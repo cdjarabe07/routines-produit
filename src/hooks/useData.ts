@@ -32,8 +32,8 @@ export function useEntity<K extends CollectionName>(name: K, id: string | undefi
 interface OperationOptions<R> {
   /** Collections à rafraîchir après succès */
   invalidates: CollectionName[];
-  /** Message de succès (texte ou fonction du résultat) */
-  success?: string | ((result: R) => string);
+  /** Message de succès (texte, ou fonction du résultat ; null = pas de message) */
+  success?: string | ((result: R) => string | null);
 }
 
 /** Opération métier (une ou plusieurs écritures) avec invalidation et messages uniformes. */
@@ -45,7 +45,8 @@ export function useOperation<V, R>(run: (ds: DataSource, vars: V) => Promise<R>,
     mutationFn: (vars: V) => run(ds, vars),
     onSuccess: async (result) => {
       await Promise.all(options.invalidates.map((name) => client.invalidateQueries({ queryKey: collectionKey(name) })));
-      if (options.success) toast.success(typeof options.success === 'function' ? options.success(result) : options.success);
+      const message = typeof options.success === 'function' ? options.success(result) : options.success;
+      if (message) toast.success(message);
     },
     onError: (error) => {
       log.error('Opération échouée', error);
