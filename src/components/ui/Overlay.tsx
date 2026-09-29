@@ -36,8 +36,8 @@ function Overlay({ open, onClose, title, description, children, footer, kind, si
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
-    const first = panel?.querySelector<HTMLElement>('[data-autofocus]') ?? panel?.querySelector<HTMLElement>(FOCUSABLE);
-    (first ?? panel)?.focus();
+    // Focus sur un élément désigné, sinon sur le dialogue lui-même (annoncé par son titre)
+    (panel?.querySelector<HTMLElement>('[data-autofocus]') ?? panel)?.focus();
     const { overflow } = document.body.style;
     document.body.style.overflow = 'hidden';
 

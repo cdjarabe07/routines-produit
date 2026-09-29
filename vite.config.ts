@@ -10,7 +10,7 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   css: {
-    modules: { localsConvention: 'camelCaseOnly' },
+    modules: { localsConvention: 'camelCase' },
   },
   test: {
     globals: true,

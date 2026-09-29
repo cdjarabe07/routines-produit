@@ -27,7 +27,7 @@
 .ranked { display: flex; flex-direction: column; gap: var(--space-2); }
 .rankedRow { display: grid; grid-template-columns: minmax(90px, 34%) minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); font-size: var(--text-sm); }
 .rankedLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rankedTrack { height: 10px; background: var(--color-surface-sunken); border-radius: 2px; overflow: hidden; }
+.rankedTrack { display: block; height: 10px; background: var(--color-surface-sunken); border-radius: 2px; overflow: hidden; }
 .rankedBar { display: block; height: 100%; }
 .tone-info { background: var(--color-primary); }
 .tone-danger { background: var(--color-danger-strong); }

@@ -51,7 +51,7 @@ export function AnomaliesPage() {
   );
 
   const columns: Column<Anomaly>[] = [
-    { id: 'date', header: 'Déclarée le', mobile: 'meta', width: '150px', cell: (a) => formatDateTime(a.createdAt), sortValue: (a) => a.createdAt },
+    { id: 'date', header: 'Déclarée le', mobile: 'meta', width: '150px', cell: (a) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(a.createdAt)}</span>, sortValue: (a) => a.createdAt },
     { id: 'description', header: 'Description', mobile: 'title', cell: (a) => <span>{a.photo && <Camera size={14} aria-label="Photo jointe" style={{ display: 'inline', marginRight: 6, verticalAlign: -2 }} />}{a.description}</span>, sortValue: (a) => a.description },
     { id: 'category', header: 'Catégorie', mobile: 'meta', cell: (a) => ANOMALY_CATEGORY[a.category], sortValue: (a) => ANOMALY_CATEGORY[a.category] },
     { id: 'ws', header: 'Poste', mobile: 'meta', cell: (a) => (a.workstationId ? lookups?.workstationById.get(a.workstationId)?.code ?? '—' : '—'), sortValue: (a) => lookups?.workstationById.get(a.workstationId ?? '')?.code ?? '' },

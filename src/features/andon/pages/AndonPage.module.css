@@ -1,0 +1,25 @@
+.display {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  overflow-y: auto;
+  padding: var(--space-6) var(--space-8);
+  background: #151c26;
+  color: #e6ebf2;
+}
+
+.displayHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+  font-size: 1.4rem;
+  font-weight: var(--weight-semibold);
+}
+.displayHead > :first-child { flex: 1; }
+.clock { font-size: 2rem; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 720px) {
+  .display { padding: var(--space-4); }
+  .displayHead { flex-wrap: wrap; font-size: 1.1rem; }
+}
