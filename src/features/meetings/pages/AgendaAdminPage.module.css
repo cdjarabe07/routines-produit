@@ -1,0 +1,120 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.week {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.weekLabel {
+  font-weight: var(--weight-medium);
+}
+.filter {
+  min-width: 220px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.day {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.today {
+  border-color: var(--color-primary);
+}
+.dayHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+}
+.today .dayHead {
+  background: var(--color-primary-soft);
+}
+.dayTitle {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: capitalize;
+}
+.empty {
+  padding: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-subtle);
+}
+.events {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1);
+}
+.event {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  font-size: var(--text-xs);
+}
+.cancelled {
+  border-left-color: var(--color-neutral);
+  opacity: 0.75;
+}
+.cancelled .title {
+  text-decoration: line-through;
+}
+.time {
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+.meta {
+  color: var(--color-text-muted);
+}
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  margin-top: 2px;
+}
+.edit {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+  text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .day {
+    min-height: 0;
+  }
+}

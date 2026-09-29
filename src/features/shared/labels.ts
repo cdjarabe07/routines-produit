@@ -1,5 +1,6 @@
 import type { Tone } from '@/components/ui/Badge';
 import type {
+  EventType,
   ActionSourceType,
   ActionStatus,
   AnomalyCategory,
@@ -30,6 +31,7 @@ export const SEVERITY: Record<Severity, { label: string; tone: Tone; rank: numbe
 export const ACTION_STATUS: Record<ActionStatus, { label: string; tone: Tone }> = {
   todo: { label: 'À faire', tone: 'neutral' },
   in_progress: { label: 'En cours', tone: 'info' },
+  blocked: { label: 'Bloquée', tone: 'danger' },
   done: { label: 'Terminée', tone: 'success' },
   cancelled: { label: 'Annulée', tone: 'neutral' },
 };
@@ -104,6 +106,16 @@ export const PRODUCTION_STATUS: Record<ProductionStatus, { label: string; tone: 
   in_progress: { label: 'En cours', tone: 'info' },
   blocked: { label: 'Bloqué', tone: 'danger' },
   done: { label: 'Terminé', tone: 'success' },
+};
+
+export const EVENT_TYPE: Record<EventType, string> = {
+  meeting: 'Réunion',
+  briefing: 'Briefing',
+  daily: 'Daily meeting',
+  training: 'Formation',
+  audit: 'Audit',
+  maintenance: 'Maintenance',
+  operational: 'Événement opérationnel',
 };
 
 export const options = <K extends string>(map: Record<K, string | { label: string }>) =>
