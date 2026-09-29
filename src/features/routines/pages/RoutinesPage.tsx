@@ -61,37 +61,83 @@ export function RoutinesPage() {
       .sort((a, b) => a.template.scheduledTime.localeCompare(b.template.scheduledTime));
   }, [templates.data, runs.data, scope, user.role, date, today, now, settings.routineLateToleranceMinutes]);
 
-  const totals = rows.reduce((acc, r) => ({ treated: acc.treated + r.treated, total: acc.total + r.total, ko: acc.ko + r.ko }), { treated: 0, total: 0, ko: 0 });
+  const totals = rows.reduce((acc, r) => ({ treated: acc.treated + r.treated, total: acc.total + r.total, ko: acc.ko + r.ko }), {
+    treated: 0,
+    total: 0,
+    ko: 0,
+  });
   const done = rows.filter((r) => r.state === 'done').length;
   const late = rows.filter((r) => r.state === 'late').length;
 
   const columns: Column<Row>[] = [
-    { id: 'time', header: 'Heure', width: '80px', cell: (r) => <strong>{r.template.scheduledTime}</strong>, sortValue: (r) => r.template.scheduledTime, mobile: 'meta' },
+    {
+      id: 'time',
+      header: 'Heure',
+      width: '80px',
+      cell: (r) => <strong>{r.template.scheduledTime}</strong>,
+      sortValue: (r) => r.template.scheduledTime,
+      mobile: 'meta',
+    },
     { id: 'title', header: 'Routine', cell: (r) => r.template.title, sortValue: (r) => r.template.title, mobile: 'title' },
     ...(scope === 'all'
-      ? [{ id: 'role', header: 'Rôle', cell: (r: Row) => ROLE_LABELS[r.template.role], sortValue: (r: Row) => r.template.role, mobile: 'meta' as const }]
+      ? [
+          {
+            id: 'role',
+            header: 'Rôle',
+            cell: (r: Row) => ROLE_LABELS[r.template.role],
+            sortValue: (r: Row) => r.template.role,
+            mobile: 'meta' as const,
+          },
+        ]
       : []),
     {
-      id: 'progress', header: 'Avancement', width: '200px', mobile: 'meta',
+      id: 'progress',
+      header: 'Avancement',
+      width: '200px',
+      mobile: 'meta',
       cell: (r) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 60 }}>
-            <Progress value={r.treated} max={r.total} label={`Avancement ${r.template.title}`} tone={r.state === 'done' ? 'success' : 'info'} size="sm" />
+            <Progress
+              value={r.treated}
+              max={r.total}
+              label={`Avancement ${r.template.title}`}
+              tone={r.state === 'done' ? 'success' : 'info'}
+              size="sm"
+            />
           </div>
-          <span style={{ fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>{r.treated}/{r.total}</span>
+          <span style={{ fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>
+            {r.treated}/{r.total}
+          </span>
         </div>
       ),
       sortValue: (r) => (r.total ? r.treated / r.total : 0),
     },
-    { id: 'ko', header: 'Non conf.', align: 'center', width: '90px', mobile: 'meta', cell: (r) => (r.ko > 0 ? <Badge tone="danger">{r.ko}</Badge> : '—'), sortValue: (r) => r.ko },
     {
-      id: 'last', header: 'Dernière saisie', mobile: 'hidden',
+      id: 'ko',
+      header: 'Non conf.',
+      align: 'center',
+      width: '90px',
+      mobile: 'meta',
+      cell: (r) => (r.ko > 0 ? <Badge tone="danger">{r.ko}</Badge> : '—'),
+      sortValue: (r) => r.ko,
+    },
+    {
+      id: 'last',
+      header: 'Dernière saisie',
+      mobile: 'hidden',
       cell: (r) => {
         const last = r.run ? Object.values(r.run.results).sort((a, b) => b.at.localeCompare(a.at))[0] : undefined;
         return last ? `${lookups?.userName(last.by)} · ${formatTime(last.at)}` : '—';
       },
     },
-    { id: 'state', header: 'État', mobile: 'aside', cell: (r) => <Badge tone={ROUTINE_STATE[r.state].tone}>{ROUTINE_STATE[r.state].label}</Badge>, sortValue: (r) => r.state },
+    {
+      id: 'state',
+      header: 'État',
+      mobile: 'aside',
+      cell: (r) => <Badge tone={ROUTINE_STATE[r.state].tone}>{ROUTINE_STATE[r.state].label}</Badge>,
+      sortValue: (r) => r.state,
+    },
   ];
 
   return (
@@ -101,16 +147,15 @@ export function RoutinesPage() {
         description="Checklists de la journée. Chaque point validé est horodaté ; l’historique des jours précédents reste consultable."
         actions={
           can('routine.manage') && (
-            <ButtonLink to="/routines/modeles" icon={<Settings2 size={16} aria-hidden />}>Gérer les modèles</ButtonLink>
+            <ButtonLink to="/routines/modeles" icon={<Settings2 size={16} aria-hidden />}>
+              Gérer les modèles
+            </ButtonLink>
           )
         }
       />
       <Stack>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <DateNavigator
-            value={date}
-            onChange={(d) => setParams(d === today ? {} : { date: d }, { replace: true })}
-          />
+          <DateNavigator value={date} onChange={(d) => setParams(d === today ? {} : { date: d }, { replace: true })} />
           <Tabs
             variant="segmented"
             label="Périmètre"
@@ -127,9 +172,22 @@ export function RoutinesPage() {
           {() => (
             <>
               <KpiStrip>
-                <Kpi label="Points traités" value={formatPercent(ratio(totals.treated, totals.total))} detail={`${totals.treated} sur ${totals.total}`} />
-                <Kpi label="Routines terminées" value={`${done}/${rows.length}`} tone={rows.length > 0 && done === rows.length ? 'success' : 'neutral'} />
-                <Kpi label="En retard" value={late} tone={late > 0 ? 'danger' : 'neutral'} detail={`Tolérance : ${settings.routineLateToleranceMinutes} min après l’heure prévue`} />
+                <Kpi
+                  label="Points traités"
+                  value={formatPercent(ratio(totals.treated, totals.total))}
+                  detail={`${totals.treated} sur ${totals.total}`}
+                />
+                <Kpi
+                  label="Routines terminées"
+                  value={`${done}/${rows.length}`}
+                  tone={rows.length > 0 && done === rows.length ? 'success' : 'neutral'}
+                />
+                <Kpi
+                  label="En retard"
+                  value={late}
+                  tone={late > 0 ? 'danger' : 'neutral'}
+                  detail={`Tolérance : ${settings.routineLateToleranceMinutes} min après l’heure prévue`}
+                />
                 <Kpi label="Non-conformités" value={totals.ko} tone={totals.ko > 0 ? 'warning' : 'neutral'} />
               </KpiStrip>
               <Panel flush>

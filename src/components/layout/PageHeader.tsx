@@ -35,7 +35,9 @@ export function Section({ title, actions, children, id }: { title: string; actio
   return (
     <section className={styles.section} aria-labelledby={id}>
       <div className={styles.sectionHead}>
-        <h2 id={id} className={styles.sectionTitle}>{title}</h2>
+        <h2 id={id} className={styles.sectionTitle}>
+          {title}
+        </h2>
         {actions && <div className={styles.actions}>{actions}</div>}
       </div>
       {children}
@@ -49,7 +51,15 @@ export function Stack({ children, gap = 5 }: { children: ReactNode; gap?: 3 | 4 
 }
 
 /** Deux colonnes sur grand écran (principal + latéral), une seule sur tablette/mobile. */
-export function Columns({ children, ratio = 'main-side', sideFirstOnMobile }: { children: ReactNode; ratio?: 'main-side' | 'equal'; sideFirstOnMobile?: boolean }) {
+export function Columns({
+  children,
+  ratio = 'main-side',
+  sideFirstOnMobile,
+}: {
+  children: ReactNode;
+  ratio?: 'main-side' | 'equal';
+  sideFirstOnMobile?: boolean;
+}) {
   return (
     <div className={`${ratio === 'equal' ? styles.columnsEqual : styles.columns} ${sideFirstOnMobile ? styles.sideFirst : ''}`}>
       {children}

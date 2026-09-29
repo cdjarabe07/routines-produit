@@ -15,7 +15,12 @@ function withCompletion(template: RoutineTemplate, results: Record<ID, ItemResul
   const complete = items.length > 0 && items.every((i) => results[i.id]);
   return {
     results,
-    completedAt: complete ? Object.values(results).map((r) => r.at).sort().at(-1) : undefined,
+    completedAt: complete
+      ? Object.values(results)
+          .map((r) => r.at)
+          .sort()
+          .at(-1)
+      : undefined,
   };
 }
 

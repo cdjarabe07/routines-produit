@@ -18,7 +18,8 @@ export function useToggleFavorite() {
 
 export function useSaveKnowledge() {
   return useOperation(
-    (ds, { id, input }: { id?: ID; input: NewEntity<KnowledgeItem> }) => (id ? ds.repo('knowledgeItems').update(id, input) : ds.repo('knowledgeItems').create(input)),
+    (ds, { id, input }: { id?: ID; input: NewEntity<KnowledgeItem> }) =>
+      id ? ds.repo('knowledgeItems').update(id, input) : ds.repo('knowledgeItems').create(input),
     { invalidates: ['knowledgeItems'], success: 'Document enregistré.' },
   );
 }

@@ -1,7 +1,25 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  ArrowLeftRight, BarChart3, BookOpen, CalendarDays, ClipboardCheck, Factory, Footprints, Gauge, LayoutDashboard,
-  ListChecks, Map as MapIcon, PlayCircle, QrCode, Ruler, Settings, ShieldCheck, Siren, TriangleAlert, Users, UserCog,
+  ArrowLeftRight,
+  BarChart3,
+  BookOpen,
+  CalendarDays,
+  ClipboardCheck,
+  Factory,
+  Footprints,
+  Gauge,
+  LayoutDashboard,
+  ListChecks,
+  Map as MapIcon,
+  PlayCircle,
+  QrCode,
+  Ruler,
+  Settings,
+  ShieldCheck,
+  Siren,
+  TriangleAlert,
+  Users,
+  UserCog,
 } from 'lucide-react';
 import type { Permission } from '@/services/auth/permissions';
 

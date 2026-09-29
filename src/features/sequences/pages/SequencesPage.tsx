@@ -42,7 +42,13 @@ export function SequencesPage() {
       <PageHeader
         title="Séquences guidées"
         description="Enchaînements d’étapes chronométrées : démarrage de poste, changement de série, journée type."
-        actions={can('sequence.manage') && <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setEditing('new')}>Nouvelle séquence</Button>}
+        actions={
+          can('sequence.manage') && (
+            <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setEditing('new')}>
+              Nouvelle séquence
+            </Button>
+          )
+        }
       />
       <QueryBoundary queries={[templates, runs, knowledge, ...queries]}>
         {() => {
@@ -50,17 +56,31 @@ export function SequencesPage() {
           const live = runs.data!.filter(isLive).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
           const past = runs.data!.filter((r) => !isLive(r));
           const columns: Column<SequenceRun>[] = [
-            { id: 'date', header: 'Démarrée le', mobile: 'meta', cell: (r) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(r.createdAt)}</span>, sortValue: (r) => r.createdAt },
+            {
+              id: 'date',
+              header: 'Démarrée le',
+              mobile: 'meta',
+              cell: (r) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(r.createdAt)}</span>,
+              sortValue: (r) => r.createdAt,
+            },
             { id: 'name', header: 'Séquence', mobile: 'title', cell: (r) => byId.get(r.templateId)?.name ?? 'Séquence supprimée' },
             { id: 'by', header: 'Par', mobile: 'meta', cell: (r) => lookups!.userName(r.startedBy) },
             {
-              id: 'duration', header: 'Durée réelle / cible', mobile: 'meta', align: 'right',
+              id: 'duration',
+              header: 'Durée réelle / cible',
+              mobile: 'meta',
+              align: 'right',
               cell: (r) => {
                 const t = byId.get(r.templateId);
                 return `${formatDuration(totalElapsedMs(r, now))}${t ? ` / ${formatDuration(plannedMs(t))}` : ''}`;
               },
             },
-            { id: 'status', header: 'Statut', mobile: 'aside', cell: (r) => <Badge tone={RUN_STATUS[r.status].tone}>{RUN_STATUS[r.status].label}</Badge> },
+            {
+              id: 'status',
+              header: 'Statut',
+              mobile: 'aside',
+              cell: (r) => <Badge tone={RUN_STATUS[r.status].tone}>{RUN_STATUS[r.status].label}</Badge>,
+            },
           ];
 
           return (
@@ -83,38 +103,70 @@ export function SequencesPage() {
               )}
 
               {templates.data!.filter((t) => t.active).length === 0 ? (
-                <EmptyState title="Aucune séquence disponible." description={can('sequence.manage') ? 'Créez une première séquence.' : 'Demandez à un responsable d’en créer une.'} />
+                <EmptyState
+                  title="Aucune séquence disponible."
+                  description={can('sequence.manage') ? 'Créez une première séquence.' : 'Demandez à un responsable d’en créer une.'}
+                />
               ) : (
                 <ul className={styles.grid}>
-                  {templates.data!.filter((t) => t.active).map((t) => (
-                    <li key={t.id} className={styles.card}>
-                      <div className={styles.cardHead}>
-                        <h2 className={styles.cardTitle}>{t.name}</h2>
-                        {can('sequence.manage') && <IconButton size="sm" label={`Modifier ${t.name}`} icon={<Pencil size={15} />} onClick={() => setEditing(t)} />}
-                      </div>
-                      {t.description && <p className={styles.cardText}>{t.description}</p>}
-                      <p className={styles.cardMeta}>{t.steps.length} étapes · durée cible {formatDuration(plannedMs(t))}</p>
-                      <ol className={styles.stepPreview}>
-                        {t.steps.slice(0, 4).map((s) => <li key={s.id}>{s.title}</li>)}
-                        {t.steps.length > 4 && <li className={styles.more}>+ {t.steps.length - 4} autres étapes</li>}
-                      </ol>
-                      <Button variant="primary" icon={<Play size={16} aria-hidden />} loading={start.isPending && start.variables?.template.id === t.id} onClick={() => launch(t)}>
-                        Démarrer
-                      </Button>
-                    </li>
-                  ))}
+                  {templates
+                    .data!.filter((t) => t.active)
+                    .map((t) => (
+                      <li key={t.id} className={styles.card}>
+                        <div className={styles.cardHead}>
+                          <h2 className={styles.cardTitle}>{t.name}</h2>
+                          {can('sequence.manage') && (
+                            <IconButton size="sm" label={`Modifier ${t.name}`} icon={<Pencil size={15} />} onClick={() => setEditing(t)} />
+                          )}
+                        </div>
+                        {t.description && <p className={styles.cardText}>{t.description}</p>}
+                        <p className={styles.cardMeta}>
+                          {t.steps.length} étapes · durée cible {formatDuration(plannedMs(t))}
+                        </p>
+                        <ol className={styles.stepPreview}>
+                          {t.steps.slice(0, 4).map((s) => (
+                            <li key={s.id}>{s.title}</li>
+                          ))}
+                          {t.steps.length > 4 && <li className={styles.more}>+ {t.steps.length - 4} autres étapes</li>}
+                        </ol>
+                        <Button
+                          variant="primary"
+                          icon={<Play size={16} aria-hidden />}
+                          loading={start.isPending && start.variables?.template.id === t.id}
+                          onClick={() => launch(t)}
+                        >
+                          Démarrer
+                        </Button>
+                      </li>
+                    ))}
                 </ul>
               )}
 
               <Panel title="Historique des exécutions" flush>
-                <DataTable caption="Historique des séquences" rows={past} columns={columns} rowKey={(r) => r.id} rowLink={(r) => `/sequences/execution/${r.id}`} initialSort={{ id: 'date', direction: 'desc' }} pageSize={15} empty={{ title: 'Aucune séquence exécutée pour l’instant.' }} />
+                <DataTable
+                  caption="Historique des séquences"
+                  rows={past}
+                  columns={columns}
+                  rowKey={(r) => r.id}
+                  rowLink={(r) => `/sequences/execution/${r.id}`}
+                  initialSort={{ id: 'date', direction: 'desc' }}
+                  pageSize={15}
+                  empty={{ title: 'Aucune séquence exécutée pour l’instant.' }}
+                />
               </Panel>
             </Stack>
           );
         }}
       </QueryBoundary>
-      <Drawer open={editing !== null} onClose={() => setEditing(null)} title={editing === 'new' ? 'Nouvelle séquence' : 'Modifier la séquence'} size="lg">
-        {editing !== null && knowledge.data && <SequenceEditor template={editing === 'new' ? undefined : editing} knowledge={knowledge.data} onDone={() => setEditing(null)} />}
+      <Drawer
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        title={editing === 'new' ? 'Nouvelle séquence' : 'Modifier la séquence'}
+        size="lg"
+      >
+        {editing !== null && knowledge.data && (
+          <SequenceEditor template={editing === 'new' ? undefined : editing} knowledge={knowledge.data} onDone={() => setEditing(null)} />
+        )}
       </Drawer>
     </>
   );

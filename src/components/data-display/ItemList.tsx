@@ -32,7 +32,13 @@ export function ItemList({ items, label }: { items: ListItem[]; label?: string }
         );
         return (
           <li key={item.id} className={cx(styles.item, item.tone && styles[item.tone])}>
-            {item.to ? <Link to={item.to} className={styles.row}>{inner}</Link> : <div className={styles.row}>{inner}</div>}
+            {item.to ? (
+              <Link to={item.to} className={styles.row}>
+                {inner}
+              </Link>
+            ) : (
+              <div className={styles.row}>{inner}</div>
+            )}
           </li>
         );
       })}

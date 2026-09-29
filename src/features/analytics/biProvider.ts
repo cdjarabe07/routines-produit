@@ -4,9 +4,7 @@ import type { AppEnv } from '@/app/config/env';
    Sans configuration, l'écran affiche explicitement « non connecté ». */
 
 export type BIConfig =
-  | { status: 'not_configured' }
-  | { status: 'invalid'; reason: string }
-  | { status: 'configured'; url: string; origin: string };
+  { status: 'not_configured' } | { status: 'invalid'; reason: string } | { status: 'configured'; url: string; origin: string };
 
 export function resolveBIConfig(env: Pick<AppEnv, 'biEmbedUrl' | 'biAllowedOrigin'>): BIConfig {
   if (!env.biEmbedUrl) return { status: 'not_configured' };

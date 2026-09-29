@@ -28,7 +28,14 @@ export function ActionDetailPage() {
     <QueryBoundary queries={[actions, ...queries]}>
       {() => {
         const action = actions.data!.find((a) => a.id === id);
-        if (!action) return <EmptyState title="Action introuvable" description="Elle a peut-être été supprimée." action={<ButtonLink to="/actions">Retour aux actions</ButtonLink>} />;
+        if (!action)
+          return (
+            <EmptyState
+              title="Action introuvable"
+              description="Elle a peut-être été supprimée."
+              action={<ButtonLink to="/actions">Retour aux actions</ButtonLink>}
+            />
+          );
         return <ActionDetail action={action} lookups={lookups!} />;
       }}
     </QueryBoundary>
@@ -62,15 +69,39 @@ function ActionDetail({ action, lookups }: { action: Action; lookups: Lookups })
         actions={
           allowed && (
             <>
-              {action.status === 'todo' && <Button onClick={() => setStatus('in_progress')} loading={update.isPending}>Démarrer</Button>}
-              {isOpenAction(action) && <Button variant="success" onClick={() => setStatus('done')} loading={update.isPending}>Marquer terminée</Button>}
-              {!isOpenAction(action) && <Button onClick={() => setStatus('in_progress')} loading={update.isPending}>Rouvrir</Button>}
-              {can('action.manage') && <Button icon={<Pencil size={15} aria-hidden />} onClick={() => setEditing(true)}>Modifier</Button>}
+              {action.status === 'todo' && (
+                <Button onClick={() => setStatus('in_progress')} loading={update.isPending}>
+                  Démarrer
+                </Button>
+              )}
+              {isOpenAction(action) && (
+                <Button variant="success" onClick={() => setStatus('done')} loading={update.isPending}>
+                  Marquer terminée
+                </Button>
+              )}
+              {!isOpenAction(action) && (
+                <Button onClick={() => setStatus('in_progress')} loading={update.isPending}>
+                  Rouvrir
+                </Button>
+              )}
+              {can('action.manage') && (
+                <Button icon={<Pencil size={15} aria-hidden />} onClick={() => setEditing(true)}>
+                  Modifier
+                </Button>
+              )}
               {isOpenAction(action) && can('action.manage') && (
                 <Button
                   variant="ghost"
                   onClick={async () => {
-                    if (await confirm({ title: 'Annuler cette action ?', message: 'Elle restera visible dans les actions terminées / annulées.', confirmLabel: 'Annuler l’action', tone: 'danger' })) setStatus('cancelled');
+                    if (
+                      await confirm({
+                        title: 'Annuler cette action ?',
+                        message: 'Elle restera visible dans les actions terminées / annulées.',
+                        confirmLabel: 'Annuler l’action',
+                        tone: 'danger',
+                      })
+                    )
+                      setStatus('cancelled');
                   }}
                 >
                   Annuler l’action
@@ -104,12 +135,26 @@ function ActionDetail({ action, lookups }: { action: Action; lookups: Lookups })
               { label: 'Responsable', value: lookups.userName(action.assigneeId) },
               { label: 'Suppléant', value: action.backupId ? lookups.userName(action.backupId) : 'Aucun' },
               { label: 'Échéance', value: <DueDate action={action} today={today} /> },
-              { label: 'Origine', value: link ? <Link to={link}>{ACTION_SOURCE[action.source.type]}</Link> : ACTION_SOURCE[action.source.type] },
+              {
+                label: 'Origine',
+                value: link ? <Link to={link}>{ACTION_SOURCE[action.source.type]}</Link> : ACTION_SOURCE[action.source.type],
+              },
               { label: 'Créée par', value: `${lookups.userName(action.createdBy)} · ${formatDateTime(action.createdAt)}` },
-              ...(action.closedAt ? [{ label: 'Terminée le', value: `${formatDate(action.closedAt)}${days !== null ? ` (en ${Math.round(days * 10) / 10} j)` : ''}` }] : []),
+              ...(action.closedAt
+                ? [
+                    {
+                      label: 'Terminée le',
+                      value: `${formatDate(action.closedAt)}${days !== null ? ` (en ${Math.round(days * 10) / 10} j)` : ''}`,
+                    },
+                  ]
+                : []),
             ]}
           />
-          {!allowed && <p style={{ marginTop: 'var(--space-4)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Seuls le responsable, le suppléant, le créateur ou l’encadrement peuvent changer le statut.</p>}
+          {!allowed && (
+            <p style={{ marginTop: 'var(--space-4)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+              Seuls le responsable, le suppléant, le créateur ou l’encadrement peuvent changer le statut.
+            </p>
+          )}
         </Panel>
       </Columns>
 

@@ -42,8 +42,17 @@ export function PeriodSelector({ preset, from, to, max, onChange }: Props) {
           }}
         >
           <TextField label="Du" type="date" max={max} value={draftFrom} onChange={(e) => setDraftFrom(e.target.value)} />
-          <TextField label="Au" type="date" max={max} value={draftTo} onChange={(e) => setDraftTo(e.target.value)} error={draftFrom && draftTo && draftFrom > draftTo ? 'Doit être après la date de début' : undefined} />
-          <Button type="submit" variant="primary" disabled={invalid}>Appliquer</Button>
+          <TextField
+            label="Au"
+            type="date"
+            max={max}
+            value={draftTo}
+            onChange={(e) => setDraftTo(e.target.value)}
+            error={draftFrom && draftTo && draftFrom > draftTo ? 'Doit être après la date de début' : undefined}
+          />
+          <Button type="submit" variant="primary" disabled={invalid}>
+            Appliquer
+          </Button>
         </form>
       )}
     </div>

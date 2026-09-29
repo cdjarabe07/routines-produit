@@ -65,8 +65,7 @@ const shortDateFmt = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '
 const longDateFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
-const asDate = (v: DateKey | ISODateTime | Date) =>
-  v instanceof Date ? v : v.length === 10 ? parseDateKey(v) : new Date(v);
+const asDate = (v: DateKey | ISODateTime | Date) => (v instanceof Date ? v : v.length === 10 ? parseDateKey(v) : new Date(v));
 
 export const formatDate = (v: DateKey | ISODateTime | Date) => dateFmt.format(asDate(v));
 export const formatShortDate = (v: DateKey | ISODateTime | Date) => shortDateFmt.format(asDate(v));

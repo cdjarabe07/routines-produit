@@ -49,7 +49,13 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
           </Button>
         </Can>
         <Can permission="andon.raise">
-          <Button size="sm" variant="danger" icon={<Siren size={16} aria-hidden />} onClick={() => navigate('/andon?declencher=1')} className={styles.quick}>
+          <Button
+            size="sm"
+            variant="danger"
+            icon={<Siren size={16} aria-hidden />}
+            onClick={() => navigate('/andon?declencher=1')}
+            className={styles.quick}
+          >
             Andon
           </Button>
         </Can>
@@ -70,7 +76,10 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
           header={
             <div>
               <strong>{user.name}</strong>
-              <div className={styles.menuRole}>{ROLE_LABELS[user.role]}{user.zoneLabel ? ` · ${user.zoneLabel}` : ''}</div>
+              <div className={styles.menuRole}>
+                {ROLE_LABELS[user.role]}
+                {user.zoneLabel ? ` · ${user.zoneLabel}` : ''}
+              </div>
               {service.mode === 'demo' && <div className={styles.menuDemo}>Session de démonstration — aucune authentification</div>}
             </div>
           }
@@ -82,7 +91,9 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
           ]}
           trigger={(props) => (
             <button type="button" className={styles.user} {...props} aria-label={`Compte : ${user.name}`}>
-              <span className={styles.avatar} aria-hidden>{initials(user.name)}</span>
+              <span className={styles.avatar} aria-hidden>
+                {initials(user.name)}
+              </span>
               <span className={styles.userText}>
                 <span className={styles.userName}>{user.name}</span>
                 <span className={styles.userRole}>{ROLE_LABELS[user.role]}</span>
@@ -108,7 +119,11 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
         size="sm"
         footer={
           notifications.unread > 0 ? (
-            <Button size="sm" loading={markRead.isPending} onClick={() => markRead.mutate(notifications.items.filter((n) => !n.readAt).map((n) => n.id))}>
+            <Button
+              size="sm"
+              loading={markRead.isPending}
+              onClick={() => markRead.mutate(notifications.items.filter((n) => !n.readAt).map((n) => n.id))}
+            >
               Tout marquer comme lu
             </Button>
           ) : undefined

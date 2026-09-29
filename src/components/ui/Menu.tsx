@@ -62,7 +62,9 @@ export function Menu({ trigger, items, align = 'end', header }: MenuProps) {
           {items.map((item, i) => (
             <button
               key={item.label}
-              ref={(el) => { itemRefs.current[i] = el; }}
+              ref={(el) => {
+                itemRefs.current[i] = el;
+              }}
               type="button"
               role="menuitem"
               disabled={item.disabled}

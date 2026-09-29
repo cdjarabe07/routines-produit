@@ -25,15 +25,33 @@
   animation: enter 160ms ease-out;
 }
 
-.success { border-left-color: #3fb866; }
-.error { border-left-color: #ff6a5c; }
-.info { border-left-color: #6fa3f0; }
-.success .icon { color: #3fb866; }
-.error .icon { color: #ff6a5c; }
-.info .icon { color: #6fa3f0; }
+.success {
+  border-left-color: #3fb866;
+}
+.error {
+  border-left-color: #ff6a5c;
+}
+.info {
+  border-left-color: #6fa3f0;
+}
+.success .icon {
+  color: #3fb866;
+}
+.error .icon {
+  color: #ff6a5c;
+}
+.info .icon {
+  color: #6fa3f0;
+}
 
-.icon { flex-shrink: 0; margin-top: 2px; }
-.message { flex: 1; line-height: var(--leading-normal); }
+.icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.message {
+  flex: 1;
+  line-height: var(--leading-normal);
+}
 
 .close {
   flex-shrink: 0;
@@ -47,9 +65,18 @@
   background: transparent;
   color: var(--color-chrome-text);
 }
-.close:hover { background: var(--color-chrome-raised); color: #fff; }
+.close:hover {
+  background: var(--color-chrome-raised);
+  color: #fff;
+}
 
 @keyframes enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

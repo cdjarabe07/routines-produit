@@ -15,9 +15,25 @@
   border-radius: var(--radius-lg);
 }
 
-.box h1 { font-size: var(--text-xl); margin-bottom: var(--space-3); }
-.box p { color: var(--color-text-muted); }
-.box ul { margin: var(--space-3) 0; padding-left: var(--space-5); list-style: disc; }
-.box li { margin-bottom: var(--space-1); }
-.hint { font-size: var(--text-sm); }
-.box code { font-family: var(--font-mono); font-size: 0.9em; }
+.box h1 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-3);
+}
+.box p {
+  color: var(--color-text-muted);
+}
+.box ul {
+  margin: var(--space-3) 0;
+  padding-left: var(--space-5);
+  list-style: disc;
+}
+.box li {
+  margin-bottom: var(--space-1);
+}
+.hint {
+  font-size: var(--text-sm);
+}
+.box code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}

@@ -16,7 +16,11 @@ import { useCloseGemba } from '../api';
 import { GEMBA_STATUS, canClose } from '../model';
 import styles from './GembaDetailPage.module.css';
 
-const RESULT_LABEL = { ok: { label: 'Conforme', tone: 'success' }, ko: { label: 'Non conforme', tone: 'danger' }, na: { label: 'N.A.', tone: 'neutral' } } as const;
+const RESULT_LABEL = {
+  ok: { label: 'Conforme', tone: 'success' },
+  ko: { label: 'Non conforme', tone: 'danger' },
+  na: { label: 'N.A.', tone: 'neutral' },
+} as const;
 
 export function GembaDetailPage() {
   const { id } = useParams();
@@ -39,16 +43,30 @@ export function GembaDetailPage() {
             <PageHeader
               back={{ to: '/gemba', label: 'Gemba Walk' }}
               title={walk.zone || 'Gemba Walk'}
-              meta={<><Badge tone={GEMBA_STATUS[walk.status].tone}>{GEMBA_STATUS[walk.status].label}</Badge><span className={styles.meta}>{formatLongDate(walk.date)}</span></>}
+              meta={
+                <>
+                  <Badge tone={GEMBA_STATUS[walk.status].tone}>{GEMBA_STATUS[walk.status].label}</Badge>
+                  <span className={styles.meta}>{formatLongDate(walk.date)}</span>
+                </>
+              }
               actions={
-                can('gemba.conduct') && walk.status === 'validated' && (
-                  <Button variant="success" disabled={!closable.ok} loading={close.isPending} onClick={() => close.mutate(walk.id)} title={closable.ok ? undefined : `${closable.openActions} action(s) encore ouverte(s)`}>
+                can('gemba.conduct') &&
+                walk.status === 'validated' && (
+                  <Button
+                    variant="success"
+                    disabled={!closable.ok}
+                    loading={close.isPending}
+                    onClick={() => close.mutate(walk.id)}
+                    title={closable.ok ? undefined : `${closable.openActions} action(s) encore ouverte(s)`}
+                  >
                     Clôturer la marche
                   </Button>
                 )
               }
             />
-            {walk.status === 'validated' && !closable.ok && <p className={styles.hint}>Clôture possible quand les {closable.openActions} action(s) liée(s) seront terminées.</p>}
+            {walk.status === 'validated' && !closable.ok && (
+              <p className={styles.hint}>Clôture possible quand les {closable.openActions} action(s) liée(s) seront terminées.</p>
+            )}
             <Columns sideFirstOnMobile>
               <Stack>
                 <Panel title={`Observations (${walk.observations.length})`} flush>
@@ -64,8 +82,16 @@ export function GembaDetailPage() {
                               <Badge tone={SEVERITY[o.severity].tone}>{SEVERITY[o.severity].label}</Badge>
                               {o.workstationId && <span className={styles.meta}>{lookups!.workstationName(o.workstationId)}</span>}
                             </div>
-                            <p><strong>Constat : </strong>{o.finding}</p>
-                            {o.improvement && <p className={styles.improvement}><strong>Amélioration proposée : </strong>{o.improvement}</p>}
+                            <p>
+                              <strong>Constat : </strong>
+                              {o.finding}
+                            </p>
+                            {o.improvement && (
+                              <p className={styles.improvement}>
+                                <strong>Amélioration proposée : </strong>
+                                {o.improvement}
+                              </p>
+                            )}
                             {o.photo && <img src={o.photo} alt="Photo de l’observation" className={styles.photo} />}
                             {action ? (
                               <Link to={`/actions/${action.id}`} className={styles.action}>
@@ -85,8 +111,15 @@ export function GembaDetailPage() {
                   <ul className={styles.checklist}>
                     {walk.checklist.map((c) => (
                       <li key={c.id}>
-                        <span>{c.label}{c.comment && <span className={styles.comment}> — {c.comment}</span>}</span>
-                        {c.result ? <Badge tone={RESULT_LABEL[c.result].tone}>{RESULT_LABEL[c.result].label}</Badge> : <Badge>Non renseigné</Badge>}
+                        <span>
+                          {c.label}
+                          {c.comment && <span className={styles.comment}> — {c.comment}</span>}
+                        </span>
+                        {c.result ? (
+                          <Badge tone={RESULT_LABEL[c.result].tone}>{RESULT_LABEL[c.result].label}</Badge>
+                        ) : (
+                          <Badge>Non renseigné</Badge>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -106,7 +139,10 @@ export function GembaDetailPage() {
                 <KeyValueList
                   items={[
                     { label: 'Conduite par', value: lookups!.userName(walk.leaderId) },
-                    { label: 'Participants', value: walk.participantIds.length ? walk.participantIds.map(lookups!.userName).join(', ') : 'Aucun' },
+                    {
+                      label: 'Participants',
+                      value: walk.participantIds.length ? walk.participantIds.map(lookups!.userName).join(', ') : 'Aucun',
+                    },
                     { label: 'Validée le', value: walk.validatedAt ? formatDateTime(walk.validatedAt) : '—' },
                     ...(walk.closedAt ? [{ label: 'Clôturée le', value: formatDateTime(walk.closedAt) }] : []),
                   ]}

@@ -4,11 +4,16 @@ import type { Role } from '@/types/domain';
    seulement une permission (via useAuth().can ou <Can>). */
 
 export type Permission =
-  | 'routine.execute' | 'routine.manage'
-  | 'sequence.run' | 'sequence.manage'
-  | 'action.create' | 'action.manage'
-  | 'anomaly.create' | 'anomaly.manage'
-  | 'andon.raise' | 'andon.respond'
+  | 'routine.execute'
+  | 'routine.manage'
+  | 'sequence.run'
+  | 'sequence.manage'
+  | 'action.create'
+  | 'action.manage'
+  | 'anomaly.create'
+  | 'anomaly.manage'
+  | 'andon.raise'
+  | 'andon.respond'
   | 'production.update'
   | 'gemba.conduct'
   | 'quality.record'
@@ -27,23 +32,74 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   operator: [...FIELD],
   hancho: [...FIELD, 'routine.execute', 'action.create', 'anomaly.manage', 'andon.respond', 'production.update', 'handover.write'],
   line_leader: [
-    ...FIELD, 'routine.execute', 'sequence.manage', 'action.create', 'action.manage', 'anomaly.manage', 'andon.respond',
-    'production.update', 'gemba.conduct', 'meeting.manage', 'handover.write', 'announcement.write', 'team.updateStatus',
+    ...FIELD,
+    'routine.execute',
+    'sequence.manage',
+    'action.create',
+    'action.manage',
+    'anomaly.manage',
+    'andon.respond',
+    'production.update',
+    'gemba.conduct',
+    'meeting.manage',
+    'handover.write',
+    'announcement.write',
+    'team.updateStatus',
     'reporting.view',
   ],
   quality: [
-    ...FIELD, 'routine.execute', 'action.create', 'action.manage', 'anomaly.manage', 'andon.respond', 'gemba.conduct',
-    'quality.record', 'handover.write', 'knowledge.manage', 'reporting.view',
+    ...FIELD,
+    'routine.execute',
+    'action.create',
+    'action.manage',
+    'anomaly.manage',
+    'andon.respond',
+    'gemba.conduct',
+    'quality.record',
+    'handover.write',
+    'knowledge.manage',
+    'reporting.view',
   ],
   manager: [
-    ...FIELD, 'routine.execute', 'routine.manage', 'sequence.manage', 'action.create', 'action.manage', 'anomaly.manage',
-    'andon.respond', 'production.update', 'gemba.conduct', 'quality.record', 'meeting.manage', 'handover.write',
-    'announcement.write', 'team.updateStatus', 'leave.manage', 'knowledge.manage', 'reporting.view',
+    ...FIELD,
+    'routine.execute',
+    'routine.manage',
+    'sequence.manage',
+    'action.create',
+    'action.manage',
+    'anomaly.manage',
+    'andon.respond',
+    'production.update',
+    'gemba.conduct',
+    'quality.record',
+    'meeting.manage',
+    'handover.write',
+    'announcement.write',
+    'team.updateStatus',
+    'leave.manage',
+    'knowledge.manage',
+    'reporting.view',
   ],
   admin: [
-    ...FIELD, 'routine.execute', 'routine.manage', 'sequence.manage', 'action.create', 'action.manage', 'anomaly.manage',
-    'andon.respond', 'production.update', 'gemba.conduct', 'quality.record', 'meeting.manage', 'handover.write',
-    'announcement.write', 'team.updateStatus', 'leave.manage', 'knowledge.manage', 'reporting.view', 'admin.access',
+    ...FIELD,
+    'routine.execute',
+    'routine.manage',
+    'sequence.manage',
+    'action.create',
+    'action.manage',
+    'anomaly.manage',
+    'andon.respond',
+    'production.update',
+    'gemba.conduct',
+    'quality.record',
+    'meeting.manage',
+    'handover.write',
+    'announcement.write',
+    'team.updateStatus',
+    'leave.manage',
+    'knowledge.manage',
+    'reporting.view',
+    'admin.access',
   ],
 };
 

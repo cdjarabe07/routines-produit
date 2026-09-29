@@ -19,8 +19,17 @@ export function AnnouncementPanel({ announcement, authorName }: { announcement?:
     <Panel
       title="Annonce du jour"
       actions={
-        can('announcement.write') && !editing && (
-          <Button size="sm" variant="ghost" icon={<Pencil size={14} aria-hidden />} onClick={() => { setText(announcement?.text ?? ''); setEditing(true); }}>
+        can('announcement.write') &&
+        !editing && (
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={<Pencil size={14} aria-hidden />}
+            onClick={() => {
+              setText(announcement?.text ?? '');
+              setEditing(true);
+            }}
+          >
             {announcement ? 'Modifier' : 'Publier'}
           </Button>
         )
@@ -35,10 +44,21 @@ export function AnnouncementPanel({ announcement, authorName }: { announcement?:
           }}
           style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}
         >
-          <TextAreaField label="Texte de l’annonce" hideLabel rows={3} value={text} onChange={(e) => setText(e.target.value)} hint="Laisser vide pour retirer l’annonce." />
+          <TextAreaField
+            label="Texte de l’annonce"
+            hideLabel
+            rows={3}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            hint="Laisser vide pour retirer l’annonce."
+          />
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            <Button size="sm" onClick={() => setEditing(false)}>Annuler</Button>
-            <Button size="sm" type="submit" variant="primary" loading={save.isPending}>Publier</Button>
+            <Button size="sm" onClick={() => setEditing(false)}>
+              Annuler
+            </Button>
+            <Button size="sm" type="submit" variant="primary" loading={save.isPending}>
+              Publier
+            </Button>
           </div>
         </form>
       ) : announcement ? (

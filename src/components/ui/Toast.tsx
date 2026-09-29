@@ -3,7 +3,11 @@ import { CircleCheck, CircleX, Info, X } from 'lucide-react';
 import styles from './Toast.module.css';
 
 type ToastKind = 'success' | 'error' | 'info';
-interface ToastItem { id: number; kind: ToastKind; message: string }
+interface ToastItem {
+  id: number;
+  kind: ToastKind;
+  message: string;
+}
 
 interface ToastApi {
   success: (message: string) => void;

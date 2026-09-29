@@ -1,5 +1,13 @@
 import type {
-  Action, AndonAlert, Anomaly, AnomalyCategory, DateKey, QualityCheck, RoutineRun, RoutineTemplate, Workstation,
+  Action,
+  AndonAlert,
+  Anomaly,
+  AnomalyCategory,
+  DateKey,
+  QualityCheck,
+  RoutineRun,
+  RoutineTemplate,
+  Workstation,
 } from '@/types/domain';
 import { closureDays, isOpenAction } from '@/features/actions/model';
 import { andonStats } from '@/features/andon/model';
@@ -162,7 +170,8 @@ export function dailySeries(source: ReportSource, p: Period, dims: Dimensions = 
 
 export function anomaliesByCategory(source: ReportSource, p: Period, dims: Dimensions = {}) {
   const counts = new Map<AnomalyCategory, number>();
-  for (const a of scope(source, dims).anomalies) if (inPeriod(dateKeyOf(a.createdAt), p)) counts.set(a.category, (counts.get(a.category) ?? 0) + 1);
+  for (const a of scope(source, dims).anomalies)
+    if (inPeriod(dateKeyOf(a.createdAt), p)) counts.set(a.category, (counts.get(a.category) ?? 0) + 1);
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
 }
 
@@ -181,15 +190,26 @@ export function delta(current: number | null, previous: number | null, higherIsB
   const diff = current - previous;
   if (Math.abs(diff) < 0.05) return { text: '= stable', favorable: null };
   const sign = diff > 0 ? '+' : '−';
-  const value = unit === 'pts' ? `${Math.abs(diff).toFixed(1).replace('.', ',')} pt` : `${Math.round(Math.abs(diff) * 10) / 10}`.replace('.', ',');
+  const value =
+    unit === 'pts' ? `${Math.abs(diff).toFixed(1).replace('.', ',')} pt` : `${Math.round(Math.abs(diff) * 10) / 10}`.replace('.', ',');
   return { text: `${sign}${value}${unit === '%' ? ' %' : ''} vs période préc.`, favorable: diff > 0 === higherIsBetter };
 }
 
 /** Export CSV (séparateur « ; » pour Excel en français). */
 export function toCsv(rows: DailyRow[]): string {
-  const header = ['Date', 'Routines (% points traités)', 'Anomalies déclarées', 'Andon déclenchés', 'Actions terminées', 'Conformité LQC (%)'];
+  const header = [
+    'Date',
+    'Routines (% points traités)',
+    'Anomalies déclarées',
+    'Andon déclenchés',
+    'Actions terminées',
+    'Conformité LQC (%)',
+  ];
   const fmt = (v: number | null) => (v === null ? '' : v.toFixed(1).replace('.', ','));
-  return [header, ...rows.map((r) => [r.date, fmt(r.routinePct), String(r.anomalies), String(r.andon), String(r.actionsClosed), fmt(r.qualityPct)])]
+  return [
+    header,
+    ...rows.map((r) => [r.date, fmt(r.routinePct), String(r.anomalies), String(r.andon), String(r.actionsClosed), fmt(r.qualityPct)]),
+  ]
     .map((cols) => cols.join(';'))
     .join('\r\n');
 }

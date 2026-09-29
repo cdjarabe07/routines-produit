@@ -29,7 +29,10 @@ export function CommentThread({ targetType, targetId, notifyUserIds, title, link
   const [error, setError] = useState<string | null>(null);
 
   const thread = useMemo(
-    () => (comments.data ?? []).filter((c) => c.targetType === targetType && c.targetId === targetId).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    () =>
+      (comments.data ?? [])
+        .filter((c) => c.targetType === targetType && c.targetId === targetId)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     [comments.data, targetType, targetId],
   );
 
@@ -63,9 +66,17 @@ export function CommentThread({ targetType, targetId, notifyUserIds, title, link
               void submit().catch(() => undefined);
             }}
           >
-            <TextAreaField label="Ajouter un commentaire" rows={2} value={text} onChange={(e) => setText(e.target.value)} error={error ?? undefined} />
+            <TextAreaField
+              label="Ajouter un commentaire"
+              rows={2}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              error={error ?? undefined}
+            />
             <div>
-              <Button type="submit" variant="primary" size="sm" loading={add.isPending}>Publier</Button>
+              <Button type="submit" variant="primary" size="sm" loading={add.isPending}>
+                Publier
+              </Button>
             </div>
           </form>
         </div>
@@ -81,7 +92,9 @@ function CommentItem({ comment, authorName, mine }: { comment: Comment; authorNa
 
   return (
     <li className={styles.item}>
-      <span className={styles.avatar} aria-hidden>{initials(authorName)}</span>
+      <span className={styles.avatar} aria-hidden>
+        {initials(authorName)}
+      </span>
       <div className={styles.body}>
         <div className={styles.head}>
           <strong>{authorName}</strong>
@@ -92,7 +105,9 @@ function CommentItem({ comment, authorName, mine }: { comment: Comment; authorNa
           <div className={styles.editForm}>
             <TextAreaField label="Modifier le commentaire" hideLabel rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} />
             <div className={styles.editActions}>
-              <Button size="sm" onClick={() => setEditing(false)}>Annuler</Button>
+              <Button size="sm" onClick={() => setEditing(false)}>
+                Annuler
+              </Button>
               <Button
                 size="sm"
                 variant="primary"
@@ -111,7 +126,9 @@ function CommentItem({ comment, authorName, mine }: { comment: Comment; authorNa
           <p className={styles.text}>{comment.text}</p>
         )}
         {mine && !editing && (
-          <button type="button" className={styles.editLink} onClick={() => setEditing(true)}>Modifier</button>
+          <button type="button" className={styles.editLink} onClick={() => setEditing(true)}>
+            Modifier
+          </button>
         )}
       </div>
     </li>

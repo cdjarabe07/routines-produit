@@ -22,7 +22,19 @@ interface Props {
 }
 
 /** Tableau Andon : une tuile par poste, l'état se lit à distance (couleur + libellé + chronomètre). */
-export function AndonBoard({ lines, workstations, alerts, now, escalationMinutes, userName, canRespond, onAcknowledge, onResolve, onRaise, display }: Props) {
+export function AndonBoard({
+  lines,
+  workstations,
+  alerts,
+  now,
+  escalationMinutes,
+  userName,
+  canRespond,
+  onAcknowledge,
+  onResolve,
+  onRaise,
+  display,
+}: Props) {
   return (
     <div className={cx(styles.board, display && styles.display)}>
       {lines.map((line) => {
@@ -31,7 +43,10 @@ export function AndonBoard({ lines, workstations, alerts, now, escalationMinutes
         return (
           <section key={line.id} className={styles.line} aria-label={line.name}>
             <header className={styles.lineHead}>
-              <h2>{line.name}{line.description ? ` — ${line.description}` : ''}</h2>
+              <h2>
+                {line.name}
+                {line.description ? ` — ${line.description}` : ''}
+              </h2>
               <span className={cx(styles.lineState, lineAlerts.length ? styles.lineAlarm : styles.lineOk)}>
                 {lineAlerts.length ? `${lineAlerts.length} Andon en cours` : 'Aucun Andon'}
               </span>
@@ -43,14 +58,25 @@ export function AndonBoard({ lines, workstations, alerts, now, escalationMinutes
                 const state = !alert ? 'ok' : alert.status === 'acknowledged' ? 'ack' : 'active';
                 const openCount = alerts.filter((a) => a.workstationId === ws.id && a.status !== 'resolved').length;
                 return (
-                  <li key={ws.id} className={cx(styles.tile, styles[state], escalated && styles.escalated, alert?.urgency === 'critical' && styles.critical)}>
+                  <li
+                    key={ws.id}
+                    className={cx(
+                      styles.tile,
+                      styles[state],
+                      escalated && styles.escalated,
+                      alert?.urgency === 'critical' && styles.critical,
+                    )}
+                  >
                     <div className={styles.tileHead}>
                       <span className={styles.code}>{ws.code}</span>
                       <span className={styles.process}>{ws.process}</span>
                     </div>
                     {alert ? (
                       <>
-                        <div className={styles.timer} aria-label={`Depuis ${formatDuration(now.getTime() - new Date(alert.raisedAt).getTime())}`}>
+                        <div
+                          className={styles.timer}
+                          aria-label={`Depuis ${formatDuration(now.getTime() - new Date(alert.raisedAt).getTime())}`}
+                        >
                           {formatDuration(now.getTime() - new Date(alert.raisedAt).getTime())}
                         </div>
                         <div className={styles.status}>
@@ -65,8 +91,14 @@ export function AndonBoard({ lines, workstations, alerts, now, escalationMinutes
                         </p>
                         {!display && canRespond && (
                           <div className={styles.buttons}>
-                            {alert.status === 'active' && <Button size="sm" className={styles.onAlarm} onClick={() => onAcknowledge?.(alert)}>Je prends en charge</Button>}
-                            <Button size="sm" variant="success" onClick={() => onResolve?.(alert)}>Résoudre</Button>
+                            {alert.status === 'active' && (
+                              <Button size="sm" className={styles.onAlarm} onClick={() => onAcknowledge?.(alert)}>
+                                Je prends en charge
+                              </Button>
+                            )}
+                            <Button size="sm" variant="success" onClick={() => onResolve?.(alert)}>
+                              Résoudre
+                            </Button>
                           </div>
                         )}
                       </>
@@ -75,12 +107,18 @@ export function AndonBoard({ lines, workstations, alerts, now, escalationMinutes
                         <div className={styles.okLabel}>En marche</div>
                         {!display && onRaise && (
                           <div className={styles.buttons}>
-                            <Button size="sm" variant="ghost" onClick={() => onRaise(ws.id)}>Déclencher</Button>
+                            <Button size="sm" variant="ghost" onClick={() => onRaise(ws.id)}>
+                              Déclencher
+                            </Button>
                           </div>
                         )}
                       </>
                     )}
-                    {alert?.urgency === 'critical' && <Badge tone="danger" strong className={styles.criticalBadge}>Critique</Badge>}
+                    {alert?.urgency === 'critical' && (
+                      <Badge tone="danger" strong className={styles.criticalBadge}>
+                        Critique
+                      </Badge>
+                    )}
                   </li>
                 );
               })}

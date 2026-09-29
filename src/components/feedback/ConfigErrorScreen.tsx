@@ -12,7 +12,9 @@ export function ConfigErrorScreen({ errors }: { errors: string[] }) {
             <li key={e}>{e}</li>
           ))}
         </ul>
-        <p className={styles.hint}>Corrigez le fichier <code>.env</code> (voir <code>.env.example</code> et le README), puis relancez le build.</p>
+        <p className={styles.hint}>
+          Corrigez le fichier <code>.env</code> (voir <code>.env.example</code> et le README), puis relancez le build.
+        </p>
       </div>
     </main>
   );

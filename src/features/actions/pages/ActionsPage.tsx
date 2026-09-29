@@ -39,21 +39,50 @@ export function ActionsPage() {
 
   const counts = useMemo(() => {
     const list = actions.data ?? [];
-    return Object.fromEntries(VIEWS.map((v) => [v.value, filterActions(list, v.value, user.id, today).length])) as Record<ActionView, number>;
+    return Object.fromEntries(VIEWS.map((v) => [v.value, filterActions(list, v.value, user.id, today).length])) as Record<
+      ActionView,
+      number
+    >;
   }, [actions.data, user.id, today]);
 
   const rows = useMemo(() => {
     const filtered = filterActions(actions.data ?? [], view, user.id, today).filter((a) => !priority || a.priority === priority);
-    return view === 'closed' ? filtered.sort((a, b) => (b.closedAt ?? b.updatedAt).localeCompare(a.closedAt ?? a.updatedAt)) : sortActions(filtered, today);
+    return view === 'closed'
+      ? filtered.sort((a, b) => (b.closedAt ?? b.updatedAt).localeCompare(a.closedAt ?? a.updatedAt))
+      : sortActions(filtered, today);
   }, [actions.data, view, user.id, today, priority]);
 
   const columns: Column<Action>[] = [
     { id: 'title', header: 'Action', mobile: 'title', cell: (a) => a.title, sortValue: (a) => a.title },
-    { id: 'source', header: 'Origine', mobile: 'meta', cell: (a) => <Badge>{ACTION_SOURCE[a.source.type]}</Badge>, sortValue: (a) => ACTION_SOURCE[a.source.type] },
-    { id: 'assignee', header: 'Responsable', mobile: 'meta', cell: (a) => lookups?.userName(a.assigneeId), sortValue: (a) => lookups?.userName(a.assigneeId) ?? '' },
-    { id: 'priority', header: 'Priorité', mobile: 'meta', cell: (a) => <PriorityBadge action={a} />, sortValue: (a) => PRIORITY[a.priority].rank },
+    {
+      id: 'source',
+      header: 'Origine',
+      mobile: 'meta',
+      cell: (a) => <Badge>{ACTION_SOURCE[a.source.type]}</Badge>,
+      sortValue: (a) => ACTION_SOURCE[a.source.type],
+    },
+    {
+      id: 'assignee',
+      header: 'Responsable',
+      mobile: 'meta',
+      cell: (a) => lookups?.userName(a.assigneeId),
+      sortValue: (a) => lookups?.userName(a.assigneeId) ?? '',
+    },
+    {
+      id: 'priority',
+      header: 'Priorité',
+      mobile: 'meta',
+      cell: (a) => <PriorityBadge action={a} />,
+      sortValue: (a) => PRIORITY[a.priority].rank,
+    },
     { id: 'due', header: 'Échéance', mobile: 'meta', cell: (a) => <DueDate action={a} today={today} />, sortValue: (a) => a.dueDate },
-    { id: 'status', header: 'Statut', mobile: 'aside', cell: (a) => <ActionStatusBadge action={a} today={today} />, sortValue: (a) => a.status },
+    {
+      id: 'status',
+      header: 'Statut',
+      mobile: 'aside',
+      cell: (a) => <ActionStatusBadge action={a} today={today} />,
+      sortValue: (a) => a.status,
+    },
   ];
 
   return (
@@ -63,7 +92,9 @@ export function ActionsPage() {
         description="Registre unique des actions de l’atelier : décidées en réunion, issues d’anomalies, de Gemba Walk ou saisies directement."
         actions={
           <Can permission="action.create">
-            <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setCreating(true)}>Nouvelle action</Button>
+            <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setCreating(true)}>
+              Nouvelle action
+            </Button>
           </Can>
         }
       />
@@ -85,14 +116,29 @@ export function ActionsPage() {
               rowKey={(a) => a.id}
               rowLink={(a) => `/actions/${a.id}`}
               rowTone={(a) => (isOverdue(a, today) ? 'danger' : undefined)}
-              search={{ placeholder: 'Rechercher une action, un responsable…', text: (a) => `${a.title} ${a.description ?? ''} ${lookups?.userName(a.assigneeId)}` }}
+              search={{
+                placeholder: 'Rechercher une action, un responsable…',
+                text: (a) => `${a.title} ${a.description ?? ''} ${lookups?.userName(a.assigneeId)}`,
+              }}
               toolbar={
                 <div style={{ minWidth: 180 }}>
-                  <SelectField label="Priorité" hideLabel placeholder="Toutes priorités" options={options(PRIORITY)} value={priority} onChange={(e) => setPriority(e.target.value as Priority | '')} />
+                  <SelectField
+                    label="Priorité"
+                    hideLabel
+                    placeholder="Toutes priorités"
+                    options={options(PRIORITY)}
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as Priority | '')}
+                  />
                 </div>
               }
               empty={{
-                title: view === 'mine' ? 'Aucune action ouverte à votre nom.' : view === 'overdue' ? 'Aucune action en retard.' : 'Aucune action dans cette vue.',
+                title:
+                  view === 'mine'
+                    ? 'Aucune action ouverte à votre nom.'
+                    : view === 'overdue'
+                      ? 'Aucune action en retard.'
+                      : 'Aucune action dans cette vue.',
               }}
             />
           </Panel>

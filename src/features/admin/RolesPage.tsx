@@ -19,7 +19,11 @@ export function RolesPage() {
             <thead>
               <tr>
                 <th scope="col">Permission</th>
-                {ROLE_ORDER.map((r) => <th key={r} scope="col">{ROLE_LABELS[r]}</th>)}
+                {ROLE_ORDER.map((r) => (
+                  <th key={r} scope="col">
+                    {ROLE_LABELS[r]}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -30,7 +34,13 @@ export function RolesPage() {
                     <code>{p}</code>
                   </th>
                   {ROLE_ORDER.map((r) => (
-                    <td key={r}>{roleCan(r, p) ? <Check size={18} aria-label="Autorisé" className={styles.yes} /> : <span className="visually-hidden">Non autorisé</span>}</td>
+                    <td key={r}>
+                      {roleCan(r, p) ? (
+                        <Check size={18} aria-label="Autorisé" className={styles.yes} />
+                      ) : (
+                        <span className="visually-hidden">Non autorisé</span>
+                      )}
+                    </td>
                   ))}
                 </tr>
               ))}

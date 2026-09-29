@@ -7,10 +7,20 @@
   animation: fade 120ms ease-out;
 }
 
-.modalBackdrop { align-items: center; justify-content: center; padding: var(--space-4); }
-.drawerBackdrop { justify-content: flex-end; }
-.drawerBackdrop.left { justify-content: flex-start; }
-.left .drawer { animation-name: slideLeft; }
+.modalBackdrop {
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+.drawerBackdrop {
+  justify-content: flex-end;
+}
+.drawerBackdrop.left {
+  justify-content: flex-start;
+}
+.left .drawer {
+  animation-name: slideLeft;
+}
 
 .panel {
   display: flex;
@@ -21,15 +31,35 @@
   max-height: 100%;
 }
 
-.modal { width: 100%; border-radius: var(--radius-lg); max-height: calc(100vh - 2 * var(--space-4)); }
-.modal.sm { max-width: 420px; }
-.modal.md { max-width: 600px; }
-.modal.lg { max-width: 880px; }
+.modal {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  max-height: calc(100vh - 2 * var(--space-4));
+}
+.modal.sm {
+  max-width: 420px;
+}
+.modal.md {
+  max-width: 600px;
+}
+.modal.lg {
+  max-width: 880px;
+}
 
-.drawer { height: 100%; width: 100%; animation: slide 160ms ease-out; }
-.drawer.sm { max-width: 380px; }
-.drawer.md { max-width: 520px; }
-.drawer.lg { max-width: 760px; }
+.drawer {
+  height: 100%;
+  width: 100%;
+  animation: slide 160ms ease-out;
+}
+.drawer.sm {
+  max-width: 380px;
+}
+.drawer.md {
+  max-width: 520px;
+}
+.drawer.lg {
+  max-width: 760px;
+}
 
 .header {
   display: flex;
@@ -39,8 +69,14 @@
   padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--color-border);
 }
-.title { font-size: var(--text-lg); }
-.description { margin-top: var(--space-1); font-size: var(--text-sm); color: var(--color-text-muted); }
+.title {
+  font-size: var(--text-lg);
+}
+.description {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
 
 .close {
   display: grid;
@@ -54,9 +90,16 @@
   color: var(--color-text-muted);
   flex-shrink: 0;
 }
-.close:hover { background: var(--color-surface-sunken); color: var(--color-text); }
+.close:hover {
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+}
 
-.body { padding: var(--space-5); overflow-y: auto; flex: 1; }
+.body {
+  padding: var(--space-5);
+  overflow-y: auto;
+  flex: 1;
+}
 
 .footer {
   display: flex;
@@ -70,14 +113,58 @@
 }
 
 @media (max-width: 720px) {
-  .modalBackdrop { align-items: flex-end; padding: 0; }
-  .modal { max-height: 92vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
-  .modal.sm, .modal.md, .modal.lg { max-width: none; }
-  .header, .body { padding-left: var(--space-4); padding-right: var(--space-4); }
-  .footer { padding: var(--space-3) var(--space-4); flex-direction: column-reverse; }
-  .footer > * { width: 100%; }
+  .modalBackdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal {
+    max-height: 92vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .modal.sm,
+  .modal.md,
+  .modal.lg {
+    max-width: none;
+  }
+  .header,
+  .body {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+  .footer {
+    padding: var(--space-3) var(--space-4);
+    flex-direction: column-reverse;
+  }
+  .footer > * {
+    width: 100%;
+  }
 }
 
-@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideLeft { from { transform: translateX(-24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
-@keyframes slide { from { transform: translateX(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideLeft {
+  from {
+    transform: translateX(-24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes slide {
+  from {
+    transform: translateX(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

@@ -7,8 +7,12 @@ import { afterEach } from 'vitest';
 function memoryStorage(): Storage {
   let map = new Map<string, string>();
   return {
-    get length() { return map.size; },
-    clear: () => { map = new Map(); },
+    get length() {
+      return map.size;
+    },
+    clear: () => {
+      map = new Map();
+    },
     getItem: (k) => map.get(k) ?? null,
     key: (i) => Array.from(map.keys())[i] ?? null,
     removeItem: (k) => void map.delete(k),

@@ -31,7 +31,10 @@ export function KnowledgePage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [creating, setCreating] = useState(false);
 
-  const myFavorites = useMemo(() => new Map((favorites.data ?? []).filter((f) => f.userId === user.id).map((f) => [f.knowledgeId, f])), [favorites.data, user.id]);
+  const myFavorites = useMemo(
+    () => new Map((favorites.data ?? []).filter((f) => f.userId === user.id).map((f) => [f.knowledgeId, f])),
+    [favorites.data, user.id],
+  );
 
   const visible = useMemo(() => {
     const q = normalize(query.trim());
@@ -50,20 +53,32 @@ export function KnowledgePage() {
       <PageHeader
         title="Centre de connaissances"
         description="Standards, modes opératoires et documents de référence, consultables pendant les routines et les audits."
-        actions={<Can permission="knowledge.manage"><Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setCreating(true)}>Nouveau document</Button></Can>}
+        actions={
+          <Can permission="knowledge.manage">
+            <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setCreating(true)}>
+              Nouveau document
+            </Button>
+          </Can>
+        }
       />
       <QueryBoundary queries={[items, favorites]}>
         {() => (
           <Stack gap={4}>
             {examples > 0 && (
               <p className={styles.notice} role="note">
-                {examples} document(s) sont des <strong>exemples repris du prototype</strong>. Ils doivent être remplacés par les standards validés de l’atelier.
+                {examples} document(s) sont des <strong>exemples repris du prototype</strong>. Ils doivent être remplacés par les standards
+                validés de l’atelier.
               </p>
             )}
             <label className={styles.search}>
               <Search size={18} aria-hidden className={styles.searchIcon} />
               <span className="visually-hidden">Rechercher dans les documents</span>
-              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Rechercher un code, un titre, un point de contrôle…" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Rechercher un code, un titre, un point de contrôle…"
+              />
             </label>
             <Tabs
               variant="segmented"
@@ -80,7 +95,13 @@ export function KnowledgePage() {
               {visible.length === 0 ? (
                 <EmptyState
                   compact
-                  title={query ? `Aucun document ne correspond à « ${query} ».` : filter === 'favorites' ? 'Aucun favori : utilisez l’étoile pour garder vos documents à portée.' : 'Aucun document dans cette catégorie.'}
+                  title={
+                    query
+                      ? `Aucun document ne correspond à « ${query} ».`
+                      : filter === 'favorites'
+                        ? 'Aucun favori : utilisez l’étoile pour garder vos documents à portée.'
+                        : 'Aucun document dans cette catégorie.'
+                  }
                 />
               ) : (
                 <ul className={styles.list}>
@@ -88,7 +109,9 @@ export function KnowledgePage() {
                     const fav = myFavorites.get(k.id);
                     return (
                       <li key={k.id} className={styles.row}>
-                        <span className={styles.icon} aria-hidden>{k.kind === 'link' ? <ExternalLink size={18} /> : <FileText size={18} />}</span>
+                        <span className={styles.icon} aria-hidden>
+                          {k.kind === 'link' ? <ExternalLink size={18} /> : <FileText size={18} />}
+                        </span>
                         <div className={styles.main}>
                           <Link to={`/connaissances/${k.id}`} className={styles.title}>
                             <span className={styles.code}>{k.code}</span> {k.title}
@@ -119,7 +142,14 @@ export function KnowledgePage() {
         )}
       </QueryBoundary>
       <Drawer open={creating} onClose={() => setCreating(false)} title="Nouveau document" size="lg">
-        {creating && <KnowledgeForm onDone={(saved) => { setCreating(false); if (saved) navigate(`/connaissances/${saved.id}`); }} />}
+        {creating && (
+          <KnowledgeForm
+            onDone={(saved) => {
+              setCreating(false);
+              if (saved) navigate(`/connaissances/${saved.id}`);
+            }}
+          />
+        )}
       </Drawer>
     </>
   );

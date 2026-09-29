@@ -76,16 +76,59 @@ export function ActionForm({ users, action, source = { type: 'manual' }, default
   return (
     <form onSubmit={form.handleSubmit} noValidate>
       <FormGrid>
-        <TextField className="full" label="Action" required value={values.title} onChange={(e) => set('title', e.target.value)} error={errors.title} placeholder="Ex. : remplacer l’outil de sertissage du poste 3" />
-        <TextAreaField className="full" label="Détails (facultatif)" rows={2} value={values.description} onChange={(e) => set('description', e.target.value)} />
-        <SelectField label="Responsable" required placeholder="Choisir…" options={people} value={values.assigneeId} onChange={(e) => set('assigneeId', e.target.value)} error={errors.assigneeId} />
-        <SelectField label="Suppléant" placeholder="Aucun" options={people.filter((p) => p.value !== values.assigneeId)} value={values.backupId} onChange={(e) => set('backupId', e.target.value)} />
-        <SelectField label="Priorité" options={options(PRIORITY)} value={values.priority} onChange={(e) => set('priority', e.target.value as Priority)} />
-        <TextField label="Échéance" type="date" required min={action ? undefined : today} value={values.dueDate} onChange={(e) => set('dueDate', e.target.value)} error={errors.dueDate} />
+        <TextField
+          className="full"
+          label="Action"
+          required
+          value={values.title}
+          onChange={(e) => set('title', e.target.value)}
+          error={errors.title}
+          placeholder="Ex. : remplacer l’outil de sertissage du poste 3"
+        />
+        <TextAreaField
+          className="full"
+          label="Détails (facultatif)"
+          rows={2}
+          value={values.description}
+          onChange={(e) => set('description', e.target.value)}
+        />
+        <SelectField
+          label="Responsable"
+          required
+          placeholder="Choisir…"
+          options={people}
+          value={values.assigneeId}
+          onChange={(e) => set('assigneeId', e.target.value)}
+          error={errors.assigneeId}
+        />
+        <SelectField
+          label="Suppléant"
+          placeholder="Aucun"
+          options={people.filter((p) => p.value !== values.assigneeId)}
+          value={values.backupId}
+          onChange={(e) => set('backupId', e.target.value)}
+        />
+        <SelectField
+          label="Priorité"
+          options={options(PRIORITY)}
+          value={values.priority}
+          onChange={(e) => set('priority', e.target.value as Priority)}
+        />
+        <TextField
+          label="Échéance"
+          type="date"
+          required
+          min={action ? undefined : today}
+          value={values.dueDate}
+          onChange={(e) => set('dueDate', e.target.value)}
+          error={errors.dueDate}
+        />
       </FormGrid>
       <FormActions>
         <Button onClick={() => onDone()}>Annuler</Button>
-        <Button type="submit" variant="primary" loading={form.submitting}>{action ? 'Enregistrer' : 'Créer l’action'}</Button>
+        <Button type="submit" variant="primary" loading={form.submitting}>
+          {action ? 'Enregistrer' : 'Créer l’action'}
+        </Button>
       </FormActions>
     </form>
   );

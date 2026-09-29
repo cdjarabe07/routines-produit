@@ -17,11 +17,15 @@ export function AppShell() {
 
   return (
     <div className={styles.shell}>
-      <a href="#contenu" className={styles.skip}>Aller au contenu</a>
+      <a href="#contenu" className={styles.skip}>
+        Aller au contenu
+      </a>
 
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden>RA</span>
+          <span className={styles.brandMark} aria-hidden>
+            RA
+          </span>
           <span className={styles.brandText}>
             <strong>Routines atelier</strong>
             <span>{settings.plantName}</span>

@@ -1,5 +1,14 @@
-.nav { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.picker { position: relative; display: inline-flex; align-items: center; }
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
 .picker input {
   height: var(--touch-target);
   padding: 0 var(--space-3);
@@ -8,5 +17,10 @@
   background: var(--color-surface);
   min-width: 150px;
 }
-.readable { font-size: var(--text-sm); color: var(--color-text-muted); }
-.readable::first-letter { text-transform: uppercase; }
+.readable {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+.readable::first-letter {
+  text-transform: uppercase;
+}

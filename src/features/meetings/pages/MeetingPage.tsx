@@ -30,7 +30,13 @@ export function MeetingPage() {
       {() => {
         const meeting = meetings.data!.find((m) => m.id === id);
         if (!meeting) return <EmptyState title="Réunion introuvable" action={<ButtonLink to="/agenda">Retour à l’agenda</ButtonLink>} />;
-        return <MeetingView meeting={meeting} actions={actions.data!.filter((a) => a.source.type === 'meeting' && a.source.id === meeting.id)} lookups={lookups!} />;
+        return (
+          <MeetingView
+            meeting={meeting}
+            actions={actions.data!.filter((a) => a.source.type === 'meeting' && a.source.id === meeting.id)}
+            lookups={lookups!}
+          />
+        );
       }}
     </QueryBoundary>
   );
@@ -71,15 +77,28 @@ function MeetingView({ meeting, actions, lookups }: { meeting: Meeting; actions:
         meta={
           <>
             <Badge tone={MEETING_STATUS[meeting.status].tone}>{MEETING_STATUS[meeting.status].label}</Badge>
-            <span className={styles.meta}>{formatLongDate(meeting.date)} · {meeting.startTime} · {meeting.durationMin} min · animée par {lookups.userName(meeting.organizerId)}</span>
+            <span className={styles.meta}>
+              {formatLongDate(meeting.date)} · {meeting.startTime} · {meeting.durationMin} min · animée par{' '}
+              {lookups.userName(meeting.organizerId)}
+            </span>
           </>
         }
         actions={
           can('meeting.manage') && (
             <>
-              {meeting.status === 'planned' && <Button variant="primary" onClick={() => updateWithMessage.mutate({ id: meeting.id, patch: { status: 'in_progress' } })}>Démarrer la réunion</Button>}
-              {meeting.status === 'in_progress' && <Button variant="success" onClick={() => updateWithMessage.mutate({ id: meeting.id, patch: { status: 'done', minutes } })}>Clôturer la réunion</Button>}
-              {meeting.status === 'done' && <Button onClick={() => updateWithMessage.mutate({ id: meeting.id, patch: { status: 'in_progress' } })}>Rouvrir</Button>}
+              {meeting.status === 'planned' && (
+                <Button variant="primary" onClick={() => updateWithMessage.mutate({ id: meeting.id, patch: { status: 'in_progress' } })}>
+                  Démarrer la réunion
+                </Button>
+              )}
+              {meeting.status === 'in_progress' && (
+                <Button variant="success" onClick={() => updateWithMessage.mutate({ id: meeting.id, patch: { status: 'done', minutes } })}>
+                  Clôturer la réunion
+                </Button>
+              )}
+              {meeting.status === 'done' && (
+                <Button onClick={() => updateWithMessage.mutate({ id: meeting.id, patch: { status: 'in_progress' } })}>Rouvrir</Button>
+              )}
             </>
           )
         }
@@ -94,23 +113,47 @@ function MeetingView({ meeting, actions, lookups }: { meeting: Meeting; actions:
                     label={point.label}
                     checked={point.done}
                     disabled={!editable}
-                    onChange={(e) => update.mutate({ id: meeting.id, patch: { agenda: meeting.agenda.map((p) => (p.id === point.id ? { ...p, done: e.target.checked } : p)) } })}
+                    onChange={(e) =>
+                      update.mutate({
+                        id: meeting.id,
+                        patch: { agenda: meeting.agenda.map((p) => (p.id === point.id ? { ...p, done: e.target.checked } : p)) },
+                      })
+                    }
                   />
                 </li>
               ))}
             </ul>
           </Panel>
-          <Panel title="Compte-rendu" description={editable ? (savedAt ? `Enregistré à ${formatTime(savedAt)}` : 'Enregistrement automatique') : undefined}>
+          <Panel
+            title="Compte-rendu"
+            description={editable ? (savedAt ? `Enregistré à ${formatTime(savedAt)}` : 'Enregistrement automatique') : undefined}
+          >
             {editable ? (
-              <TextAreaField label="Compte-rendu" hideLabel rows={6} value={minutes} onChange={(e) => setMinutes(e.target.value)} placeholder="Points clés, décisions, remarques…" />
+              <TextAreaField
+                label="Compte-rendu"
+                hideLabel
+                rows={6}
+                value={minutes}
+                onChange={(e) => setMinutes(e.target.value)}
+                placeholder="Points clés, décisions, remarques…"
+              />
             ) : (
-              <p style={{ whiteSpace: 'pre-wrap', color: meeting.minutes ? undefined : 'var(--color-text-muted)' }}>{meeting.minutes || 'Aucun compte-rendu.'}</p>
+              <p style={{ whiteSpace: 'pre-wrap', color: meeting.minutes ? undefined : 'var(--color-text-muted)' }}>
+                {meeting.minutes || 'Aucun compte-rendu.'}
+              </p>
             )}
           </Panel>
           <Panel
             title="Actions décidées"
             flush
-            actions={can('action.create') && meeting.status !== 'done' && <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => setCreating(true)}>Ajouter une action</Button>}
+            actions={
+              can('action.create') &&
+              meeting.status !== 'done' && (
+                <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => setCreating(true)}>
+                  Ajouter une action
+                </Button>
+              )
+            }
           >
             {actions.length === 0 ? (
               <EmptyState compact title="Aucune action décidée." />
@@ -138,7 +181,11 @@ function MeetingView({ meeting, actions, lookups }: { meeting: Meeting; actions:
                 onClick={() =>
                   update.mutate({
                     id: meeting.id,
-                    patch: { participantIds: (presence.data ?? []).filter((p) => p.date === meeting.date && p.status === 'present').map((p) => p.userId) },
+                    patch: {
+                      participantIds: (presence.data ?? [])
+                        .filter((p) => p.date === meeting.date && p.status === 'present')
+                        .map((p) => p.userId),
+                    },
                   })
                 }
               >
@@ -154,7 +201,16 @@ function MeetingView({ meeting, actions, lookups }: { meeting: Meeting; actions:
                   label={u.name}
                   checked={present.has(u.id)}
                   disabled={!editable}
-                  onChange={(e) => update.mutate({ id: meeting.id, patch: { participantIds: e.target.checked ? [...meeting.participantIds, u.id] : meeting.participantIds.filter((x) => x !== u.id) } })}
+                  onChange={(e) =>
+                    update.mutate({
+                      id: meeting.id,
+                      patch: {
+                        participantIds: e.target.checked
+                          ? [...meeting.participantIds, u.id]
+                          : meeting.participantIds.filter((x) => x !== u.id),
+                      },
+                    })
+                  }
                 />
               </li>
             ))}

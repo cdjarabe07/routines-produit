@@ -30,11 +30,14 @@ export function useForm<T extends object>({ initial, rules = {}, onSubmit, reset
     [submitted, rules],
   );
 
-  const reset = useCallback((next?: T) => {
-    setValues(next ?? initial);
-    setErrors({});
-    setSubmitted(false);
-  }, [initial]);
+  const reset = useCallback(
+    (next?: T) => {
+      setValues(next ?? initial);
+      setErrors({});
+      setSubmitted(false);
+    },
+    [initial],
+  );
 
   const handleSubmit = async (e?: FormEvent) => {
     e?.preventDefault();

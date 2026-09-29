@@ -15,8 +15,7 @@ const threshold = ORDER[resolveLevel()];
 function emit(level: Level, scope: string, message: string, data?: unknown) {
   if (ORDER[level] < threshold || import.meta.env.MODE === 'test') return;
   const line = `[${level.toUpperCase()}] [${scope}] ${message}`;
-  const fn =
-    level === 'debug' ? console.debug : level === 'info' ? console.info : level === 'warn' ? console.warn : console.error;
+  const fn = level === 'debug' ? console.debug : level === 'info' ? console.info : level === 'warn' ? console.warn : console.error;
   if (data === undefined) fn(line);
   else fn(line, data);
 }

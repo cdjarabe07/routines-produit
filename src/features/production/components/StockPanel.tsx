@@ -22,7 +22,17 @@ const REASONS: Record<StockMovementReason, string> = {
   adjustment: 'Correction d’inventaire',
 };
 
-export function StockPanel({ stocks, movements, lookups, editable }: { stocks: MaterialStock[]; movements: StockMovement[]; lookups: Lookups; editable: boolean }) {
+export function StockPanel({
+  stocks,
+  movements,
+  lookups,
+  editable,
+}: {
+  stocks: MaterialStock[];
+  movements: StockMovement[];
+  lookups: Lookups;
+  editable: boolean;
+}) {
   const [target, setTarget] = useState<MaterialStock | null>(null);
   const stockById = useMemo(() => new Map(stocks.map((s) => [s.id, s])), [stocks]);
   const shortStation = (id: string) => {
@@ -32,24 +42,72 @@ export function StockPanel({ stocks, movements, lookups, editable }: { stocks: M
 
   const columns: Column<MaterialStock>[] = [
     { id: 'material', header: 'Matière', mobile: 'title', cell: (s) => s.material, sortValue: (s) => s.material },
-    { id: 'ws', header: 'Poste', mobile: 'meta', cell: (s) => shortStation(s.workstationId), sortValue: (s) => lookups.workstationById.get(s.workstationId)?.code ?? '' },
     {
-      id: 'qty', header: 'Stock', mobile: 'meta', width: '220px',
+      id: 'ws',
+      header: 'Poste',
+      mobile: 'meta',
+      cell: (s) => shortStation(s.workstationId),
+      sortValue: (s) => lookups.workstationById.get(s.workstationId)?.code ?? '',
+    },
+    {
+      id: 'qty',
+      header: 'Stock',
+      mobile: 'meta',
+      width: '220px',
       cell: (s) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 60 }}>
-            <Progress value={s.quantity} max={s.target} label={`Stock ${s.material}`} tone={STOCK_STATE[stockState(s)].tone === 'danger' ? 'danger' : STOCK_STATE[stockState(s)].tone === 'warning' ? 'warning' : 'success'} size="sm" />
+            <Progress
+              value={s.quantity}
+              max={s.target}
+              label={`Stock ${s.material}`}
+              tone={
+                STOCK_STATE[stockState(s)].tone === 'danger'
+                  ? 'danger'
+                  : STOCK_STATE[stockState(s)].tone === 'warning'
+                    ? 'warning'
+                    : 'success'
+              }
+              size="sm"
+            />
           </div>
-          <span style={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{s.quantity} {s.unit}</span>
+          <span style={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+            {s.quantity} {s.unit}
+          </span>
         </div>
       ),
       sortValue: (s) => s.quantity / (s.target || 1),
     },
     { id: 'thresholds', header: 'Mini / cible', mobile: 'meta', align: 'right', cell: (s) => `${s.min} / ${s.target}` },
-    { id: 'reorder', header: 'À commander', mobile: 'meta', align: 'right', cell: (s) => (reorderQuantity(s) > 0 ? `${reorderQuantity(s)} ${s.unit}` : '—'), sortValue: reorderQuantity },
-    { id: 'state', header: 'État', mobile: 'aside', cell: (s) => <Badge tone={STOCK_STATE[stockState(s)].tone}>{STOCK_STATE[stockState(s)].label}</Badge>, sortValue: (s) => STOCK_STATE[stockState(s)].rank },
+    {
+      id: 'reorder',
+      header: 'À commander',
+      mobile: 'meta',
+      align: 'right',
+      cell: (s) => (reorderQuantity(s) > 0 ? `${reorderQuantity(s)} ${s.unit}` : '—'),
+      sortValue: reorderQuantity,
+    },
+    {
+      id: 'state',
+      header: 'État',
+      mobile: 'aside',
+      cell: (s) => <Badge tone={STOCK_STATE[stockState(s)].tone}>{STOCK_STATE[stockState(s)].label}</Badge>,
+      sortValue: (s) => STOCK_STATE[stockState(s)].rank,
+    },
     ...(editable
-      ? [{ id: 'act', header: 'Mouvement', align: 'right' as const, mobile: 'meta' as const, cell: (s: MaterialStock) => <Button size="sm" onClick={() => setTarget(s)}>Saisir</Button> }]
+      ? [
+          {
+            id: 'act',
+            header: 'Mouvement',
+            align: 'right' as const,
+            mobile: 'meta' as const,
+            cell: (s: MaterialStock) => (
+              <Button size="sm" onClick={() => setTarget(s)}>
+                Saisir
+              </Button>
+            ),
+          },
+        ]
       : []),
   ];
 
@@ -105,7 +163,13 @@ function MovementDialog({ stock, onClose }: { stock: MaterialStock | null; onClo
   };
 
   return (
-    <Modal open={stock !== null} onClose={close} title={`Mouvement — ${stock?.material ?? ''}`} description={stock ? `Stock actuel : ${stock.quantity} ${stock.unit}` : undefined} size="sm">
+    <Modal
+      open={stock !== null}
+      onClose={close}
+      title={`Mouvement — ${stock?.material ?? ''}`}
+      description={stock ? `Stock actuel : ${stock.quantity} ${stock.unit}` : undefined}
+      size="sm"
+    >
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -125,7 +189,12 @@ function MovementDialog({ stock, onClose }: { stock: MaterialStock | null; onClo
         style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
         noValidate
       >
-        <SelectField label="Type de mouvement" options={(Object.keys(REASONS) as StockMovementReason[]).map((r) => ({ value: r, label: REASONS[r] }))} value={reason} onChange={(e) => setReason(e.target.value as StockMovementReason)} />
+        <SelectField
+          label="Type de mouvement"
+          options={(Object.keys(REASONS) as StockMovementReason[]).map((r) => ({ value: r, label: REASONS[r] }))}
+          value={reason}
+          onChange={(e) => setReason(e.target.value as StockMovementReason)}
+        />
         <TextField
           label={reason === 'adjustment' ? 'Quantité comptée' : 'Quantité'}
           type="number"
@@ -139,7 +208,9 @@ function MovementDialog({ stock, onClose }: { stock: MaterialStock | null; onClo
         />
         <FormActions>
           <Button onClick={close}>Annuler</Button>
-          <Button type="submit" variant="primary" loading={move.isPending}>Enregistrer</Button>
+          <Button type="submit" variant="primary" loading={move.isPending}>
+            Enregistrer
+          </Button>
         </FormActions>
       </form>
     </Modal>

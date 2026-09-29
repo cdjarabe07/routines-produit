@@ -47,5 +47,15 @@ export function useNavCounts(): Partial<Record<NavCountKey, { value: number; urg
       anomalies: { value: (anomalies.data ?? []).filter((a) => a.status === 'open').length, urgent: false },
       handover: { value: pendingHandovers, urgent: false },
     };
-  }, [user, actions.data, alerts.data, anomalies.data, templates.data, runs.data, handovers.data, now, settings.routineLateToleranceMinutes]);
+  }, [
+    user,
+    actions.data,
+    alerts.data,
+    anomalies.data,
+    templates.data,
+    runs.data,
+    handovers.data,
+    now,
+    settings.routineLateToleranceMinutes,
+  ]);
 }

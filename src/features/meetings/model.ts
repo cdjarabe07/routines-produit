@@ -47,4 +47,10 @@ export const MEETING_STATUS = {
   done: { label: 'Terminée', tone: 'success' },
 } as const;
 
-export const DEFAULT_AGENDA = ['Sécurité et 5S', 'Production / OF du jour', 'Qualité et anomalies', 'Effectifs et absences', 'Suivi des actions'];
+export const DEFAULT_AGENDA = [
+  'Sécurité et 5S',
+  'Production / OF du jour',
+  'Qualité et anomalies',
+  'Effectifs et absences',
+  'Suivi des actions',
+];

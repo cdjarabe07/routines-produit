@@ -44,32 +44,64 @@ export function OrderBoard({ orders, lookups, today, editable, onMove, onBlock, 
                   const next = nextStage(o.stage);
                   const late = o.status !== 'done' && o.dueDate < today;
                   return (
-                    <li key={o.id} className={cx(styles.card, o.status === 'blocked' && styles.blocked, o.status === 'done' && styles.done)}>
+                    <li
+                      key={o.id}
+                      className={cx(styles.card, o.status === 'blocked' && styles.blocked, o.status === 'done' && styles.done)}
+                    >
                       <div className={styles.cardHead}>
                         <strong>{o.reference}</strong>
                         <Badge tone={PRODUCTION_STATUS[o.status].tone}>{PRODUCTION_STATUS[o.status].label}</Badge>
                       </div>
-                      <p className={styles.ref}>{o.harnessRef} · {lookups.lineById.get(o.lineId)?.name}</p>
+                      <p className={styles.ref}>
+                        {o.harnessRef} · {lookups.lineById.get(o.lineId)?.name}
+                      </p>
                       {o.status === 'blocked' && o.blockedReason && <p className={styles.reason}>{o.blockedReason}</p>}
                       <div className={styles.qty}>
-                        <Progress value={o.quantityDone} max={o.quantityPlanned} label={`Avancement ${o.reference}`} tone={o.status === 'done' ? 'success' : 'info'} size="sm" />
-                        <span>{o.quantityDone}/{o.quantityPlanned}</span>
+                        <Progress
+                          value={o.quantityDone}
+                          max={o.quantityPlanned}
+                          label={`Avancement ${o.reference}`}
+                          tone={o.status === 'done' ? 'success' : 'info'}
+                          size="sm"
+                        />
+                        <span>
+                          {o.quantityDone}/{o.quantityPlanned}
+                        </span>
                       </div>
                       <p className={cx(styles.meta, late && styles.late)}>
-                        Échéance {o.dueDate === today ? 'aujourd’hui' : formatDate(o.dueDate)}{late ? ' · en retard' : ''}
+                        Échéance {o.dueDate === today ? 'aujourd’hui' : formatDate(o.dueDate)}
+                        {late ? ' · en retard' : ''}
                         {o.ownerId ? ` · ${lookups.userName(o.ownerId)}` : ''}
                       </p>
                       {editable && o.status !== 'done' && (
                         <div className={styles.cardActions}>
-                          <IconButton variant="secondary" label={prev ? `Revenir à ${PRODUCTION_STAGE[prev]}` : 'Première étape'} icon={<ChevronLeft size={16} />} disabled={!prev} onClick={() => prev && onMove(o, prev)} />
-                          <IconButton variant="secondary" label={next ? `Passer à ${PRODUCTION_STAGE[next]}` : 'Dernière étape'} icon={<ChevronRight size={16} />} disabled={!next || o.status === 'blocked'} onClick={() => next && onMove(o, next)} />
+                          <IconButton
+                            variant="secondary"
+                            label={prev ? `Revenir à ${PRODUCTION_STAGE[prev]}` : 'Première étape'}
+                            icon={<ChevronLeft size={16} />}
+                            disabled={!prev}
+                            onClick={() => prev && onMove(o, prev)}
+                          />
+                          <IconButton
+                            variant="secondary"
+                            label={next ? `Passer à ${PRODUCTION_STAGE[next]}` : 'Dernière étape'}
+                            icon={<ChevronRight size={16} />}
+                            disabled={!next || o.status === 'blocked'}
+                            onClick={() => next && onMove(o, next)}
+                          />
                           <Menu
                             items={[
                               { label: 'Saisir la quantité produite', onSelect: () => onQuantity(o) },
-                              o.status === 'blocked' ? { label: 'Débloquer', onSelect: () => onUnblock(o) } : { label: 'Signaler un blocage', onSelect: () => onBlock(o) },
+                              o.status === 'blocked'
+                                ? { label: 'Débloquer', onSelect: () => onUnblock(o) }
+                                : { label: 'Signaler un blocage', onSelect: () => onBlock(o) },
                               { label: 'Marquer terminé', onSelect: () => onComplete(o) },
                             ]}
-                            trigger={(props) => <button type="button" className={styles.more} {...props}>Plus…</button>}
+                            trigger={(props) => (
+                              <button type="button" className={styles.more} {...props}>
+                                Plus…
+                              </button>
+                            )}
                           />
                         </div>
                       )}

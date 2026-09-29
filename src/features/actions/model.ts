@@ -12,10 +12,14 @@ export const canUpdateAction = (a: Action, userId: ID, canManage: boolean) =>
 export function sourceLink(a: Action): string | null {
   if (!a.source.id) return null;
   switch (a.source.type) {
-    case 'anomaly': return `/anomalies/${a.source.id}`;
-    case 'gemba': return `/gemba/${a.source.id}`;
-    case 'meeting': return `/reunions/${a.source.id}`;
-    default: return null;
+    case 'anomaly':
+      return `/anomalies/${a.source.id}`;
+    case 'gemba':
+      return `/gemba/${a.source.id}`;
+    case 'meeting':
+      return `/reunions/${a.source.id}`;
+    default:
+      return null;
   }
 }
 

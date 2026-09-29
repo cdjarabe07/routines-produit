@@ -19,7 +19,11 @@ export function RouteErrorPage() {
             ? 'Une nouvelle version de l’application est peut-être disponible. Rechargez la page.'
             : 'L’erreur a été enregistrée dans le journal. Revenez à l’accueil ou rechargez la page.'
         }
-        action={<ButtonLink to="/" variant="primary">Retour à l’accueil</ButtonLink>}
+        action={
+          <ButtonLink to="/" variant="primary">
+            Retour à l’accueil
+          </ButtonLink>
+        }
       />
     </div>
   );
@@ -30,7 +34,11 @@ export function NotFoundPage() {
     <EmptyState
       title="Page introuvable"
       description="Le lien est peut-être incorrect ou la page a été déplacée."
-      action={<ButtonLink to="/" variant="primary">Retour à l’accueil</ButtonLink>}
+      action={
+        <ButtonLink to="/" variant="primary">
+          Retour à l’accueil
+        </ButtonLink>
+      }
     />
   );
 }

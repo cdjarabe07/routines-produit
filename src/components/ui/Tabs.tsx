@@ -25,9 +25,20 @@ export function Tabs<V extends string>({ items, value, onChange, label, variant 
 
   const onKeyDown = (e: KeyboardEvent, index: number) => {
     const last = items.length - 1;
-    const target = e.key === 'ArrowRight' ? (index === last ? 0 : index + 1)
-      : e.key === 'ArrowLeft' ? (index === 0 ? last : index - 1)
-      : e.key === 'Home' ? 0 : e.key === 'End' ? last : null;
+    const target =
+      e.key === 'ArrowRight'
+        ? index === last
+          ? 0
+          : index + 1
+        : e.key === 'ArrowLeft'
+          ? index === 0
+            ? last
+            : index - 1
+          : e.key === 'Home'
+            ? 0
+            : e.key === 'End'
+              ? last
+              : null;
     if (target === null) return;
     e.preventDefault();
     const item = items[target];
@@ -44,7 +55,9 @@ export function Tabs<V extends string>({ items, value, onChange, label, variant 
         return (
           <button
             key={item.value}
-            ref={(el) => { refs.current[i] = el; }}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
             role="tab"
             type="button"
             aria-selected={selected}

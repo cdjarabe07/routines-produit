@@ -34,9 +34,23 @@ export function RoutineRunPage() {
       {() => {
         const template = templates.data!.find((t) => t.id === templateId);
         if (!template) {
-          return <EmptyState title="Routine introuvable" description="Ce modèle de routine n’existe plus." action={<Link to="/routines">Retour aux routines</Link>} />;
+          return (
+            <EmptyState
+              title="Routine introuvable"
+              description="Ce modèle de routine n’existe plus."
+              action={<Link to="/routines">Retour aux routines</Link>}
+            />
+          );
         }
-        return <RunView template={template} date={date} run={findRun(runs.data!, template.id, date)} userName={lookups!.userName} workstations={lookups!.workstations} />;
+        return (
+          <RunView
+            template={template}
+            date={date}
+            run={findRun(runs.data!, template.id, date)}
+            userName={lookups!.userName}
+            workstations={lookups!.workstations}
+          />
+        );
       }}
     </QueryBoundary>
   );
@@ -82,20 +96,35 @@ function RunView({ template, date, run, userName, workstations }: RunViewProps) 
         meta={
           <>
             <Badge tone={ROUTINE_STATE[state].tone}>{ROUTINE_STATE[state].label}</Badge>
-            <span className={styles.metaText}>Prévue à {template.scheduledTime} · {ROLE_LABELS[template.role]} · {formatLongDate(date)}</span>
+            <span className={styles.metaText}>
+              Prévue à {template.scheduledTime} · {ROLE_LABELS[template.role]} · {formatLongDate(date)}
+            </span>
           </>
         }
       />
 
       <div className={styles.progressBar}>
-        <Progress value={progress.treated} max={progress.total} label="Avancement de la routine" tone={state === 'done' ? 'success' : 'info'} />
+        <Progress
+          value={progress.treated}
+          max={progress.total}
+          label="Avancement de la routine"
+          tone={state === 'done' ? 'success' : 'info'}
+        />
         <span className={styles.progressText}>
           {progress.treated}/{progress.total} points
-          {progress.ko > 0 && <Badge tone="danger">{progress.ko} non conforme{progress.ko > 1 ? 's' : ''}</Badge>}
+          {progress.ko > 0 && (
+            <Badge tone="danger">
+              {progress.ko} non conforme{progress.ko > 1 ? 's' : ''}
+            </Badge>
+          )}
         </span>
       </div>
 
-      {readOnlyReason && <p className={styles.readonly} role="note">{readOnlyReason}</p>}
+      {readOnlyReason && (
+        <p className={styles.readonly} role="note">
+          {readOnlyReason}
+        </p>
+      )}
 
       <Stack gap={4}>
         {template.sections.map((section) => (
@@ -192,7 +221,12 @@ function ItemRow({ item, result, editable, busy, userName, onOpenKnowledge, onSa
             <IconButton label="Voir le standard associé" icon={<BookOpen size={18} />} onClick={() => onOpenKnowledge(item.knowledgeId!)} />
           )}
           {editable && (
-            <IconButton label="Ajouter un commentaire" icon={<MessageSquarePlus size={18} />} onClick={() => setCommentOpen((o) => !o)} aria-expanded={commentOpen} />
+            <IconButton
+              label="Ajouter un commentaire"
+              icon={<MessageSquarePlus size={18} />}
+              onClick={() => setCommentOpen((o) => !o)}
+              aria-expanded={commentOpen}
+            />
           )}
           <CheckResultToggle
             itemLabel={item.label}
@@ -205,15 +239,25 @@ function ItemRow({ item, result, editable, busy, userName, onOpenKnowledge, onSa
 
       {editable && result?.status === 'ko' && !result.anomalyId && (
         <div className={styles.itemFollowUp}>
-          <Button size="sm" variant="secondary" icon={<TriangleAlert size={15} aria-hidden />} onClick={onDeclare}>Déclarer une anomalie</Button>
+          <Button size="sm" variant="secondary" icon={<TriangleAlert size={15} aria-hidden />} onClick={onDeclare}>
+            Déclarer une anomalie
+          </Button>
         </div>
       )}
 
       {editable && commentOpen && (
         <div className={styles.itemFollowUp}>
-          <TextAreaField label="Commentaire" rows={2} value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Précision, mesure, preuve…" />
+          <TextAreaField
+            label="Commentaire"
+            rows={2}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Précision, mesure, preuve…"
+          />
           <div className={styles.commentActions}>
-            <Button size="sm" onClick={() => setCommentOpen(false)}>Fermer</Button>
+            <Button size="sm" onClick={() => setCommentOpen(false)}>
+              Fermer
+            </Button>
             <Button
               size="sm"
               variant="primary"

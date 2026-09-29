@@ -1,7 +1,15 @@
 import type { Tone } from '@/components/ui/Badge';
 import type {
-  ActionSourceType, ActionStatus, AnomalyCategory, AnomalyStatus, KnowledgeCategory, Priority, ProductionStage,
-  ProductionStatus, Severity, Shift,
+  ActionSourceType,
+  ActionStatus,
+  AnomalyCategory,
+  AnomalyStatus,
+  KnowledgeCategory,
+  Priority,
+  ProductionStage,
+  ProductionStatus,
+  Severity,
+  Shift,
 } from '@/types/domain';
 
 /* Libellés et tons partagés entre modules. Un seul endroit pour la terminologie. */
@@ -81,7 +89,15 @@ export const PRODUCTION_STAGE: Record<ProductionStage, string> = {
   shipping: 'Expédition',
 };
 
-export const PRODUCTION_STAGES: ProductionStage[] = ['cutting', 'crimping', 'assembly', 'taping', 'electrical_test', 'inspection', 'shipping'];
+export const PRODUCTION_STAGES: ProductionStage[] = [
+  'cutting',
+  'crimping',
+  'assembly',
+  'taping',
+  'electrical_test',
+  'inspection',
+  'shipping',
+];
 
 export const PRODUCTION_STATUS: Record<ProductionStatus, { label: string; tone: Tone }> = {
   planned: { label: 'Planifié', tone: 'neutral' },

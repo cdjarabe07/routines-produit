@@ -2,9 +2,7 @@ import type { BaseEntity, ID } from '@/types/domain';
 import { createId } from '@/utils/id';
 import { NotFoundError, StorageError } from '@/services/errors';
 import { createLogger } from '@/services/logger';
-import type {
-  CollectionMap, CollectionName, DataSource, Dataset, EntityPatch, ListFilter, NewEntity, Repository,
-} from './types';
+import type { CollectionMap, CollectionName, DataSource, Dataset, EntityPatch, ListFilter, NewEntity, Repository } from './types';
 import { COLLECTIONS } from './types';
 
 /* Source de données « DÉMO » : collections JSON dans un magasin clé/valeur
@@ -102,7 +100,10 @@ export function createStoreDataSource(store: KeyValueStore, buildSeed: () => Dat
         return clone(updated);
       },
       async remove(id: ID) {
-        write(name, read(name).filter((i) => i.id !== id));
+        write(
+          name,
+          read(name).filter((i) => i.id !== id),
+        );
       },
     };
   }

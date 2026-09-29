@@ -19,9 +19,15 @@ export function BIEmbed({ config, title }: { config: BIConfig; title: string }) 
           <>
             <p>Aucun rapport Power BI (ou autre outil) n’est configuré pour cette installation. Rien n’est simulé ici.</p>
             <ol className={styles.steps}>
-              <li>Publier le rapport et obtenir son URL d’intégration sécurisée (ex. Power BI « Incorporer » avec authentification Entra ID).</li>
-              <li>Renseigner <code>VITE_BI_EMBED_URL</code> et <code>VITE_BI_ALLOWED_ORIGIN</code> dans la configuration.</li>
-              <li>Reconstruire et redéployer l’application (voir <code>docs/deployment.md</code>).</li>
+              <li>
+                Publier le rapport et obtenir son URL d’intégration sécurisée (ex. Power BI « Incorporer » avec authentification Entra ID).
+              </li>
+              <li>
+                Renseigner <code>VITE_BI_EMBED_URL</code> et <code>VITE_BI_ALLOWED_ORIGIN</code> dans la configuration.
+              </li>
+              <li>
+                Reconstruire et redéployer l’application (voir <code>docs/deployment.md</code>).
+              </li>
             </ol>
           </>
         )}

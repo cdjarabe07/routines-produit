@@ -55,49 +55,49 @@ function guarded(Component: ComponentType, permission?: Permission, what?: strin
 
 /** Table des routes, partagée par l'application (routeur hash) et les tests (routeur mémoire). */
 export const appRoutes: RouteObject[] = [
-    { path: '/connexion', element: <LoginPage /> },
-    {
-      path: '/',
-      element: (
-        <RequireAuth>
-          <AppShell />
-        </RequireAuth>
-      ),
-      errorElement: <RouteErrorPage />,
-      children: [
-        { index: true, element: guarded(P.Dashboard) },
-        { path: 'routines', element: guarded(P.Routines, 'routine.execute', 'vos routines') },
-        { path: 'routines/modeles', element: guarded(P.RoutineTemplates, 'routine.manage', 'la gestion des modèles de routines') },
-        { path: 'routines/:templateId/:date', element: guarded(P.RoutineRun, 'routine.execute', 'cette routine') },
-        { path: 'actions', element: guarded(P.Actions) },
-        { path: 'actions/:id', element: guarded(P.ActionDetail) },
-        { path: 'agenda', element: guarded(P.Agenda) },
-        { path: 'reunions/:id', element: guarded(P.Meeting) },
-        { path: 'passation', element: guarded(P.Handover) },
-        { path: 'equipe', element: guarded(P.Team) },
-        { path: 'andon', element: guarded(P.Andon) },
-        { path: 'production', element: guarded(P.Production) },
-        { path: 'atelier', element: guarded(P.PlantMap) },
-        { path: 'sequences', element: guarded(P.Sequences, 'sequence.run', 'les séquences guidées') },
-        { path: 'sequences/execution/:runId', element: guarded(P.SequenceRun, 'sequence.run', 'cette séquence') },
-        { path: 'anomalies', element: guarded(P.Anomalies) },
-        { path: 'anomalies/:id', element: guarded(P.AnomalyDetail) },
-        { path: 'signaler', element: guarded(P.ReportAnomaly, 'anomaly.create', 'la déclaration d’anomalie') },
-        { path: 'gemba', element: guarded(P.Gemba) },
-        { path: 'gemba/nouvelle', element: guarded(P.GembaNew, 'gemba.conduct', 'la conduite d’une Gemba Walk') },
-        { path: 'gemba/:id', element: guarded(P.GembaDetail) },
-        { path: 'qualite', element: guarded(P.Quality) },
-        { path: 'reporting', element: guarded(P.Reporting, 'reporting.view', 'le reporting') },
-        { path: 'bi', element: guarded(P.BI, 'reporting.view', 'les tableaux BI') },
-        { path: 'connaissances', element: guarded(P.Knowledge) },
-        { path: 'connaissances/:id', element: guarded(P.KnowledgeDetail) },
-        { path: 'admin/utilisateurs', element: guarded(P.AdminUsers, 'admin.access', 'l’administration') },
-        { path: 'admin/roles', element: guarded(P.AdminRoles, 'admin.access', 'l’administration') },
-        { path: 'admin/postes', element: guarded(P.AdminStations, 'admin.access', 'l’administration') },
-        { path: 'admin/parametres', element: guarded(P.AdminSettings, 'admin.access', 'l’administration') },
-        { path: '*', element: <NotFoundPage /> },
-      ],
-    },
+  { path: '/connexion', element: <LoginPage /> },
+  {
+    path: '/',
+    element: (
+      <RequireAuth>
+        <AppShell />
+      </RequireAuth>
+    ),
+    errorElement: <RouteErrorPage />,
+    children: [
+      { index: true, element: guarded(P.Dashboard) },
+      { path: 'routines', element: guarded(P.Routines, 'routine.execute', 'vos routines') },
+      { path: 'routines/modeles', element: guarded(P.RoutineTemplates, 'routine.manage', 'la gestion des modèles de routines') },
+      { path: 'routines/:templateId/:date', element: guarded(P.RoutineRun, 'routine.execute', 'cette routine') },
+      { path: 'actions', element: guarded(P.Actions) },
+      { path: 'actions/:id', element: guarded(P.ActionDetail) },
+      { path: 'agenda', element: guarded(P.Agenda) },
+      { path: 'reunions/:id', element: guarded(P.Meeting) },
+      { path: 'passation', element: guarded(P.Handover) },
+      { path: 'equipe', element: guarded(P.Team) },
+      { path: 'andon', element: guarded(P.Andon) },
+      { path: 'production', element: guarded(P.Production) },
+      { path: 'atelier', element: guarded(P.PlantMap) },
+      { path: 'sequences', element: guarded(P.Sequences, 'sequence.run', 'les séquences guidées') },
+      { path: 'sequences/execution/:runId', element: guarded(P.SequenceRun, 'sequence.run', 'cette séquence') },
+      { path: 'anomalies', element: guarded(P.Anomalies) },
+      { path: 'anomalies/:id', element: guarded(P.AnomalyDetail) },
+      { path: 'signaler', element: guarded(P.ReportAnomaly, 'anomaly.create', 'la déclaration d’anomalie') },
+      { path: 'gemba', element: guarded(P.Gemba) },
+      { path: 'gemba/nouvelle', element: guarded(P.GembaNew, 'gemba.conduct', 'la conduite d’une Gemba Walk') },
+      { path: 'gemba/:id', element: guarded(P.GembaDetail) },
+      { path: 'qualite', element: guarded(P.Quality) },
+      { path: 'reporting', element: guarded(P.Reporting, 'reporting.view', 'le reporting') },
+      { path: 'bi', element: guarded(P.BI, 'reporting.view', 'les tableaux BI') },
+      { path: 'connaissances', element: guarded(P.Knowledge) },
+      { path: 'connaissances/:id', element: guarded(P.KnowledgeDetail) },
+      { path: 'admin/utilisateurs', element: guarded(P.AdminUsers, 'admin.access', 'l’administration') },
+      { path: 'admin/roles', element: guarded(P.AdminRoles, 'admin.access', 'l’administration') },
+      { path: 'admin/postes', element: guarded(P.AdminStations, 'admin.access', 'l’administration') },
+      { path: 'admin/parametres', element: guarded(P.AdminSettings, 'admin.access', 'l’administration') },
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
 ];
 
 export function createAppRouter() {

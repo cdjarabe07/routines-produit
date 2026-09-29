@@ -5,7 +5,17 @@ import styles from './Badge.module.css';
 /** Tons à sens métier : success = OK, warning = attention, danger = critique, info = en cours, neutral = sans état. */
 export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'demo';
 
-export function Badge({ tone = 'neutral', children, strong, className }: { tone?: Tone; children: ReactNode; strong?: boolean; className?: string }) {
+export function Badge({
+  tone = 'neutral',
+  children,
+  strong,
+  className,
+}: {
+  tone?: Tone;
+  children: ReactNode;
+  strong?: boolean;
+  className?: string;
+}) {
   return <span className={cx(styles.badge, styles[tone], strong && styles.strong, className)}>{children}</span>;
 }
 

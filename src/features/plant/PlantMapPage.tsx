@@ -27,7 +27,10 @@ export function PlantMapPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const views = useMemo(
-    () => (lookups && alerts.data && stocks.data && anomalies.data ? lookups.workstations.filter((w) => w.active).map((w) => stationView(w, alerts.data!, stocks.data!, anomalies.data!)) : []),
+    () =>
+      lookups && alerts.data && stocks.data && anomalies.data
+        ? lookups.workstations.filter((w) => w.active).map((w) => stationView(w, alerts.data!, stocks.data!, anomalies.data!))
+        : [],
     [lookups, alerts.data, stocks.data, anomalies.data],
   );
   const selected = views.find((v) => v.station.id === selectedId) ?? null;
@@ -50,7 +53,10 @@ export function PlantMapPage() {
                 <div className={styles.floor} role="group" aria-label="Plan de l’atelier">
                   {lookups!.lines.map((line, i) => (
                     <div key={line.id} className={styles.band} style={{ top: `${i === 0 ? 8 : 52}%` }} aria-hidden>
-                      <span>{line.name}{line.description ? ` — ${line.description}` : ''}</span>
+                      <span>
+                        {line.name}
+                        {line.description ? ` — ${line.description}` : ''}
+                      </span>
                     </div>
                   ))}
                   {views.map((v) => (
@@ -66,7 +72,9 @@ export function PlantMapPage() {
                       <span className={styles.nodeCode}>{v.station.code}</span>
                       <span className={styles.nodeProcess}>{v.station.process}</span>
                       <span className={styles.nodeState}>{STATION_STATE[v.state].label}</span>
-                      {v.alert && <span className={styles.nodeTimer}>{formatDuration(now.getTime() - new Date(v.alert.raisedAt).getTime())}</span>}
+                      {v.alert && (
+                        <span className={styles.nodeTimer}>{formatDuration(now.getTime() - new Date(v.alert.raisedAt).getTime())}</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -75,8 +83,8 @@ export function PlantMapPage() {
                 <div className={styles.notConnected}>
                   <Cpu size={22} aria-hidden />
                   <p>
-                    Aucune source de données machine n’est connectée. Le plan n’affiche donc que des états calculés à partir des saisies.
-                    Le branchement d’un MES ou d’un collecteur automate est décrit dans <code>docs/deployment.md</code>.
+                    Aucune source de données machine n’est connectée. Le plan n’affiche donc que des états calculés à partir des saisies. Le
+                    branchement d’un MES ou d’un collecteur automate est décrit dans <code>docs/deployment.md</code>.
                   </p>
                 </div>
               </Panel>
@@ -99,21 +107,38 @@ function Legend() {
   );
 }
 
-function StationList({ views, lines, selectedId, onSelect }: { views: StationView[]; lines: { id: string; name: string }[]; selectedId: string | null; onSelect: (id: string) => void }) {
+function StationList({
+  views,
+  lines,
+  selectedId,
+  onSelect,
+}: {
+  views: StationView[];
+  lines: { id: string; name: string }[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
   return (
     <Stack gap={3}>
       {lines.map((line) => (
         <Panel key={line.id} title={line.name} flush>
           <ul className={styles.list}>
-            {views.filter((v) => v.station.lineId === line.id).map((v) => (
-              <li key={v.station.id}>
-                <button type="button" className={cx(styles.listItem, selectedId === v.station.id && styles.listSelected)} onClick={() => onSelect(v.station.id)} aria-pressed={selectedId === v.station.id}>
-                  <strong>{v.station.code}</strong>
-                  <span className={styles.listProcess}>{v.station.process}</span>
-                  <Badge tone={STATION_STATE[v.state].tone}>{STATION_STATE[v.state].label}</Badge>
-                </button>
-              </li>
-            ))}
+            {views
+              .filter((v) => v.station.lineId === line.id)
+              .map((v) => (
+                <li key={v.station.id}>
+                  <button
+                    type="button"
+                    className={cx(styles.listItem, selectedId === v.station.id && styles.listSelected)}
+                    onClick={() => onSelect(v.station.id)}
+                    aria-pressed={selectedId === v.station.id}
+                  >
+                    <strong>{v.station.code}</strong>
+                    <span className={styles.listProcess}>{v.station.process}</span>
+                    <Badge tone={STATION_STATE[v.state].tone}>{STATION_STATE[v.state].label}</Badge>
+                  </button>
+                </li>
+              ))}
           </ul>
         </Panel>
       ))}
@@ -130,7 +155,11 @@ function StationDetail({ view }: { view: StationView | null }) {
     );
   }
   return (
-    <Panel title={view.station.name} description={`État : ${STATION_STATE[view.state].label}`} accent={STATION_STATE[view.state].tone === 'danger' ? 'danger' : STATION_STATE[view.state].tone === 'warning' ? 'warning' : 'success'}>
+    <Panel
+      title={view.station.name}
+      description={`État : ${STATION_STATE[view.state].label}`}
+      accent={STATION_STATE[view.state].tone === 'danger' ? 'danger' : STATION_STATE[view.state].tone === 'warning' ? 'warning' : 'success'}
+    >
       <Stack gap={4}>
         <section>
           <h3 className={styles.subtitle}>Signaux</h3>
@@ -153,13 +182,28 @@ function StationDetail({ view }: { view: StationView | null }) {
           {view.openAnomalies.length === 0 ? (
             <p className={styles.muted}>Aucune.</p>
           ) : (
-            <ItemList items={view.openAnomalies.slice(0, 5).map((a) => ({ id: a.id, title: a.description, aside: <Badge tone={SEVERITY[a.severity].tone}>{SEVERITY[a.severity].label}</Badge>, to: `/anomalies/${a.id}` }))} />
+            <ItemList
+              items={view.openAnomalies
+                .slice(0, 5)
+                .map((a) => ({
+                  id: a.id,
+                  title: a.description,
+                  aside: <Badge tone={SEVERITY[a.severity].tone}>{SEVERITY[a.severity].label}</Badge>,
+                  to: `/anomalies/${a.id}`,
+                }))}
+            />
           )}
         </section>
         <div className={styles.links}>
-          <ButtonLink size="sm" to={`/signaler?poste=${view.station.code}`}>Signaler une anomalie</ButtonLink>
-          <ButtonLink size="sm" to={`/andon?declencher=1&poste=${view.station.id}`} variant="danger">Déclencher un Andon</ButtonLink>
-          <Link to="/production?vue=stocks" className={styles.textLink}>Stocks</Link>
+          <ButtonLink size="sm" to={`/signaler?poste=${view.station.code}`}>
+            Signaler une anomalie
+          </ButtonLink>
+          <ButtonLink size="sm" to={`/andon?declencher=1&poste=${view.station.id}`} variant="danger">
+            Déclencher un Andon
+          </ButtonLink>
+          <Link to="/production?vue=stocks" className={styles.textLink}>
+            Stocks
+          </Link>
         </div>
       </Stack>
     </Panel>

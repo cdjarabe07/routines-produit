@@ -28,8 +28,8 @@ export function LoginPage() {
           <ShieldAlert size={28} className={styles.alertIcon} aria-hidden />
           <h1 className={styles.title}>Authentification non configurée</h1>
           <p className={styles.text}>
-            Le mode d’authentification « {service.mode} » est demandé mais aucun fournisseur n’est branché. L’accès est
-            bloqué par sécurité. Consultez <code>docs/deployment.md</code>, section « Authentification ».
+            Le mode d’authentification « {service.mode} » est demandé mais aucun fournisseur n’est branché. L’accès est bloqué par sécurité.
+            Consultez <code>docs/deployment.md</code>, section « Authentification ».
           </p>
         </div>
       </main>
@@ -40,7 +40,9 @@ export function LoginPage() {
     <main className={styles.screen}>
       <div className={styles.card}>
         <header className={styles.header}>
-          <span className={styles.mark} aria-hidden>RA</span>
+          <span className={styles.mark} aria-hidden>
+            RA
+          </span>
           <div>
             <h1 className={styles.title}>Routines atelier</h1>
             <p className={styles.subtitle}>Digitalisation des routines — atelier de câblage</p>
@@ -48,8 +50,8 @@ export function LoginPage() {
         </header>
 
         <div className={styles.demoNotice} role="note">
-          <strong>Mode démonstration.</strong> Aucune authentification : choisissez un profil pour découvrir l’application
-          avec ses droits. Les données sont fictives et restent dans ce navigateur.
+          <strong>Mode démonstration.</strong> Aucune authentification : choisissez un profil pour découvrir l’application avec ses droits.
+          Les données sont fictives et restent dans ce navigateur.
         </div>
 
         <QueryBoundary queries={[users]}>
@@ -60,7 +62,9 @@ export function LoginPage() {
                 if (members.length === 0) return null;
                 return (
                   <section key={role} aria-labelledby={`role-${role}`}>
-                    <h2 id={`role-${role}`} className={styles.roleTitle}>{ROLE_LABELS[role]}</h2>
+                    <h2 id={`role-${role}`} className={styles.roleTitle}>
+                      {ROLE_LABELS[role]}
+                    </h2>
                     <ul className={styles.profiles}>
                       {members.map((u) => (
                         <li key={u.id}>
@@ -72,7 +76,9 @@ export function LoginPage() {
                               navigate(target, { replace: true });
                             }}
                           >
-                            <span className={styles.avatar} aria-hidden>{initials(u.name)}</span>
+                            <span className={styles.avatar} aria-hidden>
+                              {initials(u.name)}
+                            </span>
                             <span className={styles.profileText}>
                               <span className={styles.name}>{u.name}</span>
                               <span className={styles.zone}>{u.zoneLabel ?? ROLE_LABELS[u.role]}</span>

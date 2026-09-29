@@ -39,7 +39,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 });
 
 /** Lien de navigation interne présenté comme un bouton. */
-export function ButtonLink({ variant = 'secondary', size = 'md', icon, iconRight, block, className, children, ...rest }: LinkProps & CommonProps) {
+export function ButtonLink({
+  variant = 'secondary',
+  size = 'md',
+  icon,
+  iconRight,
+  block,
+  className,
+  children,
+  ...rest
+}: LinkProps & CommonProps) {
   return (
     <Link className={cx(styles.button, styles[variant], styles[size], block && styles.block, className)} {...rest}>
       {icon}

@@ -30,31 +30,31 @@
   --color-primary-soft: #e7eefa;
 
   /* Statuts — sens métier */
-  --color-success: #1d7a3a;          /* conforme, OK, terminé */
+  --color-success: #1d7a3a; /* conforme, OK, terminé */
   --color-success-soft: #e5f3e9;
-  --color-warning: #a55f00;          /* attention, à surveiller, en retard léger */
+  --color-warning: #a55f00; /* attention, à surveiller, en retard léger */
   --color-warning-strong: #d98300;
   --color-warning-soft: #fdf1dd;
-  --color-danger: #b8261b;           /* critique, arrêt, non conforme */
+  --color-danger: #b8261b; /* critique, arrêt, non conforme */
   --color-danger-strong: #d62f22;
   --color-danger-soft: #fbe7e5;
-  --color-info: #1c5bb8;             /* information, en cours */
+  --color-info: #1c5bb8; /* information, en cours */
   --color-info-soft: #e7eefa;
-  --color-neutral: #5f6b7a;          /* neutre, planifié, annulé */
+  --color-neutral: #5f6b7a; /* neutre, planifié, annulé */
   --color-neutral-soft: #edf0f3;
-  --color-demo: #6b3fa0;             /* uniquement pour signaler le mode démo */
+  --color-demo: #6b3fa0; /* uniquement pour signaler le mode démo */
   --color-demo-soft: #f1eaf8;
 
   /* Typographie */
   --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
-  --text-xs: 0.75rem;     /* 12 px — métadonnées */
-  --text-sm: 0.8125rem;   /* 13 px — tableaux, libellés */
-  --text-md: 0.875rem;    /* 14 px — corps */
-  --text-lg: 1rem;        /* 16 px — titres de section */
-  --text-xl: 1.25rem;     /* 20 px — titre de page */
-  --text-kpi: 1.75rem;    /* 28 px — valeurs clés */
-  --text-display: 2.75rem;/* 44 px — minuteurs, affichage à distance */
+  --text-xs: 0.75rem; /* 12 px — métadonnées */
+  --text-sm: 0.8125rem; /* 13 px — tableaux, libellés */
+  --text-md: 0.875rem; /* 14 px — corps */
+  --text-lg: 1rem; /* 16 px — titres de section */
+  --text-xl: 1.25rem; /* 20 px — titre de page */
+  --text-kpi: 1.75rem; /* 28 px — valeurs clés */
+  --text-display: 2.75rem; /* 44 px — minuteurs, affichage à distance */
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;

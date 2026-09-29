@@ -29,7 +29,9 @@ export function DailyReportDrawer({ open, onClose, text }: { open: boolean; onCl
       footer={
         <>
           <Button onClick={onClose}>Fermer</Button>
-          <Button variant="primary" icon={<Copy size={16} aria-hidden />} onClick={copy}>Copier le texte</Button>
+          <Button variant="primary" icon={<Copy size={16} aria-hidden />} onClick={copy}>
+            Copier le texte
+          </Button>
         </>
       }
     >

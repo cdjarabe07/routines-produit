@@ -16,13 +16,32 @@ interface Values {
 
 const blankStep = (): SequenceStep => ({ id: createId(), title: '', durationMin: 5 });
 
-export function SequenceEditor({ template, knowledge, onDone }: { template?: SequenceTemplate; knowledge: KnowledgeItem[]; onDone: () => void }) {
+export function SequenceEditor({
+  template,
+  knowledge,
+  onDone,
+}: {
+  template?: SequenceTemplate;
+  knowledge: KnowledgeItem[];
+  onDone: () => void;
+}) {
   const save = useSaveSequenceTemplate();
   const form = useForm<Values>({
-    initial: { name: template?.name ?? '', description: template?.description ?? '', steps: template ? structuredClone(template.steps) : [blankStep()] },
+    initial: {
+      name: template?.name ?? '',
+      description: template?.description ?? '',
+      steps: template ? structuredClone(template.steps) : [blankStep()],
+    },
     rules: {
       name: [required('Nommez la séquence')],
-      steps: [(steps) => (steps.filter((s) => s.title.trim()).length === 0 ? 'Ajoutez au moins une étape' : steps.some((s) => s.title.trim() && !(s.durationMin > 0)) ? 'Chaque étape doit avoir une durée positive' : null)],
+      steps: [
+        (steps) =>
+          steps.filter((s) => s.title.trim()).length === 0
+            ? 'Ajoutez au moins une étape'
+            : steps.some((s) => s.title.trim() && !(s.durationMin > 0))
+              ? 'Chaque étape doit avoir une durée positive'
+              : null,
+      ],
     },
     onSubmit: async (v) => {
       await save.mutateAsync({
@@ -31,14 +50,25 @@ export function SequenceEditor({ template, knowledge, onDone }: { template?: Seq
           name: v.name.trim(),
           description: v.description.trim() || undefined,
           active: template?.active ?? true,
-          steps: v.steps.filter((s) => s.title.trim()).map((s) => ({ ...s, title: s.title.trim(), instruction: s.instruction?.trim() || undefined, plannedTime: s.plannedTime || undefined })),
+          steps: v.steps
+            .filter((s) => s.title.trim())
+            .map((s) => ({
+              ...s,
+              title: s.title.trim(),
+              instruction: s.instruction?.trim() || undefined,
+              plannedTime: s.plannedTime || undefined,
+            })),
         },
       });
       onDone();
     },
   });
   const { values, set, errors } = form;
-  const updateStep = (i: number, patch: Partial<SequenceStep>) => set('steps', values.steps.map((s, k) => (k === i ? { ...s, ...patch } : s)));
+  const updateStep = (i: number, patch: Partial<SequenceStep>) =>
+    set(
+      'steps',
+      values.steps.map((s, k) => (k === i ? { ...s, ...patch } : s)),
+    );
   const move = (i: number, delta: number) => {
     const next = [...values.steps];
     const [item] = next.splice(i, 1);
@@ -59,26 +89,81 @@ export function SequenceEditor({ template, knowledge, onDone }: { template?: Seq
             <div className={styles.stepHead}>
               <strong>Étape {i + 1}</strong>
               <div className={styles.stepTools}>
-                <IconButton size="sm" label={`Monter l’étape ${i + 1}`} icon={<ArrowUp size={15} />} disabled={i === 0} onClick={() => move(i, -1)} />
-                <IconButton size="sm" label={`Descendre l’étape ${i + 1}`} icon={<ArrowDown size={15} />} disabled={i === values.steps.length - 1} onClick={() => move(i, 1)} />
-                <IconButton size="sm" variant="danger" label={`Supprimer l’étape ${i + 1}`} icon={<Trash2 size={15} />} disabled={values.steps.length === 1} onClick={() => set('steps', values.steps.filter((_, k) => k !== i))} />
+                <IconButton
+                  size="sm"
+                  label={`Monter l’étape ${i + 1}`}
+                  icon={<ArrowUp size={15} />}
+                  disabled={i === 0}
+                  onClick={() => move(i, -1)}
+                />
+                <IconButton
+                  size="sm"
+                  label={`Descendre l’étape ${i + 1}`}
+                  icon={<ArrowDown size={15} />}
+                  disabled={i === values.steps.length - 1}
+                  onClick={() => move(i, 1)}
+                />
+                <IconButton
+                  size="sm"
+                  variant="danger"
+                  label={`Supprimer l’étape ${i + 1}`}
+                  icon={<Trash2 size={15} />}
+                  disabled={values.steps.length === 1}
+                  onClick={() =>
+                    set(
+                      'steps',
+                      values.steps.filter((_, k) => k !== i),
+                    )
+                  }
+                />
               </div>
             </div>
             <FormGrid columns={3}>
               <TextField className="full" label="Intitulé" value={step.title} onChange={(e) => updateStep(i, { title: e.target.value })} />
-              <TextField label="Durée cible (min)" type="number" min={1} value={String(step.durationMin)} onChange={(e) => updateStep(i, { durationMin: Number(e.target.value) })} />
-              <TextField label="Heure indicative" type="time" value={step.plannedTime ?? ''} onChange={(e) => updateStep(i, { plannedTime: e.target.value })} />
-              <SelectField label="Standard associé" placeholder="Aucun" options={kbOptions} value={step.knowledgeId ?? ''} onChange={(e) => updateStep(i, { knowledgeId: e.target.value || undefined })} />
-              <TextAreaField className="full" label="Consigne" rows={2} value={step.instruction ?? ''} onChange={(e) => updateStep(i, { instruction: e.target.value })} />
+              <TextField
+                label="Durée cible (min)"
+                type="number"
+                min={1}
+                value={String(step.durationMin)}
+                onChange={(e) => updateStep(i, { durationMin: Number(e.target.value) })}
+              />
+              <TextField
+                label="Heure indicative"
+                type="time"
+                value={step.plannedTime ?? ''}
+                onChange={(e) => updateStep(i, { plannedTime: e.target.value })}
+              />
+              <SelectField
+                label="Standard associé"
+                placeholder="Aucun"
+                options={kbOptions}
+                value={step.knowledgeId ?? ''}
+                onChange={(e) => updateStep(i, { knowledgeId: e.target.value || undefined })}
+              />
+              <TextAreaField
+                className="full"
+                label="Consigne"
+                rows={2}
+                value={step.instruction ?? ''}
+                onChange={(e) => updateStep(i, { instruction: e.target.value })}
+              />
             </FormGrid>
           </li>
         ))}
       </ol>
-      {errors.steps && <p className={styles.error} role="alert">{errors.steps}</p>}
-      <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => set('steps', [...values.steps, blankStep()])}>Ajouter une étape</Button>
+      {errors.steps && (
+        <p className={styles.error} role="alert">
+          {errors.steps}
+        </p>
+      )}
+      <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => set('steps', [...values.steps, blankStep()])}>
+        Ajouter une étape
+      </Button>
       <FormActions>
         <Button onClick={onDone}>Annuler</Button>
-        <Button type="submit" variant="primary" loading={form.submitting}>Enregistrer</Button>
+        <Button type="submit" variant="primary" loading={form.submitting}>
+          Enregistrer
+        </Button>
       </FormActions>
     </form>
   );

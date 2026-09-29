@@ -13,3 +13,5 @@ export function useMediaQuery(query: string): boolean {
 }
 
 export const useIsCompact = () => useMediaQuery('(max-width: 720px)');
+/** Tablette et mobile : les tableaux passent en vue carte. */
+export const useIsTabletOrSmaller = () => useMediaQuery('(max-width: 900px)');

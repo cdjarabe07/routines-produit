@@ -41,9 +41,9 @@ export interface Line extends BaseEntity {
 }
 
 export interface Workstation extends BaseEntity {
-  code: string;          // P1…P8 — utilisé dans les QR codes
+  code: string; // P1…P8 — utilisé dans les QR codes
   name: string;
-  process: string;       // Sertissage, Coupe…
+  process: string; // Sertissage, Coupe…
   lineId: ID;
   /** Position sur le plan de l'atelier, en % (0-100) */
   mapX: number;
@@ -139,8 +139,7 @@ export interface Comment extends BaseEntity {
 
 /* ---------- Anomalies ---------- */
 
-export type AnomalyCategory =
-  | 'safety' | 'quality' | '5s' | 'standard' | 'performance' | 'equipment' | 'material' | 'other';
+export type AnomalyCategory = 'safety' | 'quality' | '5s' | 'standard' | 'performance' | 'equipment' | 'material' | 'other';
 export type Severity = 'minor' | 'major' | 'critical';
 export type AnomalyStatus = 'open' | 'in_progress' | 'closed';
 export type AnomalyOrigin = 'manual' | 'qr' | 'routine' | 'quality' | 'andon' | 'gemba';
@@ -152,7 +151,7 @@ export interface Anomaly extends BaseEntity {
   workstationId?: ID;
   status: AnomalyStatus;
   reportedBy: ID;
-  photo?: string;       // data URL compressée (DÉMO) ou URL (API)
+  photo?: string; // data URL compressée (DÉMO) ou URL (API)
   origin: { type: AnomalyOrigin; id?: ID };
   closedAt?: ISODateTime;
   closedBy?: ID;
@@ -222,8 +221,7 @@ export interface SequenceRun extends BaseEntity {
 
 /* ---------- Production ---------- */
 
-export type ProductionStage =
-  | 'cutting' | 'crimping' | 'assembly' | 'taping' | 'electrical_test' | 'inspection' | 'shipping';
+export type ProductionStage = 'cutting' | 'crimping' | 'assembly' | 'taping' | 'electrical_test' | 'inspection' | 'shipping';
 export type ProductionStatus = 'planned' | 'in_progress' | 'blocked' | 'done';
 
 export interface ProductionOrder extends BaseEntity {

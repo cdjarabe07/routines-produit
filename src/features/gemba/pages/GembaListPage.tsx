@@ -26,7 +26,13 @@ export function GembaListPage() {
       <PageHeader
         title="Gemba Walk"
         description="Marches terrain : observations, écarts à la checklist et actions d’amélioration."
-        actions={<Can permission="gemba.conduct"><Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => navigate('/gemba/nouvelle')}>Nouvelle Gemba Walk</Button></Can>}
+        actions={
+          <Can permission="gemba.conduct">
+            <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => navigate('/gemba/nouvelle')}>
+              Nouvelle Gemba Walk
+            </Button>
+          </Can>
+        }
       />
       <QueryBoundary queries={[walks, actions, ...queries]}>
         {() => {
@@ -39,10 +45,37 @@ export function GembaListPage() {
             { id: 'date', header: 'Date', mobile: 'meta', cell: (w) => formatDate(w.date), sortValue: (w) => w.date },
             { id: 'zone', header: 'Zone', mobile: 'title', cell: (w) => w.zone || 'Zone non renseignée', sortValue: (w) => w.zone },
             { id: 'leader', header: 'Conduite par', mobile: 'meta', cell: (w) => lookups!.userName(w.leaderId) },
-            { id: 'ko', header: 'Non conformes', align: 'center', mobile: 'meta', cell: (w) => (koItems(w).length ? <Badge tone="danger">{koItems(w).length}</Badge> : '0'), sortValue: (w) => koItems(w).length },
-            { id: 'obs', header: 'Observations', align: 'center', mobile: 'meta', cell: (w) => w.observations.length, sortValue: (w) => w.observations.length },
-            { id: 'actions', header: 'Actions ouvertes', align: 'center', mobile: 'meta', cell: (w) => actionsOf(w).filter(isOpenAction).length, sortValue: (w) => actionsOf(w).filter(isOpenAction).length },
-            { id: 'status', header: 'Statut', mobile: 'aside', cell: (w) => <Badge tone={GEMBA_STATUS[w.status].tone}>{GEMBA_STATUS[w.status].label}</Badge>, sortValue: (w) => w.status },
+            {
+              id: 'ko',
+              header: 'Non conformes',
+              align: 'center',
+              mobile: 'meta',
+              cell: (w) => (koItems(w).length ? <Badge tone="danger">{koItems(w).length}</Badge> : '0'),
+              sortValue: (w) => koItems(w).length,
+            },
+            {
+              id: 'obs',
+              header: 'Observations',
+              align: 'center',
+              mobile: 'meta',
+              cell: (w) => w.observations.length,
+              sortValue: (w) => w.observations.length,
+            },
+            {
+              id: 'actions',
+              header: 'Actions ouvertes',
+              align: 'center',
+              mobile: 'meta',
+              cell: (w) => actionsOf(w).filter(isOpenAction).length,
+              sortValue: (w) => actionsOf(w).filter(isOpenAction).length,
+            },
+            {
+              id: 'status',
+              header: 'Statut',
+              mobile: 'aside',
+              cell: (w) => <Badge tone={GEMBA_STATUS[w.status].tone}>{GEMBA_STATUS[w.status].label}</Badge>,
+              sortValue: (w) => w.status,
+            },
           ];
           return (
             <Stack>
@@ -60,7 +93,10 @@ export function GembaListPage() {
                   rowKey={(w) => w.id}
                   rowLink={(w) => (w.status === 'draft' ? `/gemba/nouvelle?brouillon=${w.id}` : `/gemba/${w.id}`)}
                   initialSort={{ id: 'date', direction: 'desc' }}
-                  search={{ placeholder: 'Rechercher une zone, une observation…', text: (w) => `${w.zone} ${w.observations.map((o) => `${o.finding} ${o.improvement}`).join(' ')}` }}
+                  search={{
+                    placeholder: 'Rechercher une zone, une observation…',
+                    text: (w) => `${w.zone} ${w.observations.map((o) => `${o.finding} ${o.improvement}`).join(' ')}`,
+                  }}
                   empty={{ title: 'Aucune Gemba Walk enregistrée.' }}
                 />
               </Panel>

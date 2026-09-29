@@ -6,7 +6,15 @@ import { Button } from './Button';
 import styles from './PhotoInput.module.css';
 
 /** Photo optionnelle : prise de vue sur mobile/tablette, réduite avant stockage. */
-export function PhotoInput({ value, onChange, label = 'Photo (facultative)' }: { value?: string; onChange: (dataUrl: string | undefined) => void; label?: string }) {
+export function PhotoInput({
+  value,
+  onChange,
+  label = 'Photo (facultative)',
+}: {
+  value?: string;
+  onChange: (dataUrl: string | undefined) => void;
+  label?: string;
+}) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -14,14 +22,24 @@ export function PhotoInput({ value, onChange, label = 'Photo (facultative)' }: {
 
   return (
     <div className={styles.field}>
-      <span className={styles.label} id={`${id}-label`}>{label}</span>
+      <span className={styles.label} id={`${id}-label`}>
+        {label}
+      </span>
       {value ? (
         <div className={styles.preview}>
           <img src={value} alt="Aperçu de la photo jointe" />
-          <Button size="sm" variant="ghost" icon={<X size={16} aria-hidden />} onClick={() => onChange(undefined)}>Retirer</Button>
+          <Button size="sm" variant="ghost" icon={<X size={16} aria-hidden />} onClick={() => onChange(undefined)}>
+            Retirer
+          </Button>
         </div>
       ) : (
-        <Button size="md" icon={<Camera size={18} aria-hidden />} loading={busy} onClick={() => inputRef.current?.click()} aria-describedby={`${id}-label`}>
+        <Button
+          size="md"
+          icon={<Camera size={18} aria-hidden />}
+          loading={busy}
+          onClick={() => inputRef.current?.click()}
+          aria-describedby={`${id}-label`}
+        >
           Ajouter une photo
         </Button>
       )}
@@ -48,7 +66,11 @@ export function PhotoInput({ value, onChange, label = 'Photo (facultative)' }: {
           }
         }}
       />
-      {error && <p className={styles.error} role="alert">{error}</p>}
+      {error && (
+        <p className={styles.error} role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

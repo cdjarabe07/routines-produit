@@ -4,28 +4,31 @@ export type Rule<V> = (value: V) => string | null;
 export type Rules<T> = { [K in keyof T]?: Rule<T[K]>[] };
 export type FieldErrors<T> = Partial<Record<keyof T, string>>;
 
-export const required = (message = 'Champ obligatoire'): Rule<unknown> => (v) =>
-  v === undefined ||
-  v === null ||
-  (typeof v === 'string' && v.trim() === '') ||
-  (Array.isArray(v) && v.length === 0)
-    ? message
-    : null;
+export const required =
+  (message = 'Champ obligatoire'): Rule<unknown> =>
+  (v) =>
+    v === undefined || v === null || (typeof v === 'string' && v.trim() === '') || (Array.isArray(v) && v.length === 0) ? message : null;
 
-export const minLength = (n: number): Rule<string | undefined> => (v) =>
-  v && v.trim().length > 0 && v.trim().length < n ? `${n} caractères minimum` : null;
+export const minLength =
+  (n: number): Rule<string | undefined> =>
+  (v) =>
+    v && v.trim().length > 0 && v.trim().length < n ? `${n} caractères minimum` : null;
 
-export const maxLength = (n: number): Rule<string | undefined> => (v) =>
-  v && v.length > n ? `${n} caractères maximum` : null;
+export const maxLength =
+  (n: number): Rule<string | undefined> =>
+  (v) =>
+    v && v.length > n ? `${n} caractères maximum` : null;
 
-export const numberRange = (min?: number, max?: number): Rule<number | string | undefined> => (v) => {
-  if (v === undefined || v === '') return null;
-  const n = Number(v);
-  if (Number.isNaN(n)) return 'Nombre invalide';
-  if (min !== undefined && n < min) return `Minimum ${min}`;
-  if (max !== undefined && n > max) return `Maximum ${max}`;
-  return null;
-};
+export const numberRange =
+  (min?: number, max?: number): Rule<number | string | undefined> =>
+  (v) => {
+    if (v === undefined || v === '') return null;
+    const n = Number(v);
+    if (Number.isNaN(n)) return 'Nombre invalide';
+    if (min !== undefined && n < min) return `Minimum ${min}`;
+    if (max !== undefined && n > max) return `Maximum ${max}`;
+    return null;
+  };
 
 export const httpsUrl = (): Rule<string | undefined> => (v) => {
   if (!v) return null;

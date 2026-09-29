@@ -29,7 +29,8 @@ export function SequenceRunPage() {
       {() => {
         const run = runs.data!.find((r) => r.id === runId);
         const template = run && templates.data!.find((t) => t.id === run.templateId);
-        if (!run || !template) return <EmptyState title="Exécution introuvable" action={<ButtonLink to="/sequences">Retour aux séquences</ButtonLink>} />;
+        if (!run || !template)
+          return <EmptyState title="Exécution introuvable" action={<ButtonLink to="/sequences">Retour aux séquences</ButtonLink>} />;
         return <RunScreen run={run} template={template} starterName={lookups!.userName(run.startedBy)} />;
       }}
     </QueryBoundary>
@@ -58,23 +59,55 @@ function RunScreen({ run, template, starterName }: { run: SequenceRun; template:
         meta={
           <>
             <Badge tone={RUN_STATUS[run.status].tone}>{RUN_STATUS[run.status].label}</Badge>
-            <span className={styles.meta}>Démarrée par {starterName} · {formatDateTime(run.createdAt)}</span>
+            <span className={styles.meta}>
+              Démarrée par {starterName} · {formatDateTime(run.createdAt)}
+            </span>
           </>
         }
-        actions={live && <Button variant="ghost" onClick={async () => { if (await confirm({ title: 'Abandonner la séquence ?', message: 'Les temps déjà enregistrés sont conservés dans l’historique.', confirmLabel: 'Abandonner', tone: 'danger' })) act('abort'); }}>Abandonner</Button>}
+        actions={
+          live && (
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                if (
+                  await confirm({
+                    title: 'Abandonner la séquence ?',
+                    message: 'Les temps déjà enregistrés sont conservés dans l’historique.',
+                    confirmLabel: 'Abandonner',
+                    tone: 'danger',
+                  })
+                )
+                  act('abort');
+              }}
+            >
+              Abandonner
+            </Button>
+          )
+        }
       />
 
       <div className={styles.layout}>
         {live && step ? (
           <section className={styles.focus} aria-labelledby="current-step">
-            <p className={styles.stepCount}>Étape {index + 1} sur {template.steps.length}{step.plannedTime ? ` · prévue à ${step.plannedTime}` : ''}</p>
-            <h2 id="current-step" className={styles.stepTitle}>{step.title}</h2>
+            <p className={styles.stepCount}>
+              Étape {index + 1} sur {template.steps.length}
+              {step.plannedTime ? ` · prévue à ${step.plannedTime}` : ''}
+            </p>
+            <h2 id="current-step" className={styles.stepTitle}>
+              {step.title}
+            </h2>
             {step.instruction && <p className={styles.instruction}>{step.instruction}</p>}
             {step.knowledgeId && (
-              <Button size="sm" variant="ghost" icon={<BookOpen size={16} aria-hidden />} onClick={() => setKnowledgeId(step.knowledgeId!)}>Voir le standard</Button>
+              <Button size="sm" variant="ghost" icon={<BookOpen size={16} aria-hidden />} onClick={() => setKnowledgeId(step.knowledgeId!)}>
+                Voir le standard
+              </Button>
             )}
 
-            <div className={cx(styles.timer, over > 0 && styles.over, run.status === 'paused' && styles.paused)} role="timer" aria-live="off">
+            <div
+              className={cx(styles.timer, over > 0 && styles.over, run.status === 'paused' && styles.paused)}
+              role="timer"
+              aria-live="off"
+            >
               <span className={styles.time}>{formatDuration(elapsed)}</span>
               <span className={styles.target}>
                 {run.status === 'paused' ? 'En pause · ' : ''}
@@ -82,24 +115,50 @@ function RunScreen({ run, template, starterName }: { run: SequenceRun; template:
                 {over > 0 && <strong> · dépassement +{formatDuration(over)}</strong>}
               </span>
             </div>
-            <Progress value={Math.min(elapsed, target)} max={target || 1} label="Temps écoulé sur la durée cible" tone={over > 0 ? 'warning' : 'info'} />
+            <Progress
+              value={Math.min(elapsed, target)}
+              max={target || 1}
+              label="Temps écoulé sur la durée cible"
+              tone={over > 0 ? 'warning' : 'info'}
+            />
 
             <div className={styles.controls}>
-              <Button size="lg" icon={<ChevronLeft size={20} aria-hidden />} disabled={index === 0 || transition.isPending} onClick={() => act('previous')}>Précédente</Button>
+              <Button
+                size="lg"
+                icon={<ChevronLeft size={20} aria-hidden />}
+                disabled={index === 0 || transition.isPending}
+                onClick={() => act('previous')}
+              >
+                Précédente
+              </Button>
               {run.status === 'running' ? (
-                <Button size="lg" icon={<Pause size={20} aria-hidden />} disabled={transition.isPending} onClick={() => act('pause')}>Pause</Button>
+                <Button size="lg" icon={<Pause size={20} aria-hidden />} disabled={transition.isPending} onClick={() => act('pause')}>
+                  Pause
+                </Button>
               ) : (
-                <Button size="lg" icon={<Play size={20} aria-hidden />} disabled={transition.isPending} onClick={() => act('resume')}>Reprendre</Button>
+                <Button size="lg" icon={<Play size={20} aria-hidden />} disabled={transition.isPending} onClick={() => act('resume')}>
+                  Reprendre
+                </Button>
               )}
-              <Button size="lg" variant={last ? 'success' : 'primary'} iconRight={last ? <Check size={20} aria-hidden /> : <ChevronRight size={20} aria-hidden />} disabled={transition.isPending} onClick={() => act('next')}>
+              <Button
+                size="lg"
+                variant={last ? 'success' : 'primary'}
+                iconRight={last ? <Check size={20} aria-hidden /> : <ChevronRight size={20} aria-hidden />}
+                disabled={transition.isPending}
+                onClick={() => act('next')}
+              >
                 {last ? 'Terminer' : 'Étape suivante'}
               </Button>
             </div>
           </section>
         ) : (
-          <Panel title={run.status === 'completed' ? 'Séquence terminée' : 'Séquence abandonnée'} accent={run.status === 'completed' ? 'success' : undefined}>
+          <Panel
+            title={run.status === 'completed' ? 'Séquence terminée' : 'Séquence abandonnée'}
+            accent={run.status === 'completed' ? 'success' : undefined}
+          >
             <p className={styles.summary}>
-              Durée réelle <strong>{formatDuration(totalElapsedMs(run, now))}</strong> pour une durée cible de <strong>{formatDuration(plannedMs(template))}</strong>.
+              Durée réelle <strong>{formatDuration(totalElapsedMs(run, now))}</strong> pour une durée cible de{' '}
+              <strong>{formatDuration(plannedMs(template))}</strong>.
             </p>
           </Panel>
         )}

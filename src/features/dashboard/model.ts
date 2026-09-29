@@ -1,6 +1,18 @@
 import type {
-  Action, AndonAlert, Anomaly, DateKey, Handover, Line, MaterialStock, Meeting, ProductionOrder, QualityCheck,
-  RoutineRun, RoutineTemplate, User, Workstation,
+  Action,
+  AndonAlert,
+  Anomaly,
+  DateKey,
+  Handover,
+  Line,
+  MaterialStock,
+  Meeting,
+  ProductionOrder,
+  QualityCheck,
+  RoutineRun,
+  RoutineTemplate,
+  User,
+  Workstation,
 } from '@/types/domain';
 import type { Permission } from '@/services/auth/permissions';
 import { isOverdue, isDueToday, isOpenAction } from '@/features/actions/model';
@@ -69,9 +81,22 @@ export function buildPriorities(d: CockpitData): Priority[] {
     .filter((a) => isOverdue(a, d.today) && (a.assigneeId === d.user.id || a.backupId === d.user.id || d.can('action.manage')))
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   for (const a of overdue.slice(0, 5)) {
-    out.push({ id: `action-${a.id}`, level: 'high', title: a.title, meta: `Action en retard depuis le ${formatLongDate(a.dueDate)}`, to: `/actions/${a.id}` });
+    out.push({
+      id: `action-${a.id}`,
+      level: 'high',
+      title: a.title,
+      meta: `Action en retard depuis le ${formatLongDate(a.dueDate)}`,
+      to: `/actions/${a.id}`,
+    });
   }
-  if (overdue.length > 5) out.push({ id: 'action-more', level: 'high', title: `${overdue.length - 5} autre(s) action(s) en retard`, meta: 'Voir toutes les actions en retard', to: '/actions?vue=overdue' });
+  if (overdue.length > 5)
+    out.push({
+      id: 'action-more',
+      level: 'high',
+      title: `${overdue.length - 5} autre(s) action(s) en retard`,
+      meta: 'Voir toutes les actions en retard',
+      to: '/actions?vue=overdue',
+    });
 
   if (d.can('routine.execute')) {
     for (const t of templatesForRole(d.templates, d.user.role)) {
@@ -93,20 +118,40 @@ export function buildPriorities(d: CockpitData): Priority[] {
   if (d.can('meeting.manage')) {
     const meeting = d.meetings.find((m) => m.date === d.today && m.status !== 'done');
     if (meeting && minutesOfDay(d.now) >= timeToMinutes(meeting.startTime)) {
-      out.push({ id: `meeting-${meeting.id}`, level: 'normal', title: `${meeting.title} (${meeting.startTime})`, meta: 'Réunion du jour pas encore clôturée', to: `/reunions/${meeting.id}` });
+      out.push({
+        id: `meeting-${meeting.id}`,
+        level: 'normal',
+        title: `${meeting.title} (${meeting.startTime})`,
+        meta: 'Réunion du jour pas encore clôturée',
+        to: `/reunions/${meeting.id}`,
+      });
     }
   }
 
   if (d.can('production.update')) {
     const low = d.stocks.filter(needsReorder);
-    if (low.length) out.push({ id: 'stocks', level: 'normal', title: `${low.length} stock(s) matière sous le minimum`, meta: low.map((s) => s.material).join(' · '), to: '/production?vue=stocks' });
+    if (low.length)
+      out.push({
+        id: 'stocks',
+        level: 'normal',
+        title: `${low.length} stock(s) matière sous le minimum`,
+        meta: low.map((s) => s.material).join(' · '),
+        to: '/production?vue=stocks',
+      });
   }
 
   if (d.can('handover.write') && d.now.getHours() >= 12) {
     const since = new Date(d.now);
     since.setHours(0, 0, 0, 0);
     const written = d.handovers.some((h) => h.authorId === d.user.id && new Date(h.createdAt) >= since);
-    if (!written) out.push({ id: 'handover', level: 'normal', title: 'Rédiger la passation de poste', meta: 'Aucune passation publiée par vous aujourd’hui', to: '/passation' });
+    if (!written)
+      out.push({
+        id: 'handover',
+        level: 'normal',
+        title: 'Rédiger la passation de poste',
+        meta: 'Aucune passation publiée par vous aujourd’hui',
+        to: '/passation',
+      });
   }
 
   return out;
@@ -128,7 +173,12 @@ export function lineStatuses(d: Pick<CockpitData, 'lines' | 'workstations' | 'al
     const blockedOrders = d.orders.filter((o) => o.lineId === line.id && o.status === 'blocked');
     const lowStocks = d.stocks.filter((s) => stationIds.has(s.workstationId) && needsReorder(s)).length;
     const waitingAndon = alerts.filter((a) => a.status === 'active').length;
-    const state = waitingAndon > 0 || alerts.some((a) => a.urgency === 'critical') ? 'stopped' : alerts.length || blockedOrders.length || lowStocks ? 'degraded' : 'running';
+    const state =
+      waitingAndon > 0 || alerts.some((a) => a.urgency === 'critical')
+        ? 'stopped'
+        : alerts.length || blockedOrders.length || lowStocks
+          ? 'degraded'
+          : 'running';
     return { line, openAndon: alerts.length, waitingAndon, blockedOrders, lowStocks, state };
   });
 }
@@ -161,7 +211,10 @@ export function buildDailyReport(d: CockpitData, plantName: string): string {
     formatLongDate(d.now),
     '',
     'ÉTAT DES LIGNES',
-    ...lines.map((l) => `• ${l.line.name} : ${stateLabel[l.state]}${l.openAndon ? ` (${l.openAndon} Andon ouvert)` : ''}${l.blockedOrders.length ? ` — ${l.blockedOrders.length} OF bloqué` : ''}`),
+    ...lines.map(
+      (l) =>
+        `• ${l.line.name} : ${stateLabel[l.state]}${l.openAndon ? ` (${l.openAndon} Andon ouvert)` : ''}${l.blockedOrders.length ? ` — ${l.blockedOrders.length} OF bloqué` : ''}`,
+    ),
     '',
     'INDICATEURS',
     `• Routines : ${formatPercent(ind.routinePct)} des points traités (${ind.routineDetail})`,
@@ -173,6 +226,9 @@ export function buildDailyReport(d: CockpitData, plantName: string): string {
   if (anomaliesToday.length) {
     out.push('', 'ANOMALIES DU JOUR', ...anomaliesToday.map((a) => `• ${d.workstationName(a.workstationId)} — ${a.description}`));
   }
-  out.push('', `Généré le ${formatLongDate(d.now)} à ${formatTime(d.now)} par ${d.user.name}, à partir des données saisies dans l’application.`);
+  out.push(
+    '',
+    `Généré le ${formatLongDate(d.now)} à ${formatTime(d.now)} par ${d.user.name}, à partir des données saisies dans l’application.`,
+  );
   return out.join('\n');
 }

@@ -40,7 +40,8 @@ export function AnomalyDetailPage() {
     <QueryBoundary queries={[anomalies, actions, ...queries]}>
       {() => {
         const anomaly = anomalies.data!.find((a) => a.id === id);
-        if (!anomaly) return <EmptyState title="Anomalie introuvable" action={<ButtonLink to="/anomalies">Retour aux anomalies</ButtonLink>} />;
+        if (!anomaly)
+          return <EmptyState title="Anomalie introuvable" action={<ButtonLink to="/anomalies">Retour aux anomalies</ButtonLink>} />;
         const linked = actions.data!.filter((a) => a.source.type === 'anomaly' && a.source.id === anomaly.id);
         return <AnomalyDetail anomaly={anomaly} linked={linked} lookups={lookups!} />;
       }}
@@ -75,11 +76,25 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
           manage && (
             <>
               {anomaly.status === 'open' && (
-                <Button onClick={() => updateStatus.mutate({ id: anomaly.id, status: 'in_progress', by: user.id })} loading={updateStatus.isPending}>Prendre en charge</Button>
+                <Button
+                  onClick={() => updateStatus.mutate({ id: anomaly.id, status: 'in_progress', by: user.id })}
+                  loading={updateStatus.isPending}
+                >
+                  Prendre en charge
+                </Button>
               )}
-              {anomaly.status !== 'closed' && <Button variant="success" onClick={() => setClosing(true)}>Clôturer</Button>}
+              {anomaly.status !== 'closed' && (
+                <Button variant="success" onClick={() => setClosing(true)}>
+                  Clôturer
+                </Button>
+              )}
               {anomaly.status === 'closed' && (
-                <Button onClick={() => updateStatus.mutate({ id: anomaly.id, status: 'open', by: user.id })} loading={updateStatus.isPending}>Rouvrir</Button>
+                <Button
+                  onClick={() => updateStatus.mutate({ id: anomaly.id, status: 'open', by: user.id })}
+                  loading={updateStatus.isPending}
+                >
+                  Rouvrir
+                </Button>
               )}
             </>
           )
@@ -89,15 +104,34 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
       <Columns sideFirstOnMobile>
         <Stack>
           {(anomaly.description.length > 120 || anomaly.photo || anomaly.resolutionNote) && (
-          <Panel title="Description">
-            {anomaly.description.length > 120 && <p style={{ whiteSpace: 'pre-wrap' }}>{anomaly.description}</p>}
-            {anomaly.photo && <img src={anomaly.photo} alt="Photo jointe à la déclaration" style={{ marginTop: 'var(--space-4)', maxWidth: '100%', maxHeight: 420, borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }} />}
-            {anomaly.resolutionNote && (
-              <p style={{ marginTop: 'var(--space-4)', padding: 'var(--space-3)', background: 'var(--color-success-soft)', borderRadius: 'var(--radius-md)' }}>
-                <strong>Résolution :</strong> {anomaly.resolutionNote}
-              </p>
-            )}
-          </Panel>
+            <Panel title="Description">
+              {anomaly.description.length > 120 && <p style={{ whiteSpace: 'pre-wrap' }}>{anomaly.description}</p>}
+              {anomaly.photo && (
+                <img
+                  src={anomaly.photo}
+                  alt="Photo jointe à la déclaration"
+                  style={{
+                    marginTop: 'var(--space-4)',
+                    maxWidth: '100%',
+                    maxHeight: 420,
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border)',
+                  }}
+                />
+              )}
+              {anomaly.resolutionNote && (
+                <p
+                  style={{
+                    marginTop: 'var(--space-4)',
+                    padding: 'var(--space-3)',
+                    background: 'var(--color-success-soft)',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <strong>Résolution :</strong> {anomaly.resolutionNote}
+                </p>
+              )}
+            </Panel>
           )}
 
           <Panel
@@ -105,8 +139,11 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
             description={linked.length ? `${openActions} ouverte(s) sur ${linked.length}` : undefined}
             flush
             actions={
-              can('action.create') && anomaly.status !== 'closed' && (
-                <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => setCreatingAction(true)}>Créer une action</Button>
+              can('action.create') &&
+              anomaly.status !== 'closed' && (
+                <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => setCreatingAction(true)}>
+                  Créer une action
+                </Button>
               )
             }
           >
@@ -155,12 +192,22 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
         </Panel>
       </Columns>
 
-      <Drawer open={creatingAction} onClose={() => setCreatingAction(false)} title="Action corrective" description="Échéance et priorité proposées selon la gravité de l’anomalie." size="md">
+      <Drawer
+        open={creatingAction}
+        onClose={() => setCreatingAction(false)}
+        title="Action corrective"
+        description="Échéance et priorité proposées selon la gravité de l’anomalie."
+        size="md"
+      >
         {creatingAction && (
           <ActionForm
             users={lookups.users}
             source={{ type: 'anomaly', id: anomaly.id }}
-            defaults={{ title: `Traiter : ${truncate(anomaly.description, 120)}`, priority: PRIORITY_BY_SEVERITY[anomaly.severity], dueDate: defaultDueDate(anomaly.severity, today) }}
+            defaults={{
+              title: `Traiter : ${truncate(anomaly.description, 120)}`,
+              priority: PRIORITY_BY_SEVERITY[anomaly.severity],
+              dueDate: defaultDueDate(anomaly.severity, today),
+            }}
             onDone={() => setCreatingAction(false)}
           />
         )}
@@ -179,10 +226,18 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
             setClosing(false);
           }}
         >
-          <TextAreaField label="Résolution (facultative)" rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Cause et traitement réalisés" />
+          <TextAreaField
+            label="Résolution (facultative)"
+            rows={3}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Cause et traitement réalisés"
+          />
           <FormActions>
             <Button onClick={() => setClosing(false)}>Annuler</Button>
-            <Button type="submit" variant="success" loading={updateStatus.isPending}>Clôturer</Button>
+            <Button type="submit" variant="success" loading={updateStatus.isPending}>
+              Clôturer
+            </Button>
           </FormActions>
         </form>
       </Modal>

@@ -1,4 +1,6 @@
-.root { position: relative; }
+.root {
+  position: relative;
+}
 
 .menu {
   position: absolute;
@@ -12,8 +14,12 @@
   box-shadow: var(--shadow-overlay);
   color: var(--color-text);
 }
-.start { left: 0; }
-.end { right: 0; }
+.start {
+  left: 0;
+}
+.end {
+  right: 0;
+}
 
 .header {
   padding: var(--space-2) var(--space-3) var(--space-3);
@@ -35,6 +41,14 @@
   text-align: left;
   font-size: var(--text-md);
 }
-.item:hover:not(:disabled), .item:focus-visible { background: var(--color-surface-sunken); box-shadow: none; }
-.item:disabled { color: var(--color-text-subtle); }
-.danger { color: var(--color-danger); }
+.item:hover:not(:disabled),
+.item:focus-visible {
+  background: var(--color-surface-sunken);
+  box-shadow: none;
+}
+.item:disabled {
+  color: var(--color-text-subtle);
+}
+.danger {
+  color: var(--color-danger);
+}

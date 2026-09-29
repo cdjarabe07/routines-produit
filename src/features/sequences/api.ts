@@ -5,7 +5,8 @@ import { abortRun, nextStep, pauseRun, previousStep, resumeRun, startRun, type R
 
 export function useStartSequence() {
   return useOperation(
-    (ds, { template, user }: { template: SequenceTemplate; user: User }) => ds.repo('sequenceRuns').create(startRun(template, user.id, new Date())),
+    (ds, { template, user }: { template: SequenceTemplate; user: User }) =>
+      ds.repo('sequenceRuns').create(startRun(template, user.id, new Date())),
     { invalidates: ['sequenceRuns'] },
   );
 }
@@ -28,7 +29,10 @@ export function useSequenceTransition() {
       const next = TRANSITIONS[transition](fresh, new Date());
       return ds.repo('sequenceRuns').update(run.id, next);
     },
-    { invalidates: ['sequenceRuns'], success: (r) => (r.status === 'completed' ? 'Séquence terminée.' : r.status === 'aborted' ? 'Séquence abandonnée.' : null) },
+    {
+      invalidates: ['sequenceRuns'],
+      success: (r) => (r.status === 'completed' ? 'Séquence terminée.' : r.status === 'aborted' ? 'Séquence abandonnée.' : null),
+    },
   );
 }
 

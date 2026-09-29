@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react';
 import { EmptyState } from '@/components/feedback/States';
 import { Button } from '@/components/ui/Button';
-import { useIsCompact } from '@/hooks/useMediaQuery';
+import { useIsTabletOrSmaller } from '@/hooks/useMediaQuery';
 import { cx } from '@/utils/cx';
 import { normalize } from '@/utils/format';
 import styles from './DataTable.module.css';
@@ -37,9 +37,19 @@ interface DataTableProps<T> {
 }
 
 export function DataTable<T>({
-  rows, columns, rowKey, caption, rowLink, search, initialSort, pageSize = 25, empty, toolbar, rowTone,
+  rows,
+  columns,
+  rowKey,
+  caption,
+  rowLink,
+  search,
+  initialSort,
+  pageSize = 25,
+  empty,
+  toolbar,
+  rowTone,
 }: DataTableProps<T>) {
-  const compact = useIsCompact();
+  const compact = useIsTabletOrSmaller();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState(initialSort);
@@ -104,7 +114,15 @@ export function DataTable<T>({
 
       {visible.length === 0 ? (
         query ? (
-          <EmptyState compact title={`Aucun résultat pour « ${query} ».`} action={<Button size="sm" variant="ghost" onClick={() => setQuery('')}>Effacer la recherche</Button>} />
+          <EmptyState
+            compact
+            title={`Aucun résultat pour « ${query} ».`}
+            action={
+              <Button size="sm" variant="ghost" onClick={() => setQuery('')}>
+                Effacer la recherche
+              </Button>
+            }
+          />
         ) : (
           <EmptyState compact title={empty.title} description={empty.description} action={empty.action} />
         )
@@ -117,7 +135,9 @@ export function DataTable<T>({
               <li key={rowKey(row)} className={cx(styles.card, rowTone?.(row) && styles[rowTone(row)!])}>
                 <div className={styles.cardHead}>
                   <div className={styles.cardTitle}>{renderTitle(row)}</div>
-                  {aside.map((c) => <div key={c.id}>{c.cell(row)}</div>)}
+                  {aside.map((c) => (
+                    <div key={c.id}>{c.cell(row)}</div>
+                  ))}
                 </div>
                 {meta.length > 0 && (
                   <dl className={styles.cardMeta}>
@@ -151,7 +171,15 @@ export function DataTable<T>({
                       {c.sortValue ? (
                         <button type="button" className={styles.sortButton} onClick={() => toggleSort(c.id)}>
                           {c.header}
-                          {active ? (sort!.direction === 'asc' ? <ArrowUp size={13} aria-hidden /> : <ArrowDown size={13} aria-hidden />) : <ArrowUpDown size={13} aria-hidden className={styles.sortIdle} />}
+                          {active ? (
+                            sort!.direction === 'asc' ? (
+                              <ArrowUp size={13} aria-hidden />
+                            ) : (
+                              <ArrowDown size={13} aria-hidden />
+                            )
+                          ) : (
+                            <ArrowUpDown size={13} aria-hidden className={styles.sortIdle} />
+                          )}
                         </button>
                       ) : (
                         c.header
@@ -186,8 +214,12 @@ export function DataTable<T>({
             {current * pageSize + 1}–{Math.min(sorted.length, (current + 1) * pageSize)} sur {sorted.length}
           </span>
           <div className={styles.pagerButtons}>
-            <Button size="sm" disabled={current === 0} onClick={() => setPage(current - 1)}>Précédent</Button>
-            <Button size="sm" disabled={current >= pageCount - 1} onClick={() => setPage(current + 1)}>Suivant</Button>
+            <Button size="sm" disabled={current === 0} onClick={() => setPage(current - 1)}>
+              Précédent
+            </Button>
+            <Button size="sm" disabled={current >= pageCount - 1} onClick={() => setPage(current + 1)}>
+              Suivant
+            </Button>
           </div>
         </nav>
       )}

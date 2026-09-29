@@ -44,7 +44,14 @@ export const ROUTINE_STATE: Record<RoutineState, { label: string; tone: Tone }> 
  * - due : heure prévue passée, dans la tolérance
  * - upcoming : avant l'heure prévue
  */
-export function routineState(template: RoutineTemplate, run: RoutineRun | undefined, date: DateKey, today: DateKey, now: Date, toleranceMin: number): RoutineState {
+export function routineState(
+  template: RoutineTemplate,
+  run: RoutineRun | undefined,
+  date: DateKey,
+  today: DateKey,
+  now: Date,
+  toleranceMin: number,
+): RoutineState {
   const p = runProgress(template, run);
   if (p.total > 0 && p.treated === p.total) return 'done';
   if (date < today) return 'late';
@@ -59,7 +66,7 @@ export function routineState(template: RoutineTemplate, run: RoutineRun | undefi
 export const canEditRun = (template: RoutineTemplate, role: Role, canManage: boolean, date: DateKey, today: DateKey) =>
   date === today && (template.role === role || canManage);
 
-export const templatesForRole =(templates: RoutineTemplate[], role: Role) =>
+export const templatesForRole = (templates: RoutineTemplate[], role: Role) =>
   templates.filter((t) => t.active && t.role === role).sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
 
 export const findRun = (runs: RoutineRun[], templateId: string, date: DateKey) =>

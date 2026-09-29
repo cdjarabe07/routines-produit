@@ -21,14 +21,21 @@ async function raise(ds: DataSource, input: RaiseInput, user: User): Promise<And
   if (existing) throw new ValidationError(`Un Andon ${ANDON_TYPE[input.type].label.toLowerCase()} est déjà en cours sur ce poste.`);
 
   const now = new Date().toISOString();
-  const alert = await ds.repo('andonAlerts').create({ ...input, detail: input.detail.trim(), status: 'active', raisedBy: user.id, raisedAt: now });
+  const alert = await ds
+    .repo('andonAlerts')
+    .create({ ...input, detail: input.detail.trim(), status: 'active', raisedBy: user.id, raisedAt: now });
 
   // Prévenir les personnes habilitées à intervenir sur la ligne du poste
   const ws = await ds.repo('workstations').get(input.workstationId);
   const responders = (await ds.repo('users').list()).filter(
     (u) => u.active && roleCan(u.role, 'andon.respond') && u.role !== 'admin' && (!u.lineId || u.lineId === ws.lineId),
   );
-  await notify(ds, responders.map((u) => u.id), { kind: 'andon_raised', title: `Andon ${ANDON_TYPE[input.type].label.toLowerCase()} — ${ws.name}`, link: '/andon' }, user.id);
+  await notify(
+    ds,
+    responders.map((u) => u.id),
+    { kind: 'andon_raised', title: `Andon ${ANDON_TYPE[input.type].label.toLowerCase()} — ${ws.name}`, link: '/andon' },
+    user.id,
+  );
   return alert;
 }
 
@@ -44,7 +51,9 @@ export function useAcknowledgeAndon() {
     async (ds, { alert, user }: { alert: AndonAlert; user: User }) => {
       const fresh = await ds.repo('andonAlerts').get(alert.id);
       if (fresh.status !== 'active') throw new ValidationError('Cet Andon a déjà été pris en charge.');
-      return ds.repo('andonAlerts').update(alert.id, { status: 'acknowledged', acknowledgedBy: user.id, acknowledgedAt: new Date().toISOString() });
+      return ds
+        .repo('andonAlerts')
+        .update(alert.id, { status: 'acknowledged', acknowledgedBy: user.id, acknowledgedAt: new Date().toISOString() });
     },
     { invalidates: ['andonAlerts'], success: 'Prise en charge enregistrée.' },
   );
@@ -76,7 +85,14 @@ export function useResolveAndon() {
           ds,
           {
             description: `Suite Andon « ${alert.detail} » — cause : ${rootCause.trim()}`,
-            category: alert.type === 'safety' ? 'safety' : alert.type === 'material' ? 'material' : alert.type === 'equipment' ? 'equipment' : 'quality',
+            category:
+              alert.type === 'safety'
+                ? 'safety'
+                : alert.type === 'material'
+                  ? 'material'
+                  : alert.type === 'equipment'
+                    ? 'equipment'
+                    : 'quality',
             severity: alert.urgency === 'critical' ? 'critical' : 'major',
             workstationId: alert.workstationId,
             origin: { type: 'andon', id: alert.id },

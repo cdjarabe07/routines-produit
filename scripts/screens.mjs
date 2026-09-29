@@ -21,7 +21,10 @@ for (const vp of viewports) {
   page.on('pageerror', (e) => problems.push(`[${vp.name}] pageerror: ${e.message}`));
   page.on('console', (m) => m.type() === 'error' && problems.push(`[${vp.name}] console: ${m.text()}`));
   await page.goto(`${base}/#/connexion`);
-  await page.evaluate((userId) => sessionStorage.setItem('ra:session', JSON.stringify({ userId, startedAt: new Date().toISOString(), mode: 'demo' })), profile);
+  await page.evaluate(
+    (userId) => sessionStorage.setItem('ra:session', JSON.stringify({ userId, startedAt: new Date().toISOString(), mode: 'demo' })),
+    profile,
+  );
   for (const route of routes.length ? routes : ['/']) {
     await page.goto(`${base}/#${route}`);
     await page.reload(); // le changement de hash seul ne relit pas la session

@@ -44,11 +44,27 @@ export function AgendaPage() {
   }, [templates.data, runs.data, meetings.data, scope, user.role, date]);
 
   const columns: Column<Meeting>[] = [
-    { id: 'date', header: 'Date', mobile: 'meta', cell: (m) => `${formatDate(m.date)} ${m.startTime}`, sortValue: (m) => `${m.date}${m.startTime}` },
+    {
+      id: 'date',
+      header: 'Date',
+      mobile: 'meta',
+      cell: (m) => `${formatDate(m.date)} ${m.startTime}`,
+      sortValue: (m) => `${m.date}${m.startTime}`,
+    },
     { id: 'title', header: 'Réunion', mobile: 'title', cell: (m) => m.title },
     { id: 'participants', header: 'Présents', align: 'center', mobile: 'meta', cell: (m) => m.participantIds.length },
-    { id: 'agenda', header: 'Ordre du jour', mobile: 'meta', cell: (m) => `${m.agenda.filter((a) => a.done).length}/${m.agenda.length} points` },
-    { id: 'status', header: 'Statut', mobile: 'aside', cell: (m) => <Badge tone={MEETING_STATUS[m.status].tone}>{MEETING_STATUS[m.status].label}</Badge> },
+    {
+      id: 'agenda',
+      header: 'Ordre du jour',
+      mobile: 'meta',
+      cell: (m) => `${m.agenda.filter((a) => a.done).length}/${m.agenda.length} points`,
+    },
+    {
+      id: 'status',
+      header: 'Statut',
+      mobile: 'aside',
+      cell: (m) => <Badge tone={MEETING_STATUS[m.status].tone}>{MEETING_STATUS[m.status].label}</Badge>,
+    },
   ];
 
   return (
@@ -56,14 +72,29 @@ export function AgendaPage() {
       <PageHeader
         title="Agenda & réunions"
         description="Routines planifiées et réunions de la journée, comptes-rendus et actions décidées."
-        actions={can('meeting.manage') && <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setPlanning(true)}>Planifier une réunion</Button>}
+        actions={
+          can('meeting.manage') && (
+            <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setPlanning(true)}>
+              Planifier une réunion
+            </Button>
+          )
+        }
       />
       <QueryBoundary queries={[templates, runs, meetings, ...queries]}>
         {() => (
           <Stack>
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <DateNavigator value={date} onChange={(d) => setParams(d === today ? {} : { date: d }, { replace: true })} allowFuture />
-              <Tabs variant="segmented" label="Périmètre" value={scope} onChange={setScope} items={[{ value: 'mine', label: 'Mon rôle' }, { value: 'all', label: 'Toute l’équipe' }]} />
+              <Tabs
+                variant="segmented"
+                label="Périmètre"
+                value={scope}
+                onChange={setScope}
+                items={[
+                  { value: 'mine', label: 'Mon rôle' },
+                  { value: 'all', label: 'Toute l’équipe' },
+                ]}
+              />
             </div>
             <Columns>
               <Panel title="Déroulé de la journée" flush>
@@ -120,7 +151,11 @@ function MeetingForm({ date, onDone }: { date: DateKey; onDone: () => void }) {
         durationMin: Number(v.durationMin),
         organizerId: user.id,
         participantIds: [],
-        agenda: v.agenda.split('\n').map((l) => l.trim()).filter(Boolean).map((label) => ({ id: createId(), label, done: false })),
+        agenda: v.agenda
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((label) => ({ id: createId(), label, done: false })),
         minutes: '',
         status: 'planned',
       });
@@ -132,15 +167,37 @@ function MeetingForm({ date, onDone }: { date: DateKey; onDone: () => void }) {
   return (
     <form onSubmit={form.handleSubmit} noValidate>
       <FormGrid>
-        <TextField className="full" label="Titre" required value={values.title} onChange={(e) => set('title', e.target.value)} error={errors.title} />
+        <TextField
+          className="full"
+          label="Titre"
+          required
+          value={values.title}
+          onChange={(e) => set('title', e.target.value)}
+          error={errors.title}
+        />
         <TextField label="Date" type="date" required value={values.date} onChange={(e) => set('date', e.target.value)} />
         <TextField label="Heure" type="time" required value={values.startTime} onChange={(e) => set('startTime', e.target.value)} />
-        <TextField label="Durée (min)" type="number" min={5} value={values.durationMin} onChange={(e) => set('durationMin', e.target.value)} error={errors.durationMin} />
-        <TextAreaField className="full" label="Ordre du jour (un point par ligne)" rows={6} value={values.agenda} onChange={(e) => set('agenda', e.target.value)} />
+        <TextField
+          label="Durée (min)"
+          type="number"
+          min={5}
+          value={values.durationMin}
+          onChange={(e) => set('durationMin', e.target.value)}
+          error={errors.durationMin}
+        />
+        <TextAreaField
+          className="full"
+          label="Ordre du jour (un point par ligne)"
+          rows={6}
+          value={values.agenda}
+          onChange={(e) => set('agenda', e.target.value)}
+        />
       </FormGrid>
       <FormActions>
         <Button onClick={onDone}>Annuler</Button>
-        <Button type="submit" variant="primary" loading={form.submitting}>Planifier</Button>
+        <Button type="submit" variant="primary" loading={form.submitting}>
+          Planifier
+        </Button>
       </FormActions>
     </form>
   );

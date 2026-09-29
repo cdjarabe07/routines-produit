@@ -33,14 +33,46 @@ export function AndonHistory({ alerts, lookups }: { alerts: AndonAlert[]; lookup
     .sort((a, b) => b.value - a.value);
 
   const columns: Column<AndonAlert>[] = [
-    { id: 'raised', header: 'Déclenché le', mobile: 'meta', cell: (a) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(a.raisedAt)}</span>, sortValue: (a) => a.raisedAt },
-    { id: 'station', header: 'Poste', mobile: 'title', cell: (a) => lookups.workstationName(a.workstationId), sortValue: (a) => lookups.workstationById.get(a.workstationId)?.code ?? '' },
+    {
+      id: 'raised',
+      header: 'Déclenché le',
+      mobile: 'meta',
+      cell: (a) => <span style={{ whiteSpace: 'nowrap' }}>{formatDateTime(a.raisedAt)}</span>,
+      sortValue: (a) => a.raisedAt,
+    },
+    {
+      id: 'station',
+      header: 'Poste',
+      mobile: 'title',
+      cell: (a) => lookups.workstationName(a.workstationId),
+      sortValue: (a) => lookups.workstationById.get(a.workstationId)?.code ?? '',
+    },
     { id: 'type', header: 'Type', mobile: 'meta', cell: (a) => ANDON_TYPE[a.type].label, sortValue: (a) => a.type },
     { id: 'detail', header: 'Problème', mobile: 'meta', cell: (a) => a.detail },
-    { id: 'ack', header: 'Prise en charge', align: 'right', mobile: 'meta', cell: (a) => (acknowledgeMinutes(a) === null ? '—' : formatMinutes(acknowledgeMinutes(a)!)), sortValue: (a) => acknowledgeMinutes(a) ?? -1 },
-    { id: 'res', header: 'Résolution', align: 'right', mobile: 'meta', cell: (a) => (resolutionMinutes(a) === null ? '—' : formatMinutes(resolutionMinutes(a)!)), sortValue: (a) => resolutionMinutes(a) ?? -1 },
+    {
+      id: 'ack',
+      header: 'Prise en charge',
+      align: 'right',
+      mobile: 'meta',
+      cell: (a) => (acknowledgeMinutes(a) === null ? '—' : formatMinutes(acknowledgeMinutes(a)!)),
+      sortValue: (a) => acknowledgeMinutes(a) ?? -1,
+    },
+    {
+      id: 'res',
+      header: 'Résolution',
+      align: 'right',
+      mobile: 'meta',
+      cell: (a) => (resolutionMinutes(a) === null ? '—' : formatMinutes(resolutionMinutes(a)!)),
+      sortValue: (a) => resolutionMinutes(a) ?? -1,
+    },
     { id: 'cause', header: 'Cause', mobile: 'hidden', cell: (a) => a.rootCause ?? '—' },
-    { id: 'status', header: 'Statut', mobile: 'aside', cell: (a) => <Badge tone={ANDON_STATUS[a.status].tone}>{ANDON_STATUS[a.status].label}</Badge>, sortValue: (a) => a.status },
+    {
+      id: 'status',
+      header: 'Statut',
+      mobile: 'aside',
+      cell: (a) => <Badge tone={ANDON_STATUS[a.status].tone}>{ANDON_STATUS[a.status].label}</Badge>,
+      sortValue: (a) => a.status,
+    },
   ];
 
   return (
@@ -48,8 +80,16 @@ export function AndonHistory({ alerts, lookups }: { alerts: AndonAlert[]; lookup
       <Tabs variant="segmented" label="Période" value={days} onChange={setDays} items={PERIODS.map((p) => ({ ...p }))} />
       <KpiStrip>
         <Kpi label="Andon déclenchés" value={stats.count} detail={`sur ${days} jours`} />
-        <Kpi label="Prise en charge moyenne" value={stats.avgAcknowledgeMin === null ? '—' : formatMinutes(stats.avgAcknowledgeMin)} detail="déclenchement → prise en charge" />
-        <Kpi label="Résolution moyenne" value={stats.avgResolutionMin === null ? '—' : formatMinutes(stats.avgResolutionMin)} detail="déclenchement → résolution" />
+        <Kpi
+          label="Prise en charge moyenne"
+          value={stats.avgAcknowledgeMin === null ? '—' : formatMinutes(stats.avgAcknowledgeMin)}
+          detail="déclenchement → prise en charge"
+        />
+        <Kpi
+          label="Résolution moyenne"
+          value={stats.avgResolutionMin === null ? '—' : formatMinutes(stats.avgResolutionMin)}
+          detail="déclenchement → résolution"
+        />
       </KpiStrip>
       <Columns ratio="equal">
         <Panel title="Répartition par type">
@@ -66,7 +106,10 @@ export function AndonHistory({ alerts, lookups }: { alerts: AndonAlert[]; lookup
           columns={columns}
           rowKey={(a) => a.id}
           initialSort={{ id: 'raised', direction: 'desc' }}
-          search={{ placeholder: 'Rechercher un problème, une cause…', text: (a) => `${a.detail} ${a.rootCause ?? ''} ${lookups.workstationName(a.workstationId)}` }}
+          search={{
+            placeholder: 'Rechercher un problème, une cause…',
+            text: (a) => `${a.detail} ${a.rootCause ?? ''} ${lookups.workstationName(a.workstationId)}`,
+          }}
           pageSize={20}
           empty={{ title: 'Aucun Andon sur la période.' }}
         />

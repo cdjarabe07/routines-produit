@@ -16,10 +16,20 @@
   font-size: 1.4rem;
   font-weight: var(--weight-semibold);
 }
-.displayHead > :first-child { flex: 1; }
-.clock { font-size: 2rem; font-variant-numeric: tabular-nums; }
+.displayHead > :first-child {
+  flex: 1;
+}
+.clock {
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+}
 
 @media (max-width: 720px) {
-  .display { padding: var(--space-4); }
-  .displayHead { flex-wrap: wrap; font-size: 1.1rem; }
+  .display {
+    padding: var(--space-4);
+  }
+  .displayHead {
+    flex-wrap: wrap;
+    font-size: 1.1rem;
+  }
 }

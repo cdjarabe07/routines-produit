@@ -10,7 +10,10 @@ export function useRecordCheck() {
 }
 
 export function useLinkCheckAnomaly() {
-  return useOperation((ds, { checkId, anomalyId }: { checkId: ID; anomalyId: ID }) => ds.repo('qualityChecks').update(checkId, { anomalyId }), {
-    invalidates: ['qualityChecks'],
-  });
+  return useOperation(
+    (ds, { checkId, anomalyId }: { checkId: ID; anomalyId: ID }) => ds.repo('qualityChecks').update(checkId, { anomalyId }),
+    {
+      invalidates: ['qualityChecks'],
+    },
+  );
 }

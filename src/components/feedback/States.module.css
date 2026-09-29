@@ -17,15 +17,33 @@
   padding: var(--space-3) var(--space-4);
   text-align: left;
 }
-.compact .title { font-weight: var(--weight-regular); color: var(--color-text-muted); }
-.compact .description { width: 100%; }
+.compact .title {
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+}
+.compact .description {
+  width: 100%;
+}
 
-.icon { color: var(--color-text-subtle); }
-.title { font-weight: var(--weight-semibold); color: var(--color-text); }
-.description { max-width: 460px; font-size: var(--text-sm); }
-.action { margin-top: var(--space-2); }
+.icon {
+  color: var(--color-text-subtle);
+}
+.title {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+.description {
+  max-width: 460px;
+  font-size: var(--text-sm);
+}
+.action {
+  margin-top: var(--space-2);
+}
 
-.error .icon, .error .title { color: var(--color-danger); }
+.error .icon,
+.error .title {
+  color: var(--color-danger);
+}
 
 .spinner {
   width: 18px;
@@ -36,4 +54,8 @@
   animation: spin 700ms linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

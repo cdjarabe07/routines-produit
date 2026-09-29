@@ -1,6 +1,4 @@
-import {
-  forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes,
-} from 'react';
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { cx } from '@/utils/cx';
 import styles from './Field.module.css';
 
@@ -13,22 +11,43 @@ interface ShellProps {
   className?: string;
 }
 
-function FieldShell({ id, label, hint, error, required, hideLabel, className, children }: ShellProps & { id: string; children: ReactNode }) {
+function FieldShell({
+  id,
+  label,
+  hint,
+  error,
+  required,
+  hideLabel,
+  className,
+  children,
+}: ShellProps & { id: string; children: ReactNode }) {
   return (
     <div className={cx(styles.field, className)}>
       <label htmlFor={id} className={cx(styles.label, hideLabel && 'visually-hidden')}>
         {label}
-        {required && <span className={styles.required} aria-hidden> *</span>}
+        {required && (
+          <span className={styles.required} aria-hidden>
+            {' '}
+            *
+          </span>
+        )}
       </label>
       {children}
-      {hint && !error && <p id={`${id}-hint`} className={styles.hint}>{hint}</p>}
-      {error && <p id={`${id}-error`} className={styles.error} role="alert">{error}</p>}
+      {hint && !error && (
+        <p id={`${id}-hint`} className={styles.hint}>
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={`${id}-error`} className={styles.error} role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
-const describedBy = (id: string, hint?: ReactNode, error?: string) =>
-  error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+const describedBy = (id: string, hint?: ReactNode, error?: string) => (error ? `${id}-error` : hint ? `${id}-hint` : undefined);
 
 export type TextFieldProps = ShellProps & Omit<InputHTMLAttributes<HTMLInputElement>, 'className'>;
 

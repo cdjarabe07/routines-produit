@@ -1,4 +1,7 @@
-.wrap { position: relative; display: inline-flex; }
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
 .tip {
   position: absolute;
   bottom: calc(100% + 6px);

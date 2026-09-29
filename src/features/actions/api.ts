@@ -34,7 +34,12 @@ export function useUpdateAction() {
       }
       const updated = await ds.repo('actions').update(action.id, next);
       if (patch.assigneeId && patch.assigneeId !== action.assigneeId) {
-        await notify(ds, [patch.assigneeId], { kind: 'action_assigned', title: `Action réassignée : ${truncate(action.title, 80)}`, link: `/actions/${action.id}` }, actor.id);
+        await notify(
+          ds,
+          [patch.assigneeId],
+          { kind: 'action_assigned', title: `Action réassignée : ${truncate(action.title, 80)}`, link: `/actions/${action.id}` },
+          actor.id,
+        );
       }
       return updated;
     },
@@ -53,11 +58,33 @@ const STATUS_MESSAGE: Record<ActionStatus, string> = {
 
 export function useAddComment() {
   return useOperation(
-    async (ds, { targetType, targetId, text, author, notifyUserIds, title, link }: {
-      targetType: CommentTarget; targetId: ID; text: string; author: User; notifyUserIds: (ID | undefined)[]; title: string; link: string;
-    }): Promise<Comment> => {
+    async (
+      ds,
+      {
+        targetType,
+        targetId,
+        text,
+        author,
+        notifyUserIds,
+        title,
+        link,
+      }: {
+        targetType: CommentTarget;
+        targetId: ID;
+        text: string;
+        author: User;
+        notifyUserIds: (ID | undefined)[];
+        title: string;
+        link: string;
+      },
+    ): Promise<Comment> => {
       const comment = await ds.repo('comments').create({ targetType, targetId, authorId: author.id, text: text.trim() });
-      await notify(ds, notifyUserIds, { kind: 'comment_added', title: `Commentaire de ${author.name} sur « ${truncate(title, 60)} »`, link }, author.id);
+      await notify(
+        ds,
+        notifyUserIds,
+        { kind: 'comment_added', title: `Commentaire de ${author.name} sur « ${truncate(title, 60)} »`, link },
+        author.id,
+      );
       return comment;
     },
     { invalidates: ['comments', 'notifications'], success: 'Commentaire publié.' },
@@ -66,7 +93,8 @@ export function useAddComment() {
 
 export function useEditComment() {
   return useOperation(
-    (ds, { id, text }: { id: ID; text: string }) => ds.repo('comments').update(id, { text: text.trim(), editedAt: new Date().toISOString() }),
+    (ds, { id, text }: { id: ID; text: string }) =>
+      ds.repo('comments').update(id, { text: text.trim(), editedAt: new Date().toISOString() }),
     { invalidates: ['comments'], success: 'Commentaire modifié.' },
   );
 }

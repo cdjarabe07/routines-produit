@@ -8,7 +8,9 @@ export function useSetPresence() {
   return useOperation(
     async (ds, { userId, date, status, recordedBy }: { userId: ID; date: DateKey; status: PresenceStatus; recordedBy: ID }) => {
       const existing = (await ds.repo('presence').list({ where: { userId, date } }))[0];
-      return existing ? ds.repo('presence').update(existing.id, { status, recordedBy }) : ds.repo('presence').create({ userId, date, status, recordedBy });
+      return existing
+        ? ds.repo('presence').update(existing.id, { status, recordedBy })
+        : ds.repo('presence').create({ userId, date, status, recordedBy });
     },
     { invalidates: ['presence'] },
   );
@@ -18,7 +20,9 @@ export function useCreateLeave() {
   return useOperation(
     async (ds, input: NewEntity<Leave>) => {
       if (input.to < input.from) throw new ValidationError('La date de fin doit être postérieure à la date de début.');
-      const overlapping = (await ds.repo('leaves').list({ where: { userId: input.userId } })).some((l) => l.from <= input.to && l.to >= input.from);
+      const overlapping = (await ds.repo('leaves').list({ where: { userId: input.userId } })).some(
+        (l) => l.from <= input.to && l.to >= input.from,
+      );
       if (overlapping) throw new ValidationError('Un congé existe déjà sur cette période pour cette personne.');
       return ds.repo('leaves').create(input);
     },
@@ -39,7 +43,8 @@ export function useCreateHandover() {
 
 export function useAcknowledgeHandover() {
   return useOperation(
-    (ds, { id, userId }: { id: ID; userId: ID }) => ds.repo('handovers').update(id, { acknowledgedBy: userId, acknowledgedAt: new Date().toISOString() }),
+    (ds, { id, userId }: { id: ID; userId: ID }) =>
+      ds.repo('handovers').update(id, { acknowledgedBy: userId, acknowledgedAt: new Date().toISOString() }),
     { invalidates: ['handovers'], success: 'Passation marquée comme lue.' },
   );
 }

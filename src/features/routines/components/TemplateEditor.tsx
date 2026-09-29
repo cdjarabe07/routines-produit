@@ -21,7 +21,15 @@ const EXECUTING_ROLES = ROLE_ORDER.filter((r) => r !== 'operator' && r !== 'admi
 
 const emptySection = (): RoutineSection => ({ id: createId(), title: 'Points de contrôle', items: [{ id: createId(), label: '' }] });
 
-export function TemplateEditor({ template, knowledge, onDone }: { template?: RoutineTemplate; knowledge: KnowledgeItem[]; onDone: () => void }) {
+export function TemplateEditor({
+  template,
+  knowledge,
+  onDone,
+}: {
+  template?: RoutineTemplate;
+  knowledge: KnowledgeItem[];
+  onDone: () => void;
+}) {
   const save = useSaveRoutineTemplate();
   const form = useForm<Values>({
     initial: {
@@ -38,11 +46,22 @@ export function TemplateEditor({ template, knowledge, onDone }: { template?: Rou
     },
     onSubmit: async (v) => {
       const sections = v.sections
-        .map((s) => ({ ...s, title: s.title.trim() || 'Points de contrôle', items: s.items.filter((i) => i.label.trim()).map((i) => ({ ...i, label: i.label.trim() })) }))
+        .map((s) => ({
+          ...s,
+          title: s.title.trim() || 'Points de contrôle',
+          items: s.items.filter((i) => i.label.trim()).map((i) => ({ ...i, label: i.label.trim() })),
+        }))
         .filter((s) => s.items.length > 0);
       await save.mutateAsync({
         id: template?.id,
-        input: { title: v.title.trim(), description: v.description.trim() || undefined, role: v.role, scheduledTime: v.scheduledTime, sections, active: template?.active ?? true },
+        input: {
+          title: v.title.trim(),
+          description: v.description.trim() || undefined,
+          role: v.role,
+          scheduledTime: v.scheduledTime,
+          sections,
+          active: template?.active ?? true,
+        },
       });
       onDone();
     },
@@ -50,17 +69,45 @@ export function TemplateEditor({ template, knowledge, onDone }: { template?: Rou
   const { values, set, errors } = form;
 
   const updateSection = (index: number, patch: Partial<RoutineSection>) =>
-    set('sections', values.sections.map((s, i) => (i === index ? { ...s, ...patch } : s)));
+    set(
+      'sections',
+      values.sections.map((s, i) => (i === index ? { ...s, ...patch } : s)),
+    );
 
   const knowledgeOptions = knowledge.filter((k) => k.kind === 'standard').map((k) => ({ value: k.id, label: `${k.code} — ${k.title}` }));
 
   return (
     <form onSubmit={form.handleSubmit} noValidate>
       <FormGrid>
-        <TextField className="full" label="Titre" required value={values.title} onChange={(e) => set('title', e.target.value)} error={errors.title} />
-        <SelectField label="Rôle qui l’exécute" options={EXECUTING_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))} value={values.role} onChange={(e) => set('role', e.target.value as Role)} />
-        <TextField label="Heure prévue" type="time" required value={values.scheduledTime} onChange={(e) => set('scheduledTime', e.target.value)} error={errors.scheduledTime} />
-        <TextAreaField className="full" label="Description (facultative)" rows={2} value={values.description} onChange={(e) => set('description', e.target.value)} />
+        <TextField
+          className="full"
+          label="Titre"
+          required
+          value={values.title}
+          onChange={(e) => set('title', e.target.value)}
+          error={errors.title}
+        />
+        <SelectField
+          label="Rôle qui l’exécute"
+          options={EXECUTING_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+          value={values.role}
+          onChange={(e) => set('role', e.target.value as Role)}
+        />
+        <TextField
+          label="Heure prévue"
+          type="time"
+          required
+          value={values.scheduledTime}
+          onChange={(e) => set('scheduledTime', e.target.value)}
+          error={errors.scheduledTime}
+        />
+        <TextAreaField
+          className="full"
+          label="Description (facultative)"
+          rows={2}
+          value={values.description}
+          onChange={(e) => set('description', e.target.value)}
+        />
       </FormGrid>
 
       <div className={styles.sections}>
@@ -70,7 +117,18 @@ export function TemplateEditor({ template, knowledge, onDone }: { template?: Rou
             <div className={styles.sectionHead}>
               <TextField label={`Section ${si + 1}`} value={section.title} onChange={(e) => updateSection(si, { title: e.target.value })} />
               {values.sections.length > 1 && (
-                <IconButton label={`Supprimer la section ${si + 1}`} variant="danger" size="sm" icon={<Trash2 size={15} />} onClick={() => set('sections', values.sections.filter((_, i) => i !== si))} />
+                <IconButton
+                  label={`Supprimer la section ${si + 1}`}
+                  variant="danger"
+                  size="sm"
+                  icon={<Trash2 size={15} />}
+                  onClick={() =>
+                    set(
+                      'sections',
+                      values.sections.filter((_, i) => i !== si),
+                    )
+                  }
+                />
               )}
             </div>
             <ol className={styles.items}>
@@ -81,7 +139,9 @@ export function TemplateEditor({ template, knowledge, onDone }: { template?: Rou
                     hideLabel
                     placeholder={`Point de contrôle ${ii + 1}`}
                     value={item.label}
-                    onChange={(e) => updateSection(si, { items: section.items.map((it, k) => (k === ii ? { ...it, label: e.target.value } : it)) })}
+                    onChange={(e) =>
+                      updateSection(si, { items: section.items.map((it, k) => (k === ii ? { ...it, label: e.target.value } : it)) })
+                    }
                   />
                   <SelectField
                     label={`Standard associé au point ${ii + 1}`}
@@ -89,7 +149,11 @@ export function TemplateEditor({ template, knowledge, onDone }: { template?: Rou
                     placeholder="Aucun standard"
                     options={knowledgeOptions}
                     value={item.knowledgeId ?? ''}
-                    onChange={(e) => updateSection(si, { items: section.items.map((it, k) => (k === ii ? { ...it, knowledgeId: e.target.value || undefined } : it)) })}
+                    onChange={(e) =>
+                      updateSection(si, {
+                        items: section.items.map((it, k) => (k === ii ? { ...it, knowledgeId: e.target.value || undefined } : it)),
+                      })
+                    }
                   />
                   <IconButton
                     label={`Supprimer le point ${ii + 1}`}
@@ -101,18 +165,31 @@ export function TemplateEditor({ template, knowledge, onDone }: { template?: Rou
                 </li>
               ))}
             </ol>
-            <Button size="sm" variant="ghost" icon={<Plus size={15} aria-hidden />} onClick={() => updateSection(si, { items: [...section.items, { id: createId(), label: '' }] })}>
+            <Button
+              size="sm"
+              variant="ghost"
+              icon={<Plus size={15} aria-hidden />}
+              onClick={() => updateSection(si, { items: [...section.items, { id: createId(), label: '' }] })}
+            >
               Ajouter un point
             </Button>
           </fieldset>
         ))}
-        {errors.sections && <p className={styles.error} role="alert">{errors.sections}</p>}
-        <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => set('sections', [...values.sections, emptySection()])}>Ajouter une section</Button>
+        {errors.sections && (
+          <p className={styles.error} role="alert">
+            {errors.sections}
+          </p>
+        )}
+        <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => set('sections', [...values.sections, emptySection()])}>
+          Ajouter une section
+        </Button>
       </div>
 
       <FormActions>
         <Button onClick={onDone}>Annuler</Button>
-        <Button type="submit" variant="primary" loading={form.submitting}>Enregistrer le modèle</Button>
+        <Button type="submit" variant="primary" loading={form.submitting}>
+          Enregistrer le modèle
+        </Button>
       </FormActions>
     </form>
   );

@@ -33,11 +33,18 @@ export function KnowledgeDetailPage() {
       {() => {
         const item = items.data!.find((k) => k.id === id);
         if (!item || (item.status === 'draft' && !can('knowledge.manage'))) {
-          return <EmptyState title="Document introuvable" action={<ButtonLink to="/connaissances">Retour au centre de connaissances</ButtonLink>} />;
+          return (
+            <EmptyState
+              title="Document introuvable"
+              action={<ButtonLink to="/connaissances">Retour au centre de connaissances</ButtonLink>}
+            />
+          );
         }
         const fav = favorites.data!.find((f) => f.userId === user.id && f.knowledgeId === item.id);
         const url = safeExternalUrl(item.url);
-        const usedInRoutines = templates.data!.filter((t) => t.active && t.sections.some((s) => s.items.some((i) => i.knowledgeId === item.id)));
+        const usedInRoutines = templates.data!.filter(
+          (t) => t.active && t.sections.some((s) => s.items.some((i) => i.knowledgeId === item.id)),
+        );
         const usedInSequences = sequences.data!.filter((s) => s.active && s.steps.some((st) => st.knowledgeId === item.id));
         return (
           <>
@@ -54,10 +61,18 @@ export function KnowledgeDetailPage() {
               }
               actions={
                 <>
-                  <Button icon={<Star size={16} fill={fav ? 'currentColor' : 'none'} aria-hidden />} aria-pressed={Boolean(fav)} onClick={() => toggle.mutate({ userId: user.id, knowledgeId: item.id, existing: fav })}>
+                  <Button
+                    icon={<Star size={16} fill={fav ? 'currentColor' : 'none'} aria-hidden />}
+                    aria-pressed={Boolean(fav)}
+                    onClick={() => toggle.mutate({ userId: user.id, knowledgeId: item.id, existing: fav })}
+                  >
                     {fav ? 'Favori' : 'Ajouter aux favoris'}
                   </Button>
-                  {can('knowledge.manage') && <Button icon={<Pencil size={16} aria-hidden />} onClick={() => setEditing(true)}>Modifier</Button>}
+                  {can('knowledge.manage') && (
+                    <Button icon={<Pencil size={16} aria-hidden />} onClick={() => setEditing(true)}>
+                      Modifier
+                    </Button>
+                  )}
                 </>
               }
             />
@@ -67,7 +82,12 @@ export function KnowledgeDetailPage() {
                   <p>{item.summary}</p>
                   {url && (
                     <p style={{ marginTop: 'var(--space-4)' }}>
-                      <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 500 }}
+                      >
                         Ouvrir le document externe <ExternalLink size={15} aria-hidden />
                       </a>
                     </p>
@@ -75,8 +95,18 @@ export function KnowledgeDetailPage() {
                 </Panel>
                 {item.keyPoints.length > 0 && (
                   <Panel title="Points clés">
-                    <ol style={{ listStyle: 'decimal', paddingLeft: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                      {item.keyPoints.map((p) => <li key={p}>{p}</li>)}
+                    <ol
+                      style={{
+                        listStyle: 'decimal',
+                        paddingLeft: 'var(--space-5)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 'var(--space-2)',
+                      }}
+                    >
+                      {item.keyPoints.map((p) => (
+                        <li key={p}>{p}</li>
+                      ))}
                     </ol>
                   </Panel>
                 )}
@@ -86,7 +116,12 @@ export function KnowledgeDetailPage() {
                   ) : (
                     <ItemList
                       items={[
-                        ...usedInRoutines.map((t) => ({ id: t.id, title: t.title, meta: `Routine ${t.scheduledTime} · ${ROLE_LABELS[t.role]}`, to: `/routines/${t.id}/${todayKey()}` })),
+                        ...usedInRoutines.map((t) => ({
+                          id: t.id,
+                          title: t.title,
+                          meta: `Routine ${t.scheduledTime} · ${ROLE_LABELS[t.role]}`,
+                          to: `/routines/${t.id}/${todayKey()}`,
+                        })),
                         ...usedInSequences.map((s) => ({ id: s.id, title: s.name, meta: 'Séquence guidée', to: '/sequences' })),
                       ]}
                     />
@@ -105,7 +140,13 @@ export function KnowledgeDetailPage() {
                 />
               </Panel>
             </Columns>
-            <Drawer open={editing} onClose={() => setEditing(false)} title="Modifier le document" description="Pensez à incrémenter la version si le contenu change." size="lg">
+            <Drawer
+              open={editing}
+              onClose={() => setEditing(false)}
+              title="Modifier le document"
+              description="Pensez à incrémenter la version si le contenu change."
+              size="lg"
+            >
               {editing && <KnowledgeForm item={item} onDone={() => setEditing(false)} />}
             </Drawer>
           </>

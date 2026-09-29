@@ -30,7 +30,9 @@ describe('storeDataSource', () => {
   });
 
   it('filtre par égalité', async () => {
-    const ws = await make().repo('workstations').list({ where: { lineId: 'line-b' } });
+    const ws = await make()
+      .repo('workstations')
+      .list({ where: { lineId: 'line-b' } });
     expect(ws.map((w) => w.code).sort()).toEqual(['P5', 'P6', 'P7', 'P8']);
   });
 
@@ -58,9 +60,16 @@ describe('storeDataSource', () => {
   it('signale un stockage plein par une StorageError', async () => {
     const store = createMemoryStore();
     const ds = make(store);
-    const full: KeyValueStore = { ...store, setItem: () => { throw new Error('QuotaExceededError'); } };
+    const full: KeyValueStore = {
+      ...store,
+      setItem: () => {
+        throw new Error('QuotaExceededError');
+      },
+    };
     const blocked = createStoreDataSource({ ...full, getItem: store.getItem }, () => buildDemoData());
-    await expect(blocked.repo('announcements').create({ text: 'x', date: '2026-09-29', authorId: 'u' })).rejects.toBeInstanceOf(StorageError);
+    await expect(blocked.repo('announcements').create({ text: 'x', date: '2026-09-29', authorId: 'u' })).rejects.toBeInstanceOf(
+      StorageError,
+    );
     expect(ds.kind).toBe('demo');
   });
 });

@@ -30,8 +30,7 @@ export const alertElapsedMin = (a: AndonAlert, now: Date) => minutesBetween(a.ra
 export const isEscalated = (a: AndonAlert, now: Date, thresholdMin: number) =>
   a.status === 'active' && minutesBetween(a.raisedAt, now) >= thresholdMin;
 
-export const acknowledgeMinutes = (a: AndonAlert) =>
-  a.acknowledgedAt ? minutesBetween(a.raisedAt, a.acknowledgedAt) : null;
+export const acknowledgeMinutes = (a: AndonAlert) => (a.acknowledgedAt ? minutesBetween(a.raisedAt, a.acknowledgedAt) : null);
 
 export const resolutionMinutes = (a: AndonAlert) => (a.resolvedAt ? minutesBetween(a.raisedAt, a.resolvedAt) : null);
 

@@ -42,7 +42,9 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         role="alertdialog"
         footer={
           <>
-            <Button onClick={() => close(false)} data-autofocus>{options?.cancelLabel ?? 'Annuler'}</Button>
+            <Button onClick={() => close(false)} data-autofocus>
+              {options?.cancelLabel ?? 'Annuler'}
+            </Button>
             <Button variant={options?.tone === 'danger' ? 'danger' : 'primary'} onClick={() => close(true)}>
               {options?.confirmLabel ?? 'Confirmer'}
             </Button>

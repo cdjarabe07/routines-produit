@@ -46,17 +46,45 @@ export function DashboardPage() {
   const data = useMemo<CockpitData | null>(() => {
     if (!lookups || all.some((q) => !q.data)) return null;
     return {
-      user, now, today, can,
+      user,
+      now,
+      today,
+      can,
       lines: lookups.lines,
       workstations: lookups.workstations,
-      alerts: alerts.data!, actions: actions.data!, anomalies: anomalies.data!, templates: templates.data!, runs: runs.data!,
-      meetings: meetings.data!, stocks: stocks.data!, orders: orders.data!, handovers: handovers.data!, checks: checks.data!,
+      alerts: alerts.data!,
+      actions: actions.data!,
+      anomalies: anomalies.data!,
+      templates: templates.data!,
+      runs: runs.data!,
+      meetings: meetings.data!,
+      stocks: stocks.data!,
+      orders: orders.data!,
+      handovers: handovers.data!,
+      checks: checks.data!,
       escalationMinutes: settings.andonEscalationMinutes,
       toleranceMinutes: settings.routineLateToleranceMinutes,
       workstationName: lookups.workstationName,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dépend des données de chaque requête
-  }, [user, now, today, can, lookups, settings, alerts.data, actions.data, anomalies.data, templates.data, runs.data, meetings.data, stocks.data, orders.data, handovers.data, checks.data]);
+  }, [
+    user,
+    now,
+    today,
+    can,
+    lookups,
+    settings,
+    alerts.data,
+    actions.data,
+    anomalies.data,
+    templates.data,
+    runs.data,
+    meetings.data,
+    stocks.data,
+    orders.data,
+    handovers.data,
+    checks.data,
+  ]);
 
   const hour = now.getHours();
   const greeting = hour < 5 || hour >= 18 ? 'Bonsoir' : 'Bonjour';
@@ -81,7 +109,9 @@ export function DashboardPage() {
           const myRoutines = can('routine.execute') ? templatesForRole(data.templates, user.role) : [];
           const agenda = buildDayAgenda(today, templatesForRole(data.templates, user.role), data.runs, data.meetings);
           const nowMinutes = minutesOfDay(now);
-          const announcement = announcements.data!.filter((a) => a.date === today).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+          const announcement = announcements
+            .data!.filter((a) => a.date === today)
+            .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
           const lastHandover = [...data.handovers].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 
           return (
@@ -107,7 +137,12 @@ export function DashboardPage() {
                           meta: p.meta,
                           to: p.to,
                           tone: p.level === 'critical' ? 'danger' : p.level === 'high' ? 'warning' : undefined,
-                          aside: p.level === 'critical' ? <Badge tone="danger" strong>Urgent</Badge> : undefined,
+                          aside:
+                            p.level === 'critical' ? (
+                              <Badge tone="danger" strong>
+                                Urgent
+                              </Badge>
+                            ) : undefined,
                         }))}
                       />
                     )}
@@ -115,13 +150,39 @@ export function DashboardPage() {
 
                   <KpiStrip>
                     <Kpi label="Routines du jour" value={formatPercent(ind.routinePct)} detail={ind.routineDetail} to="/routines" />
-                    <Kpi label="Actions en retard" value={ind.overdueActions} tone={ind.overdueActions ? 'danger' : 'success'} detail={`${ind.dueToday} à échéance aujourd’hui`} to="/actions?vue=overdue" />
-                    <Kpi label="Anomalies ouvertes" value={ind.openAnomalies} tone={ind.criticalAnomalies ? 'danger' : 'neutral'} detail={`${ind.criticalAnomalies} critique(s)`} to="/anomalies" />
-                    <Kpi label="Conformité LQC" value={formatPercent(ind.qualityPct, 1)} tone={ind.qualityPct !== null && ind.qualityPct < 95 ? 'warning' : 'neutral'} detail={ind.qualityCount ? `${ind.qualityCount} mesure(s) aujourd’hui` : 'Aucune mesure aujourd’hui'} to="/qualite" />
+                    <Kpi
+                      label="Actions en retard"
+                      value={ind.overdueActions}
+                      tone={ind.overdueActions ? 'danger' : 'success'}
+                      detail={`${ind.dueToday} à échéance aujourd’hui`}
+                      to="/actions?vue=overdue"
+                    />
+                    <Kpi
+                      label="Anomalies ouvertes"
+                      value={ind.openAnomalies}
+                      tone={ind.criticalAnomalies ? 'danger' : 'neutral'}
+                      detail={`${ind.criticalAnomalies} critique(s)`}
+                      to="/anomalies"
+                    />
+                    <Kpi
+                      label="Conformité LQC"
+                      value={formatPercent(ind.qualityPct, 1)}
+                      tone={ind.qualityPct !== null && ind.qualityPct < 95 ? 'warning' : 'neutral'}
+                      detail={ind.qualityCount ? `${ind.qualityCount} mesure(s) aujourd’hui` : 'Aucune mesure aujourd’hui'}
+                      to="/qualite"
+                    />
                   </KpiStrip>
 
                   {myRoutines.length > 0 && (
-                    <Panel title="Mes routines du jour" flush actions={<ButtonLink to="/routines" size="sm" variant="ghost">Tout voir</ButtonLink>}>
+                    <Panel
+                      title="Mes routines du jour"
+                      flush
+                      actions={
+                        <ButtonLink to="/routines" size="sm" variant="ghost">
+                          Tout voir
+                        </ButtonLink>
+                      }
+                    >
                       <ItemList
                         items={myRoutines.map((t) => {
                           const run = findRun(data.runs, t.id, today);
@@ -142,9 +203,21 @@ export function DashboardPage() {
                 </Stack>
 
                 <Stack>
-                  <AnnouncementPanel key={announcement?.id ?? 'none'} announcement={announcement} authorName={lookups!.userName(announcement?.authorId)} />
+                  <AnnouncementPanel
+                    key={announcement?.id ?? 'none'}
+                    announcement={announcement}
+                    authorName={lookups!.userName(announcement?.authorId)}
+                  />
 
-                  <Panel title="Agenda du jour" flush actions={<ButtonLink to="/agenda" size="sm" variant="ghost">Agenda</ButtonLink>}>
+                  <Panel
+                    title="Agenda du jour"
+                    flush
+                    actions={
+                      <ButtonLink to="/agenda" size="sm" variant="ghost">
+                        Agenda
+                      </ButtonLink>
+                    }
+                  >
                     {agenda.length === 0 ? (
                       <EmptyState compact title="Rien de planifié aujourd’hui pour votre rôle." />
                     ) : (
@@ -154,21 +227,37 @@ export function DashboardPage() {
                           leading: e.kind === 'meeting' ? <Users size={16} /> : <CalendarClock size={16} />,
                           title: `${e.time} · ${e.title}`,
                           meta: e.detail,
-                          aside: e.done ? <Badge tone="success">Fait</Badge> : timeToMinutes(e.time) <= nowMinutes ? <Badge tone="warning">À faire</Badge> : undefined,
+                          aside: e.done ? (
+                            <Badge tone="success">Fait</Badge>
+                          ) : timeToMinutes(e.time) <= nowMinutes ? (
+                            <Badge tone="warning">À faire</Badge>
+                          ) : undefined,
                           to: e.to,
                         }))}
                       />
                     )}
                   </Panel>
 
-                  <Panel title="Dernière passation" actions={<ButtonLink to="/passation" size="sm" variant="ghost">Passations</ButtonLink>}>
+                  <Panel
+                    title="Dernière passation"
+                    actions={
+                      <ButtonLink to="/passation" size="sm" variant="ghost">
+                        Passations
+                      </ButtonLink>
+                    }
+                  >
                     {lastHandover ? (
                       <>
                         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
-                          {SHIFT[lastHandover.fromShift]} → {SHIFT[lastHandover.toShift]} · {lookups!.userName(lastHandover.authorId)} · {formatTime(lastHandover.createdAt)}
+                          {SHIFT[lastHandover.fromShift]} → {SHIFT[lastHandover.toShift]} · {lookups!.userName(lastHandover.authorId)} ·{' '}
+                          {formatTime(lastHandover.createdAt)}
                         </p>
                         <p>{lastHandover.note}</p>
-                        {!lastHandover.acknowledgedAt && <div style={{ marginTop: 'var(--space-2)' }}><Badge tone="warning">Non lue par l’équipe suivante</Badge></div>}
+                        {!lastHandover.acknowledgedAt && (
+                          <div style={{ marginTop: 'var(--space-2)' }}>
+                            <Badge tone="warning">Non lue par l’équipe suivante</Badge>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <p style={{ color: 'var(--color-text-muted)' }}>Aucune passation enregistrée.</p>
@@ -180,7 +269,13 @@ export function DashboardPage() {
           );
         }}
       </QueryBoundary>
-      {data && <DailyReportDrawer open={reportOpen} onClose={() => setReportOpen(false)} text={reportOpen ? buildDailyReport(data, settings.plantName) : ''} />}
+      {data && (
+        <DailyReportDrawer
+          open={reportOpen}
+          onClose={() => setReportOpen(false)}
+          text={reportOpen ? buildDailyReport(data, settings.plantName) : ''}
+        />
+      )}
     </>
   );
 }

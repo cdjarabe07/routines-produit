@@ -46,12 +46,21 @@ export function ProductionPage() {
         title="Production"
         description="Ordres de fabrication par étape et stocks matières aux postes."
         meta={<Badge>Saisie manuelle — aucun système MES/ERP connecté</Badge>}
-        actions={editable && tab === 'orders' && <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setCreating(true)}>Nouvel OF</Button>}
+        actions={
+          editable &&
+          tab === 'orders' && (
+            <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setCreating(true)}>
+              Nouvel OF
+            </Button>
+          )
+        }
       />
       <QueryBoundary queries={[orders, stocks, movements, ...queries]}>
         {() => {
           const lowStocks = stocks.data!.filter(needsReorder).length;
-          const visible = orders.data!.filter((o) => (lineFilter === 'all' || o.lineId === lineFilter) && (showDone || o.status !== 'done'));
+          const visible = orders.data!.filter(
+            (o) => (lineFilter === 'all' || o.lineId === lineFilter) && (showDone || o.status !== 'done'),
+          );
           const blocked = orders.data!.filter((o) => o.status === 'blocked').length;
           return (
             <Stack>
@@ -83,12 +92,20 @@ export function ProductionPage() {
                     lookups={lookups!}
                     today={today}
                     editable={editable}
-                    onMove={(o, stage) => update.mutate({ id: o.id, patch: { stage, status: o.status === 'planned' ? 'in_progress' : o.status } })}
+                    onMove={(o, stage) =>
+                      update.mutate({ id: o.id, patch: { stage, status: o.status === 'planned' ? 'in_progress' : o.status } })
+                    }
                     onBlock={setBlocking}
                     onUnblock={(o) => update.mutate({ id: o.id, patch: { status: 'in_progress', blockedReason: undefined } })}
                     onQuantity={setQuantityFor}
                     onComplete={async (o) => {
-                      if (await confirm({ title: `Terminer ${o.reference} ?`, message: `Quantité produite : ${o.quantityDone}/${o.quantityPlanned}.`, confirmLabel: 'Terminer' })) {
+                      if (
+                        await confirm({
+                          title: `Terminer ${o.reference} ?`,
+                          message: `Quantité produite : ${o.quantityDone}/${o.quantityPlanned}.`,
+                          confirmLabel: 'Terminer',
+                        })
+                      ) {
                         update.mutate({ id: o.id, patch: { status: 'done', blockedReason: undefined } });
                       }
                     }}
@@ -98,8 +115,18 @@ export function ProductionPage() {
                 <StockPanel stocks={stocks.data!} movements={movements.data!} lookups={lookups!} editable={editable} />
               )}
 
-              <BlockDialog order={blocking} onClose={() => setBlocking(null)} onConfirm={(reason) => blocking && update.mutateAsync({ id: blocking.id, patch: { status: 'blocked', blockedReason: reason } })} />
-              <QuantityDialog order={quantityFor} onClose={() => setQuantityFor(null)} onConfirm={(q) => quantityFor && update.mutateAsync({ id: quantityFor.id, patch: { quantityDone: q } })} />
+              <BlockDialog
+                order={blocking}
+                onClose={() => setBlocking(null)}
+                onConfirm={(reason) =>
+                  blocking && update.mutateAsync({ id: blocking.id, patch: { status: 'blocked', blockedReason: reason } })
+                }
+              />
+              <QuantityDialog
+                order={quantityFor}
+                onClose={() => setQuantityFor(null)}
+                onConfirm={(q) => quantityFor && update.mutateAsync({ id: quantityFor.id, patch: { quantityDone: q } })}
+              />
               <Drawer open={creating} onClose={() => setCreating(false)} title="Nouvel ordre de fabrication" size="md">
                 {creating && <OrderForm lookups={lookups!} onDone={() => setCreating(false)} />}
               </Drawer>
@@ -111,7 +138,15 @@ export function ProductionPage() {
   );
 }
 
-function BlockDialog({ order, onClose, onConfirm }: { order: ProductionOrder | null; onClose: () => void; onConfirm: (reason: string) => Promise<unknown> | null }) {
+function BlockDialog({
+  order,
+  onClose,
+  onConfirm,
+}: {
+  order: ProductionOrder | null;
+  onClose: () => void;
+  onConfirm: (reason: string) => Promise<unknown> | null;
+}) {
   const form = useForm({
     initial: { reason: '' },
     rules: { reason: [required('Indiquez la cause du blocage')] },
@@ -122,39 +157,94 @@ function BlockDialog({ order, onClose, onConfirm }: { order: ProductionOrder | n
     },
   });
   return (
-    <Modal open={order !== null} onClose={() => { form.reset(); onClose(); }} title={`Blocage — ${order?.reference ?? ''}`} size="sm">
+    <Modal
+      open={order !== null}
+      onClose={() => {
+        form.reset();
+        onClose();
+      }}
+      title={`Blocage — ${order?.reference ?? ''}`}
+      size="sm"
+    >
       <form onSubmit={form.handleSubmit} noValidate>
-        <TextField label="Cause du blocage" required value={form.values.reason} onChange={(e) => form.set('reason', e.target.value)} error={form.errors.reason} placeholder="Ex. : rupture de terminaux au poste 1" data-autofocus />
+        <TextField
+          label="Cause du blocage"
+          required
+          value={form.values.reason}
+          onChange={(e) => form.set('reason', e.target.value)}
+          error={form.errors.reason}
+          placeholder="Ex. : rupture de terminaux au poste 1"
+          data-autofocus
+        />
         <FormActions>
-          <Button onClick={() => { form.reset(); onClose(); }}>Annuler</Button>
-          <Button type="submit" variant="danger" loading={form.submitting}>Bloquer l’OF</Button>
+          <Button
+            onClick={() => {
+              form.reset();
+              onClose();
+            }}
+          >
+            Annuler
+          </Button>
+          <Button type="submit" variant="danger" loading={form.submitting}>
+            Bloquer l’OF
+          </Button>
         </FormActions>
       </form>
     </Modal>
   );
 }
 
-function QuantityDialog({ order, onClose, onConfirm }: { order: ProductionOrder | null; onClose: () => void; onConfirm: (q: number) => Promise<unknown> | null }) {
+function QuantityDialog({
+  order,
+  onClose,
+  onConfirm,
+}: {
+  order: ProductionOrder | null;
+  onClose: () => void;
+  onConfirm: (q: number) => Promise<unknown> | null;
+}) {
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const close = () => { setValue(''); setError(null); onClose(); };
+  const close = () => {
+    setValue('');
+    setError(null);
+    onClose();
+  };
   return (
-    <Modal open={order !== null} onClose={close} title={`Quantité produite — ${order?.reference ?? ''}`} description={order ? `Prévu : ${order.quantityPlanned} · actuel : ${order.quantityDone}` : undefined} size="sm">
+    <Modal
+      open={order !== null}
+      onClose={close}
+      title={`Quantité produite — ${order?.reference ?? ''}`}
+      description={order ? `Prévu : ${order.quantityPlanned} · actuel : ${order.quantityDone}` : undefined}
+      size="sm"
+    >
       <form
         noValidate
         onSubmit={async (e) => {
           e.preventDefault();
           const n = Number(value);
           if (value === '' || Number.isNaN(n) || n < 0 || !Number.isInteger(n)) return setError('Saisissez un nombre entier positif.');
-          if (order && n > order.quantityPlanned * 1.2) return setError(`Valeur improbable (prévu : ${order.quantityPlanned}). Vérifiez la saisie.`);
+          if (order && n > order.quantityPlanned * 1.2)
+            return setError(`Valeur improbable (prévu : ${order.quantityPlanned}). Vérifiez la saisie.`);
           await onConfirm(n);
           close();
         }}
       >
-        <TextField label="Quantité totale produite" type="number" min={0} inputMode="numeric" value={value} onChange={(e) => setValue(e.target.value)} error={error ?? undefined} data-autofocus />
+        <TextField
+          label="Quantité totale produite"
+          type="number"
+          min={0}
+          inputMode="numeric"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          error={error ?? undefined}
+          data-autofocus
+        />
         <FormActions>
           <Button onClick={close}>Annuler</Button>
-          <Button type="submit" variant="primary">Enregistrer</Button>
+          <Button type="submit" variant="primary">
+            Enregistrer
+          </Button>
         </FormActions>
       </form>
     </Modal>
@@ -164,7 +254,15 @@ function QuantityDialog({ order, onClose, onConfirm }: { order: ProductionOrder 
 function OrderForm({ lookups, onDone }: { lookups: Lookups; onDone: () => void }) {
   const create = useCreateOrder();
   const form = useForm({
-    initial: { reference: '', harnessRef: '', lineId: lookups.lines[0]?.id ?? '', quantityPlanned: '', stage: 'cutting' as ProductionStage, ownerId: '', dueDate: addDays(todayKey(), 1) },
+    initial: {
+      reference: '',
+      harnessRef: '',
+      lineId: lookups.lines[0]?.id ?? '',
+      quantityPlanned: '',
+      stage: 'cutting' as ProductionStage,
+      ownerId: '',
+      dueDate: addDays(todayKey(), 1),
+    },
     rules: {
       reference: [required('Référence de l’OF obligatoire')],
       harnessRef: [required('Référence faisceau obligatoire')],
@@ -174,8 +272,15 @@ function OrderForm({ lookups, onDone }: { lookups: Lookups; onDone: () => void }
     },
     onSubmit: async (v) => {
       await create.mutateAsync({
-        reference: v.reference.trim(), harnessRef: v.harnessRef.trim(), lineId: v.lineId, quantityPlanned: Number(v.quantityPlanned),
-        quantityDone: 0, stage: v.stage, status: 'planned', ownerId: v.ownerId || undefined, dueDate: v.dueDate,
+        reference: v.reference.trim(),
+        harnessRef: v.harnessRef.trim(),
+        lineId: v.lineId,
+        quantityPlanned: Number(v.quantityPlanned),
+        quantityDone: 0,
+        stage: v.stage,
+        status: 'planned',
+        ownerId: v.ownerId || undefined,
+        dueDate: v.dueDate,
       });
       onDone();
     },
@@ -184,17 +289,64 @@ function OrderForm({ lookups, onDone }: { lookups: Lookups; onDone: () => void }
   return (
     <form onSubmit={form.handleSubmit} noValidate>
       <FormGrid>
-        <TextField label="Référence OF" required value={values.reference} onChange={(e) => set('reference', e.target.value)} error={errors.reference} placeholder="OF-2660" />
-        <TextField label="Référence faisceau" required value={values.harnessRef} onChange={(e) => set('harnessRef', e.target.value)} error={errors.harnessRef} />
-        <SelectField label="Ligne" options={lookups.lines.map((l) => ({ value: l.id, label: l.name }))} value={values.lineId} onChange={(e) => set('lineId', e.target.value)} />
-        <TextField label="Quantité prévue" required type="number" min={1} value={values.quantityPlanned} onChange={(e) => set('quantityPlanned', e.target.value)} error={errors.quantityPlanned} />
-        <SelectField label="Étape de départ" options={options(PRODUCTION_STAGE)} value={values.stage} onChange={(e) => set('stage', e.target.value as ProductionStage)} />
-        <TextField label="Échéance" required type="date" value={values.dueDate} onChange={(e) => set('dueDate', e.target.value)} error={errors.dueDate} />
-        <SelectField className="full" label="Responsable" placeholder="Non attribué" options={userOptions(lookups.activeUsers)} value={values.ownerId} onChange={(e) => set('ownerId', e.target.value)} />
+        <TextField
+          label="Référence OF"
+          required
+          value={values.reference}
+          onChange={(e) => set('reference', e.target.value)}
+          error={errors.reference}
+          placeholder="OF-2660"
+        />
+        <TextField
+          label="Référence faisceau"
+          required
+          value={values.harnessRef}
+          onChange={(e) => set('harnessRef', e.target.value)}
+          error={errors.harnessRef}
+        />
+        <SelectField
+          label="Ligne"
+          options={lookups.lines.map((l) => ({ value: l.id, label: l.name }))}
+          value={values.lineId}
+          onChange={(e) => set('lineId', e.target.value)}
+        />
+        <TextField
+          label="Quantité prévue"
+          required
+          type="number"
+          min={1}
+          value={values.quantityPlanned}
+          onChange={(e) => set('quantityPlanned', e.target.value)}
+          error={errors.quantityPlanned}
+        />
+        <SelectField
+          label="Étape de départ"
+          options={options(PRODUCTION_STAGE)}
+          value={values.stage}
+          onChange={(e) => set('stage', e.target.value as ProductionStage)}
+        />
+        <TextField
+          label="Échéance"
+          required
+          type="date"
+          value={values.dueDate}
+          onChange={(e) => set('dueDate', e.target.value)}
+          error={errors.dueDate}
+        />
+        <SelectField
+          className="full"
+          label="Responsable"
+          placeholder="Non attribué"
+          options={userOptions(lookups.activeUsers)}
+          value={values.ownerId}
+          onChange={(e) => set('ownerId', e.target.value)}
+        />
       </FormGrid>
       <FormActions>
         <Button onClick={onDone}>Annuler</Button>
-        <Button type="submit" variant="primary" loading={form.submitting}>Créer l’OF</Button>
+        <Button type="submit" variant="primary" loading={form.submitting}>
+          Créer l’OF
+        </Button>
       </FormActions>
     </form>
   );

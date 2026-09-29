@@ -28,7 +28,14 @@ interface AnomalyFormProps {
 }
 
 /** Formulaire de déclaration d'anomalie, commun à tous les points d'entrée (QR, routine, LQC, Andon). */
-export function AnomalyForm({ workstations, initial, origin, onCreated, onCancel, submitLabel = 'Enregistrer l’anomalie' }: AnomalyFormProps) {
+export function AnomalyForm({
+  workstations,
+  initial,
+  origin,
+  onCreated,
+  onCancel,
+  submitLabel = 'Enregistrer l’anomalie',
+}: AnomalyFormProps) {
   const user = useCurrentUser();
   const create = useCreateAnomaly();
   const rules = useMemo(
@@ -101,7 +108,9 @@ export function AnomalyForm({ workstations, initial, origin, onCreated, onCancel
       </FormGrid>
       <FormActions>
         {onCancel && <Button onClick={onCancel}>Annuler</Button>}
-        <Button type="submit" variant="primary" loading={form.submitting}>{submitLabel}</Button>
+        <Button type="submit" variant="primary" loading={form.submitting}>
+          {submitLabel}
+        </Button>
       </FormActions>
     </form>
   );

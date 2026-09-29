@@ -4,7 +4,8 @@ import { X } from 'lucide-react';
 import { cx } from '@/utils/cx';
 import styles from './Overlay.module.css';
 
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 interface OverlayProps {
   open: boolean;
@@ -23,7 +24,19 @@ interface OverlayProps {
 }
 
 /* Base commune Modal / Drawer : piège du focus, Échap, restauration du focus, blocage du défilement. */
-function Overlay({ open, onClose, title, description, children, footer, kind, size = 'md', dismissible = true, role = 'dialog', side = 'right' }: OverlayProps) {
+function Overlay({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  kind,
+  size = 'md',
+  dismissible = true,
+  role = 'dialog',
+  side = 'right',
+}: OverlayProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descId = useId();
@@ -71,7 +84,12 @@ function Overlay({ open, onClose, title, description, children, footer, kind, si
   if (!open) return null;
 
   return createPortal(
-    <div className={cx(styles.backdrop, styles[`${kind}Backdrop`], kind === 'drawer' && side === 'left' && styles.left)} onMouseDown={(e) => { if (e.target === e.currentTarget && dismissible) onClose(); }}>
+    <div
+      className={cx(styles.backdrop, styles[`${kind}Backdrop`], kind === 'drawer' && side === 'left' && styles.left)}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && dismissible) onClose();
+      }}
+    >
       <div
         ref={panelRef}
         role={role}
@@ -83,8 +101,14 @@ function Overlay({ open, onClose, title, description, children, footer, kind, si
       >
         <header className={styles.header}>
           <div>
-            <h2 id={titleId} className={styles.title}>{title}</h2>
-            {description && <p id={descId} className={styles.description}>{description}</p>}
+            <h2 id={titleId} className={styles.title}>
+              {title}
+            </h2>
+            {description && (
+              <p id={descId} className={styles.description}>
+                {description}
+              </p>
+            )}
           </div>
           {dismissible && (
             <button type="button" className={styles.close} onClick={onClose} aria-label="Fermer">

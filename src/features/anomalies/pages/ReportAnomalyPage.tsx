@@ -20,7 +20,10 @@ export function ReportAnomalyPage() {
 
   return (
     <>
-      <PageHeader title="Signaler une anomalie" description="Décrivez ce que vous avez constaté. La déclaration est horodatée et visible immédiatement par l’encadrement et la qualité." />
+      <PageHeader
+        title="Signaler une anomalie"
+        description="Décrivez ce que vous avez constaté. La déclaration est horodatée et visible immédiatement par l’encadrement et la qualité."
+      />
       <QueryBoundary queries={queries}>
         {() => {
           const station = code ? lookups!.workstations.find((w) => w.code.toLowerCase() === code.toLowerCase()) : undefined;
@@ -35,16 +38,33 @@ export function ReportAnomalyPage() {
                   </div>
                 </div>
                 <div className={styles.successActions}>
-                  <ButtonLink to={`/anomalies/${created.id}`} variant="primary">Voir l’anomalie</ButtonLink>
-                  <Button onClick={() => { setCreated(null); setFormKey((k) => k + 1); }}>Signaler une autre anomalie</Button>
+                  <ButtonLink to={`/anomalies/${created.id}`} variant="primary">
+                    Voir l’anomalie
+                  </ButtonLink>
+                  <Button
+                    onClick={() => {
+                      setCreated(null);
+                      setFormKey((k) => k + 1);
+                    }}
+                  >
+                    Signaler une autre anomalie
+                  </Button>
                 </div>
               </Panel>
             );
           }
           return (
             <Panel>
-              {code && !station && <p className={styles.warning} role="alert">Le poste « {code} » du QR code n’existe pas ou plus. Choisissez le poste dans la liste.</p>}
-              {station && <p className={styles.station}>Poste identifié par QR code : <strong>{station.name}</strong></p>}
+              {code && !station && (
+                <p className={styles.warning} role="alert">
+                  Le poste « {code} » du QR code n’existe pas ou plus. Choisissez le poste dans la liste.
+                </p>
+              )}
+              {station && (
+                <p className={styles.station}>
+                  Poste identifié par QR code : <strong>{station.name}</strong>
+                </p>
+              )}
               <AnomalyForm
                 key={formKey}
                 workstations={lookups!.workstations}

@@ -46,9 +46,13 @@ export function AndonPage() {
         description="Arrêter, appeler, attendre : chaque alerte est chronométrée jusqu’à sa résolution."
         actions={
           <>
-            <Button icon={<Maximize2 size={16} aria-hidden />} onClick={() => setDisplay(true)}>Affichage atelier</Button>
+            <Button icon={<Maximize2 size={16} aria-hidden />} onClick={() => setDisplay(true)}>
+              Affichage atelier
+            </Button>
             <Can permission="andon.raise">
-              <Button variant="danger" icon={<Siren size={16} aria-hidden />} onClick={() => openRaise()}>Déclencher un Andon</Button>
+              <Button variant="danger" icon={<Siren size={16} aria-hidden />} onClick={() => openRaise()}>
+                Déclencher un Andon
+              </Button>
             </Can>
           </>
         }
@@ -89,7 +93,9 @@ export function AndonPage() {
                   <header className={styles.displayHead}>
                     <span>Andon — {settings.plantName}</span>
                     <span className={styles.clock}>{formatTime(now)}</span>
-                    <Button icon={<X size={18} aria-hidden />} onClick={() => setDisplay(false)} autoFocus>Quitter l’affichage</Button>
+                    <Button icon={<X size={18} aria-hidden />} onClick={() => setDisplay(false)} autoFocus>
+                      Quitter l’affichage
+                    </Button>
                   </header>
                   {board}
                 </div>

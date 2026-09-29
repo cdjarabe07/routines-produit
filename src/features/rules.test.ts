@@ -15,8 +15,16 @@ import { memberStatus } from './team/model';
 const base = { createdAt: '2026-09-01T08:00:00.000Z', updatedAt: '2026-09-01T08:00:00.000Z' };
 
 const action = (p: Partial<Action>): Action => ({
-  ...base, id: p.id ?? 'a', title: 'x', assigneeId: 'u1', priority: 'medium', status: 'todo', dueDate: '2026-09-29',
-  source: { type: 'manual' }, createdBy: 'u9', ...p,
+  ...base,
+  id: p.id ?? 'a',
+  title: 'x',
+  assigneeId: 'u1',
+  priority: 'medium',
+  status: 'todo',
+  dueDate: '2026-09-29',
+  source: { type: 'manual' },
+  createdBy: 'u9',
+  ...p,
 });
 
 describe('actions', () => {
@@ -28,7 +36,12 @@ describe('actions', () => {
   });
 
   it('filtre « mes actions » sur le responsable et le suppléant', () => {
-    const list = [action({ id: '1' }), action({ id: '2', assigneeId: 'u2', backupId: 'u1' }), action({ id: '3', assigneeId: 'u2' }), action({ id: '4', status: 'done' })];
+    const list = [
+      action({ id: '1' }),
+      action({ id: '2', assigneeId: 'u2', backupId: 'u1' }),
+      action({ id: '3', assigneeId: 'u2' }),
+      action({ id: '4', status: 'done' }),
+    ];
     expect(filterActions(list, 'mine', 'u1', '2026-09-29').map((a) => a.id)).toEqual(['1', '2']);
     expect(filterActions(list, 'closed', 'u1', '2026-09-29').map((a) => a.id)).toEqual(['4']);
   });
@@ -57,10 +70,31 @@ describe('actions', () => {
 });
 
 const template: RoutineTemplate = {
-  ...base, id: 't', title: 'Routine', role: 'line_leader', scheduledTime: '08:00', active: true,
-  sections: [{ id: 's', title: 'S', items: [{ id: 'i1', label: 'A' }, { id: 'i2', label: 'B' }] }],
+  ...base,
+  id: 't',
+  title: 'Routine',
+  role: 'line_leader',
+  scheduledTime: '08:00',
+  active: true,
+  sections: [
+    {
+      id: 's',
+      title: 'S',
+      items: [
+        { id: 'i1', label: 'A' },
+        { id: 'i2', label: 'B' },
+      ],
+    },
+  ],
 };
-const run = (results: RoutineRun['results']): RoutineRun => ({ ...base, id: 'r', templateId: 't', date: '2026-09-29', assigneeId: 'u1', results });
+const run = (results: RoutineRun['results']): RoutineRun => ({
+  ...base,
+  id: 'r',
+  templateId: 't',
+  date: '2026-09-29',
+  assigneeId: 'u1',
+  results,
+});
 const at = (h: number, m = 0) => new Date(2026, 8, 29, h, m);
 
 describe('routines', () => {
@@ -92,7 +126,16 @@ describe('routines', () => {
 });
 
 describe('séquences guidées', () => {
-  const tpl = { ...base, id: 's', name: 'S', active: true, steps: [{ id: 'a', title: 'A', durationMin: 2 }, { id: 'b', title: 'B', durationMin: 3 }] };
+  const tpl = {
+    ...base,
+    id: 's',
+    name: 'S',
+    active: true,
+    steps: [
+      { id: 'a', title: 'A', durationMin: 2 },
+      { id: 'b', title: 'B', durationMin: 3 },
+    ],
+  };
   const t = (sec: number) => new Date(Date.UTC(2026, 8, 29, 8, 0, sec));
 
   it('mesure le temps à partir des horodatages, pause comprise', () => {
@@ -132,7 +175,16 @@ describe('séquences guidées', () => {
 });
 
 const alert = (p: Partial<AndonAlert>): AndonAlert => ({
-  ...base, id: p.id ?? 'x', workstationId: 'w1', type: 'quality', urgency: 'normal', detail: 'd', status: 'active', raisedBy: 'u', raisedAt: '2026-09-29T08:00:00.000Z', ...p,
+  ...base,
+  id: p.id ?? 'x',
+  workstationId: 'w1',
+  type: 'quality',
+  urgency: 'normal',
+  detail: 'd',
+  status: 'active',
+  raisedBy: 'u',
+  raisedAt: '2026-09-29T08:00:00.000Z',
+  ...p,
 });
 
 describe('andon', () => {
@@ -144,7 +196,11 @@ describe('andon', () => {
   });
 
   it('retient l’alerte la plus grave d’un poste', () => {
-    const list = [alert({ id: 'ack', status: 'acknowledged' }), alert({ id: 'wait' }), alert({ id: 'crit', urgency: 'critical', status: 'acknowledged' })];
+    const list = [
+      alert({ id: 'ack', status: 'acknowledged' }),
+      alert({ id: 'wait' }),
+      alert({ id: 'crit', urgency: 'critical', status: 'acknowledged' }),
+    ];
     expect(worstOpenAlert(list, 'w1')?.id).toBe('crit');
     expect(worstOpenAlert([alert({ status: 'resolved' })], 'w1')).toBeUndefined();
   });
@@ -187,6 +243,8 @@ describe('gemba', () => {
   it('bloque la validation sans zone, sans checklist ou avec un KO non commenté', () => {
     const errors = validationErrors({ zone: '', checklist: [{ id: '1', label: 'x', result: 'ko' }], observations: [] });
     expect(errors).toHaveLength(2);
-    expect(validationErrors({ zone: 'Z', checklist: [{ id: '1', label: 'x', result: 'ko', comment: 'vu' }], observations: [] })).toEqual([]);
+    expect(validationErrors({ zone: 'Z', checklist: [{ id: '1', label: 'x', result: 'ko', comment: 'vu' }], observations: [] })).toEqual(
+      [],
+    );
   });
 });

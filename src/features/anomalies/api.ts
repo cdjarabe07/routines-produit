@@ -16,7 +16,11 @@ export async function createAnomaly(ds: DataSource, input: AnomalyInput, reporte
     await notify(
       ds,
       leaders.map((u) => u.id),
-      { kind: 'anomaly_reported', title: `Anomalie critique (${ANOMALY_CATEGORY[input.category]}) : ${truncate(input.description, 70)}`, link: `/anomalies/${anomaly.id}` },
+      {
+        kind: 'anomaly_reported',
+        title: `Anomalie critique (${ANOMALY_CATEGORY[input.category]}) : ${truncate(input.description, 70)}`,
+        link: `/anomalies/${anomaly.id}`,
+      },
       reporter.id,
     );
   }
@@ -41,7 +45,8 @@ export function useUpdateAnomalyStatus() {
       }),
     {
       invalidates: ['anomalies'],
-      success: (a) => (a.status === 'closed' ? 'Anomalie clôturée.' : a.status === 'in_progress' ? 'Anomalie en traitement.' : 'Anomalie rouverte.'),
+      success: (a) =>
+        a.status === 'closed' ? 'Anomalie clôturée.' : a.status === 'in_progress' ? 'Anomalie en traitement.' : 'Anomalie rouverte.',
     },
   );
 }

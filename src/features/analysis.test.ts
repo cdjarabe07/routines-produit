@@ -11,10 +11,25 @@ const lookupName = (id?: string) => data.workstations.find((w) => w.id === id)?.
 function cockpit(userId: string): CockpitData {
   const user = data.users.find((u) => u.id === userId)!;
   return {
-    user, now: NOW, today: '2026-09-29', can: (p) => roleCan(user.role, p),
-    lines: data.lines, workstations: data.workstations, alerts: data.andonAlerts, actions: data.actions, anomalies: data.anomalies,
-    templates: data.routineTemplates, runs: data.routineRuns, meetings: data.meetings, stocks: data.materialStocks, orders: data.productionOrders,
-    handovers: data.handovers, checks: data.qualityChecks, escalationMinutes: 10, toleranceMinutes: 120, workstationName: lookupName,
+    user,
+    now: NOW,
+    today: '2026-09-29',
+    can: (p) => roleCan(user.role, p),
+    lines: data.lines,
+    workstations: data.workstations,
+    alerts: data.andonAlerts,
+    actions: data.actions,
+    anomalies: data.anomalies,
+    templates: data.routineTemplates,
+    runs: data.routineRuns,
+    meetings: data.meetings,
+    stocks: data.materialStocks,
+    orders: data.productionOrders,
+    handovers: data.handovers,
+    checks: data.qualityChecks,
+    escalationMinutes: 10,
+    toleranceMinutes: 120,
+    workstationName: lookupName,
   };
 }
 
@@ -60,7 +75,10 @@ describe('reporting', () => {
   it('résout les périodes prédéfinies et personnalisées', () => {
     expect(resolvePeriod('7d', '2026-09-29')).toMatchObject({ from: '2026-09-23', to: '2026-09-29' });
     expect(resolvePeriod('month', '2026-09-29').from).toBe('2026-09-01');
-    expect(resolvePeriod('custom', '2026-09-29', { from: '2026-09-10', to: '2026-09-12' })).toMatchObject({ from: '2026-09-10', to: '2026-09-12' });
+    expect(resolvePeriod('custom', '2026-09-29', { from: '2026-09-10', to: '2026-09-12' })).toMatchObject({
+      from: '2026-09-10',
+      to: '2026-09-12',
+    });
     // Période personnalisée incohérente → retour aux 7 derniers jours
     expect(resolvePeriod('custom', '2026-09-29', { from: '2026-09-12', to: '2026-09-10' }).label).toBe('7 derniers jours');
   });
@@ -70,7 +88,15 @@ describe('reporting', () => {
   });
 
   it('calcule des indicateurs cohérents sur le jeu de démonstration', () => {
-    const src = { templates: data.routineTemplates, runs: data.routineRuns, anomalies: data.anomalies, actions: data.actions, alerts: data.andonAlerts, checks: data.qualityChecks, workstations: data.workstations };
+    const src = {
+      templates: data.routineTemplates,
+      runs: data.routineRuns,
+      anomalies: data.anomalies,
+      actions: data.actions,
+      alerts: data.andonAlerts,
+      checks: data.qualityChecks,
+      workstations: data.workstations,
+    };
     const period = resolvePeriod('30d', '2026-09-29');
     const k = computeKpis(src, period);
     expect(k.routinePct).toBeGreaterThan(50);

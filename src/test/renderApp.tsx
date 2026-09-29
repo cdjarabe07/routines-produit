@@ -15,7 +15,10 @@ import { createMemoryStore, createStoreDataSource } from '@/services/data/storeD
 export function renderApp(path: string, options: { userId?: string } = {}) {
   const ds = createStoreDataSource(createMemoryStore(), () => buildDemoData(new Date()));
   if (options.userId) {
-    window.sessionStorage.setItem('ra:session', JSON.stringify({ userId: options.userId, startedAt: new Date().toISOString(), mode: 'demo' }));
+    window.sessionStorage.setItem(
+      'ra:session',
+      JSON.stringify({ userId: options.userId, startedAt: new Date().toISOString(), mode: 'demo' }),
+    );
   }
   const auth = createDemoAuthService(window.sessionStorage);
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: 0 } } });

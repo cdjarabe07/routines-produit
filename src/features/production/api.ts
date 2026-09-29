@@ -34,7 +34,8 @@ export function useStockMovement() {
 
 export function useSaveStock() {
   return useOperation(
-    (ds, { id, input }: { id?: ID; input: NewEntity<MaterialStock> }) => (id ? ds.repo('materialStocks').update(id, input) : ds.repo('materialStocks').create(input)),
+    (ds, { id, input }: { id?: ID; input: NewEntity<MaterialStock> }) =>
+      id ? ds.repo('materialStocks').update(id, input) : ds.repo('materialStocks').create(input),
     { invalidates: ['materialStocks'], success: 'Référence matière enregistrée.' },
   );
 }

@@ -30,7 +30,9 @@ export const reorderQuantity = (s: MaterialStock) => Math.max(0, s.target - s.qu
 
 export const orderProgress = (o: ProductionOrder) => (o.quantityPlanned > 0 ? Math.min(1, o.quantityDone / o.quantityPlanned) : 0);
 
-export const nextStage = (stage: ProductionStage): ProductionStage | null => PRODUCTION_STAGES[PRODUCTION_STAGES.indexOf(stage) + 1] ?? null;
-export const previousStage = (stage: ProductionStage): ProductionStage | null => PRODUCTION_STAGES[PRODUCTION_STAGES.indexOf(stage) - 1] ?? null;
+export const nextStage = (stage: ProductionStage): ProductionStage | null =>
+  PRODUCTION_STAGES[PRODUCTION_STAGES.indexOf(stage) + 1] ?? null;
+export const previousStage = (stage: ProductionStage): ProductionStage | null =>
+  PRODUCTION_STAGES[PRODUCTION_STAGES.indexOf(stage) - 1] ?? null;
 
 export const isActiveOrder = (o: ProductionOrder) => o.status !== 'done';

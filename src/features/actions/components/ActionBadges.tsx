@@ -19,5 +19,9 @@ export function PriorityBadge({ action }: { action: Action }) {
 export function DueDate({ action, today }: { action: Action; today: DateKey }) {
   const late = isOverdue(action, today);
   const label = action.dueDate === today ? 'Aujourd’hui' : formatDate(action.dueDate);
-  return <span style={{ color: late ? 'var(--color-danger)' : undefined, fontWeight: late ? 600 : undefined, whiteSpace: 'nowrap' }}>{label}</span>;
+  return (
+    <span style={{ color: late ? 'var(--color-danger)' : undefined, fontWeight: late ? 600 : undefined, whiteSpace: 'nowrap' }}>
+      {label}
+    </span>
+  );
 }
