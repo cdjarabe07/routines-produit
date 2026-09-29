@@ -47,18 +47,18 @@ export function startRun(template: SequenceTemplate, userId: ID, now: Date): Omi
   };
 }
 
-export function pauseRun(run: RunState, now: Date): RunState {
+export function pauseRun<T extends RunState>(run: T, now: Date): T {
   if (run.status !== 'running') return run;
   return { ...run, steps: closeSegment(run, now), status: 'paused', segmentStartedAt: null };
 }
 
-export function resumeRun(run: RunState, now: Date): RunState {
+export function resumeRun<T extends RunState>(run: T, now: Date): T {
   if (run.status !== 'paused') return run;
   return { ...run, status: 'running', segmentStartedAt: now.toISOString() };
 }
 
 /** Valide l'étape courante et passe à la suivante ; termine la séquence après la dernière. */
-export function nextStep(run: RunState, now: Date): RunState {
+export function nextStep<T extends RunState>(run: T, now: Date): T {
   if (run.status === 'completed' || run.status === 'aborted') return run;
   const steps = closeSegment(run, now).map((log, i) => (i === run.currentStepIndex ? { ...log, completedAt: now.toISOString() } : log));
   const last = run.currentStepIndex >= run.steps.length - 1;
@@ -72,14 +72,14 @@ export function nextStep(run: RunState, now: Date): RunState {
 }
 
 /** Revient à l'étape précédente, qui redevient à faire (son temps déjà passé est conservé). */
-export function previousStep(run: RunState, now: Date): RunState {
+export function previousStep<T extends RunState>(run: T, now: Date): T {
   if (run.currentStepIndex === 0 || run.status === 'completed' || run.status === 'aborted') return run;
   const target = run.currentStepIndex - 1;
   const steps = closeSegment(run, now).map((log, i) => (i === target ? { ...log, completedAt: undefined } : log));
   return { ...run, steps, currentStepIndex: target, segmentStartedAt: run.status === 'running' ? now.toISOString() : null };
 }
 
-export function abortRun(run: RunState, now: Date): RunState {
+export function abortRun<T extends RunState>(run: T, now: Date): T {
   if (run.status === 'completed' || run.status === 'aborted') return run;
   return { ...run, steps: closeSegment(run, now), status: 'aborted', segmentStartedAt: null, completedAt: now.toISOString() };
 }

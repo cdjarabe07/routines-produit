@@ -12,7 +12,7 @@ export function useStartSequence() {
 
 export type Transition = 'pause' | 'resume' | 'next' | 'previous' | 'abort';
 
-const TRANSITIONS: Record<Transition, (run: RunState, now: Date) => RunState> = {
+const TRANSITIONS: Record<Transition, <T extends RunState>(run: T, now: Date) => T> = {
   pause: pauseRun,
   resume: resumeRun,
   next: nextStep,
