@@ -1,7 +1,8 @@
 /* Validation de formulaires — règles déclaratives, messages en français. */
 
-export type Rule<V> = (value: V) => string | null;
-export type Rules<T> = { [K in keyof T]?: Rule<T[K]>[] };
+/** Règle de champ ; reçoit aussi toutes les valeurs du formulaire (comparaison entre champs). */
+export type Rule<V, T = unknown> = (value: V, all: T) => string | null;
+export type Rules<T> = { [K in keyof T]?: Rule<T[K], T>[] };
 export type FieldErrors<T> = Partial<Record<keyof T, string>>;
 
 export const required =
@@ -43,7 +44,7 @@ export function validate<T extends object>(values: T, rules: Rules<T>): FieldErr
   const errors: FieldErrors<T> = {};
   for (const key of Object.keys(rules) as (keyof T)[]) {
     for (const rule of rules[key] ?? []) {
-      const message = rule(values[key]);
+      const message = rule(values[key], values);
       if (message) {
         errors[key] = message;
         break;

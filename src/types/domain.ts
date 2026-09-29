@@ -1,7 +1,7 @@
 /* ============================================================
    Modèle de données — entités métier.
-   Les valeurs dérivées (retard, conformité, état d'un poste…)
-   ne sont jamais stockées : voir features/<module>/model.ts.
+   Les valeurs dérivées (retard, occurrences planifiées, conformité,
+   état d'un poste…) ne sont jamais stockées : voir features/<module>/model.ts.
    Documentation : docs/data-model.md
    ============================================================ */
 
@@ -39,6 +39,17 @@ export interface User extends BaseEntity {
   lastSignInAt?: ISODateTime;
 }
 
+/** Équipe : groupe de personnes d'un même quart, éventuellement rattaché à une ligne. */
+export interface Team extends BaseEntity {
+  name: string;
+  /** Absent : l'équipe couvre plusieurs quarts */
+  shift?: Shift;
+  lineId?: ID;
+  leaderId?: ID;
+  active: boolean;
+}
+
+/** Ligne de production. Joue le rôle de « zone » (docs/role-model.md §3). */
 export interface Line extends BaseEntity {
   code: string;
   name: string;
@@ -72,51 +83,128 @@ export interface Leave extends BaseEntity {
   reason?: string;
 }
 
-/* ---------- Routines ---------- */
+/* ---------- Checklists ---------- */
 
-export interface RoutineItem {
+/** Types de contrôle (docs/implementation-plan.md §2). */
+export type CheckType = 'conformity' | 'yes_no' | 'number' | 'text' | 'select' | 'comment';
+
+export interface ChecklistItem {
   id: ID;
   label: string;
+  type: CheckType;
+  required: boolean;
+  /** Choix proposés (type « select ») */
+  options?: string[];
+  /** Unité et bornes de conformité (type « number ») */
+  unit?: string;
+  min?: number;
+  max?: number;
+  help?: string;
   knowledgeId?: ID;
 }
 
-export interface RoutineSection {
-  id: ID;
-  title: string;
-  items: RoutineItem[];
-}
-
-export interface RoutineTemplate extends BaseEntity {
-  title: string;
+/** Checklist réutilisable : une tâche de routine peut y faire référence. */
+export interface Checklist extends BaseEntity {
+  name: string;
   description?: string;
-  role: Role;
-  scheduledTime: TimeOfDay;
-  sections: RoutineSection[];
+  items: ChecklistItem[];
   active: boolean;
 }
 
+/* ---------- Routines ---------- */
+
+export type Priority = 'low' | 'medium' | 'high' | 'critical';
+
+/** Tâche d'une routine. L'ordre d'exécution est l'ordre du tableau. */
+export interface RoutineTask {
+  id: ID;
+  title: string;
+  description?: string;
+  instructions?: string;
+  estimatedMin?: number;
+  priority: Priority;
+  /** Une tâche facultative peut rester non faite sans empêcher la clôture */
+  required: boolean;
+  /** Fonction responsable de la tâche, si elle diffère de l'exécutant de la routine */
+  responsibleRole?: Role;
+  knowledgeId?: ID;
+  /** Checklist réutilisable jointe (bibliothèque) */
+  checklistId?: ID;
+  /** Contrôles propres à la tâche. Sans aucun contrôle, la tâche se valide en un geste. */
+  checks: ChecklistItem[];
+}
+
+/** Routine : ce qui doit être fait. Quand et par qui : voir Schedule. */
+export interface RoutineTemplate extends BaseEntity {
+  title: string;
+  description?: string;
+  durationMin: number;
+  /** Heure proposée par défaut lors de la planification */
+  defaultTime: TimeOfDay;
+  /** Zone (ligne) et poste concernés */
+  lineId?: ID;
+  workstationId?: ID;
+  tasks: RoutineTask[];
+  active: boolean;
+}
+
+export type Recurrence = 'once' | 'daily' | 'weekdays' | 'weekly';
+export type ScheduleStatus = 'active' | 'cancelled';
+
+/**
+ * Planification d'une routine : date, heure, répétition, affectation.
+ * Les occurrences (planification × date) sont CALCULÉES, jamais stockées (features/planning/model.ts).
+ */
+export interface Schedule extends BaseEntity {
+  routineId: ID;
+  startDate: DateKey;
+  endDate?: DateKey;
+  time: TimeOfDay;
+  recurrence: Recurrence;
+  /** Jours de la semaine pour « weekly » : 1 = lundi … 7 = dimanche */
+  weekdays: number[];
+  /** Affectation : une personne, ou une équipe (tous ses membres voient la routine) */
+  assigneeId?: ID;
+  teamId?: ID;
+  lineId?: ID;
+  workstationId?: ID;
+  status: ScheduleStatus;
+  /** Occurrences annulées individuellement */
+  skippedDates: DateKey[];
+  note?: string;
+  createdBy: ID;
+}
+
 export type CheckResult = 'ok' | 'ko' | 'na';
+export type CheckValue = string | number | boolean;
 
 export interface ItemResult {
   status: CheckResult;
+  /** Valeur saisie pour un contrôle typé (oui/non, nombre, texte, choix) */
+  value?: CheckValue;
   comment?: string;
   at: ISODateTime;
   by: ID;
   anomalyId?: ID;
 }
 
+/** Exécution d'une occurrence planifiée. */
 export interface RoutineRun extends BaseEntity {
+  scheduleId: ID;
   templateId: ID;
   date: DateKey;
+  /** Personne qui a démarré l'exécution */
   assigneeId: ID;
-  results: Record<ID, ItemResult>;
+  startedAt: ISODateTime;
+  /** Clé : id de tâche (tâche sans contrôle) ou « tâche/contrôle » */
+  results: Record<string, ItemResult>;
   completedAt?: ISODateTime;
+  completedBy?: ID;
 }
 
 /* ---------- Actions & commentaires ---------- */
 
-export type Priority = 'low' | 'medium' | 'high' | 'critical';
-export type ActionStatus = 'todo' | 'in_progress' | 'done' | 'cancelled';
+export type ActionStatus = 'todo' | 'in_progress' | 'blocked' | 'done' | 'cancelled';
 export type ActionSourceType = 'manual' | 'meeting' | 'anomaly' | 'gemba' | 'routine' | 'andon' | 'quality';
 
 export interface Action extends BaseEntity {
@@ -129,14 +217,19 @@ export interface Action extends BaseEntity {
   dueDate: DateKey;
   source: { type: ActionSourceType; id?: ID };
   createdBy: ID;
+  blockedReason?: string;
+  /** Ce qui a été fait, saisi à la clôture */
+  resolutionNote?: string;
   closedAt?: ISODateTime;
 }
 
-export type CommentTarget = 'action' | 'anomaly' | 'gembaWalk' | 'andonAlert';
+export type CommentTarget = 'action' | 'anomaly' | 'gembaWalk' | 'andonAlert' | 'routineRun' | 'meeting';
 
 export interface Comment extends BaseEntity {
   targetType: CommentTarget;
   targetId: ID;
+  /** Élément précis commenté dans la cible (ex. tâche d'une routine) */
+  anchorId?: ID;
   authorId: ID;
   text: string;
   editedAt?: ISODateTime;
@@ -156,7 +249,7 @@ export interface Anomaly extends BaseEntity {
   workstationId?: ID;
   status: AnomalyStatus;
   reportedBy: ID;
-  photo?: string; // data URL compressée (DÉMO) ou URL (API)
+  photo?: string; // data URL compressée (stockage local) ou URL (API)
   origin: { type: AnomalyOrigin; id?: ID };
   closedAt?: ISODateTime;
   closedBy?: ID;
@@ -166,8 +259,9 @@ export interface Anomaly extends BaseEntity {
 /* ---------- Andon ---------- */
 
 export type AndonType = 'quality' | 'equipment' | 'material' | 'safety';
-export type AndonUrgency = 'normal' | 'critical';
-export type AndonStatus = 'active' | 'acknowledged' | 'resolved';
+export type AndonUrgency = 'low' | 'medium' | 'critical';
+/** Nouveau → Pris en charge → En résolution → Résolu */
+export type AndonStatus = 'active' | 'acknowledged' | 'in_progress' | 'resolved';
 
 export interface AndonAlert extends BaseEntity {
   workstationId: ID;
@@ -179,6 +273,7 @@ export interface AndonAlert extends BaseEntity {
   raisedAt: ISODateTime;
   acknowledgedBy?: ID;
   acknowledgedAt?: ISODateTime;
+  resolutionStartedAt?: ISODateTime;
   resolvedBy?: ID;
   resolvedAt?: ISODateTime;
   rootCause?: string;
@@ -194,6 +289,10 @@ export interface SequenceStep {
   durationMin: number;
   plannedTime?: TimeOfDay;
   knowledgeId?: ID;
+  /** Critère à confirmer avant de passer à l'étape suivante */
+  validation?: string;
+  /** Une étape désactivée est ignorée à l'exécution */
+  active: boolean;
 }
 
 export interface SequenceTemplate extends BaseEntity {
@@ -311,7 +410,7 @@ export interface QualityCheck extends BaseEntity {
 
 export type KnowledgeCategory = 'safety' | '5s' | 'standard' | 'quality' | 'performance' | 'production' | 'material';
 export type KnowledgeKind = 'standard' | 'link';
-export type KnowledgeStatus = 'draft' | 'published';
+export type KnowledgeStatus = 'draft' | 'published' | 'archived';
 
 export interface KnowledgeItem extends BaseEntity {
   code: string;
@@ -333,9 +432,11 @@ export interface Favorite extends BaseEntity {
   knowledgeId: ID;
 }
 
-/* ---------- Réunions, passations, annonces ---------- */
+/* ---------- Agenda, réunions, passations, annonces ---------- */
 
-export type MeetingStatus = 'planned' | 'in_progress' | 'done';
+export type MeetingStatus = 'planned' | 'in_progress' | 'done' | 'cancelled';
+/** Type d'événement d'agenda. Réunion, briefing et daily ont un ordre du jour et un compte-rendu. */
+export type EventType = 'meeting' | 'briefing' | 'daily' | 'training' | 'audit' | 'maintenance' | 'operational';
 
 export interface AgendaPoint {
   id: ID;
@@ -343,18 +444,28 @@ export interface AgendaPoint {
   done: boolean;
 }
 
+/** Événement d'agenda (réunion, briefing, formation, audit…). */
 export interface Meeting extends BaseEntity {
   title: string;
+  type: EventType;
   date: DateKey;
   startTime: TimeOfDay;
-  durationMin: number;
+  endTime: TimeOfDay;
+  location?: string;
+  description?: string;
+  /** Responsable : anime la réunion */
   organizerId: ID;
+  /** Invités */
   participantIds: ID[];
   /** Équipes invitées : tous leurs membres sont participants */
-  teamIds?: ID[];
+  teamIds: ID[];
+  /** Présents, saisis pendant la réunion */
+  attendeeIds: ID[];
   agenda: AgendaPoint[];
   minutes: string;
   status: MeetingStatus;
+  /** Série créée par répétition */
+  seriesId?: ID;
 }
 
 export interface Handover extends BaseEntity {

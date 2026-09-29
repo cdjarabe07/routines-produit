@@ -1,7 +1,7 @@
-/* Générateur du jeu de DÉMONSTRATION.
-   - Toutes les données sont fictives et datées par rapport à « maintenant ».
+/* Générateur du jeu initial de l'environnement simulé (docs/current-state.md §6).
+   - Personnes et contenus d'illustration, datés par rapport à « maintenant ».
    - Générateur pseudo-aléatoire à graine fixe : le jeu est reproductible.
-   - Aucune logique métier ici : uniquement des enregistrements « comme saisis ». */
+   - Les exécutions de routines suivent les planifications (même règle que l'application : occursOn). */
 
 import type {
   Action,
@@ -10,7 +10,10 @@ import type {
   Anomaly,
   AnomalyStatus,
   BaseEntity,
+  Checklist,
+  ChecklistItem,
   CheckResult,
+  CheckValue,
   DateKey,
   ItemResult,
   KnowledgeItem,
@@ -20,21 +23,30 @@ import type {
   ProductionOrder,
   QualityCheck,
   RoutineRun,
+  RoutineTask,
   RoutineTemplate,
+  Schedule,
   Severity,
+  Team,
   User,
   Workstation,
 } from '@/types/domain';
 import type { Dataset } from '@/services/data/types';
-import { addDays, atTime, toDateKey } from '@/utils/date';
+import { occursOn } from '@/features/planning/model';
+import { checkKey, evaluateCheck } from '@/features/routines/model';
+import { addDays, atTime, isoWeekday, toDateKey } from '@/utils/date';
 import {
   DEMO_ANOMALY_SAMPLES,
   DEMO_AUDIT_SECTIONS,
+  DEMO_CHECKLISTS,
   DEMO_KNOWLEDGE,
   DEMO_ROUTINES,
   DEMO_SEQUENCE_STEPS,
+  DEMO_TEAMS,
   DEMO_USERS,
   DEMO_WORKSTATIONS,
+  type DemoCheck,
+  type DemoRoutine,
 } from './reference';
 
 function mulberry32(seed: number) {
@@ -83,6 +95,13 @@ export function buildDemoData(now: Date = new Date()): Dataset {
   ];
   const lineId = (l?: 'A' | 'B') => (l === 'B' ? 'line-b' : l === 'A' ? 'line-a' : undefined);
 
+  const teams: Team[] = DEMO_TEAMS.map((t) =>
+    stamp(
+      { id: t.id, name: t.name, shift: t.shift, lineId: lineId(t.line), leaderId: t.leader, active: true },
+      `${addDays(today, -90)}T08:00:00.000Z`,
+    ),
+  );
+
   const users: User[] = DEMO_USERS.map((u) =>
     stamp({
       id: u.id,
@@ -92,10 +111,12 @@ export function buildDemoData(now: Date = new Date()): Dataset {
       lineId: lineId(u.line),
       zoneLabel: u.zone,
       shift: u.shift,
+      teamId: u.team,
+      workstationId: u.ws,
       active: true,
+      lastSignInAt: u.id === 'u-marc' ? minutesAgo(60 * 24 * 2) : minutesAgo(30 + Math.floor(rnd() * 400)),
     }),
   );
-  const staff = users.filter((u) => u.role !== 'admin');
 
   const workstations: Workstation[] = DEMO_WORKSTATIONS.map((w) =>
     stamp({ id: w.id, code: w.code, name: w.name, process: w.process, lineId: lineId(w.line)!, mapX: w.x, mapY: w.y, active: true }),
@@ -135,88 +156,189 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     ),
   ];
 
-  /* ---------- Routines ---------- */
-  const routineTemplates: RoutineTemplate[] = [
-    ...DEMO_ROUTINES.map((r) =>
-      stamp({
+  /* ---------- Checklists, routines, planification ---------- */
+  const configured = `${addDays(today, -HISTORY_DAYS - 5)}T08:00:00.000Z`;
+  const toItem = (c: DemoCheck): ChecklistItem => ({
+    id: c.id,
+    label: c.label,
+    type: c.type,
+    required: c.required ?? false,
+    unit: c.unit,
+    min: c.min,
+    max: c.max,
+    options: c.options,
+  });
+  const nominal = new Map<string, number>();
+  for (const c of DEMO_CHECKLISTS.flatMap((l) => l.items)) if (c.nominal !== undefined) nominal.set(c.id, c.nominal);
+  for (const c of DEMO_ROUTINES.flatMap((r) => r.tasks.flatMap((t) => t.checks ?? [])))
+    if (c.nominal !== undefined) nominal.set(c.id, c.nominal);
+
+  const checklists: Checklist[] = DEMO_CHECKLISTS.map((c) =>
+    stamp({ id: c.id, name: c.name, description: c.description, active: true, items: c.items.map(toItem) }, configured),
+  );
+  const checklistById = new Map(checklists.map((c) => [c.id, c]));
+
+  const audit: DemoRoutine = {
+    id: 'rt-ll-audit',
+    title: 'Audit terrain',
+    description: 'Tour de ligne structuré en 7 thèmes. Un point non conforme permet de déclarer une anomalie.',
+    time: '09:00',
+    durationMin: 45,
+    line: 'A',
+    tasks: DEMO_AUDIT_SECTIONS.map((s) => ({
+      title: s.title,
+      min: 6,
+      required: true,
+      checks: s.items.map((label, i) => ({ id: `p${i}`, label, type: 'conformity' as const, required: true })),
+    })),
+    schedules: [{ id: 'sc-ll-audit', recurrence: 'weekdays', assignee: 'u-karim' }],
+  };
+  const demoRoutines = [...DEMO_ROUTINES, audit];
+
+  const routineTemplates: RoutineTemplate[] = demoRoutines.map((r) =>
+    stamp(
+      {
         id: r.id,
         title: r.title,
-        role: r.role,
-        scheduledTime: r.time,
+        description: r.description,
+        durationMin: r.durationMin,
+        defaultTime: r.time,
+        lineId: lineId(r.line),
+        workstationId: r.ws,
         active: true,
-        sections: [
-          {
-            id: `${r.id}-s1`,
-            title: 'Points de contrôle',
-            items: r.items.map(([label, kb], i) => ({ id: `${r.id}-i${i}`, label, knowledgeId: kb })),
-          },
-        ],
-      }),
+        tasks: r.tasks.map((t, i): RoutineTask => ({
+          id: `${r.id}-t${i}`,
+          title: t.title,
+          instructions: t.instructions,
+          estimatedMin: t.min,
+          priority: t.priority ?? 'medium',
+          required: t.required ?? true,
+          knowledgeId: t.kb,
+          checklistId: t.checklist,
+          checks: (t.checks ?? []).map(toItem),
+        })),
+      },
+      configured,
     ),
-    stamp({
-      id: 'rt-ll-audit',
-      title: 'Audit terrain',
-      role: 'line_leader' as const,
-      scheduledTime: '09:00',
-      active: true,
-      description: 'Tour de ligne structuré en 7 thèmes. Un point non conforme permet de déclarer une anomalie.',
-      sections: DEMO_AUDIT_SECTIONS.map((s, si) => ({
-        id: `rt-ll-audit-s${si}`,
-        title: s.title,
-        items: s.items.map((label, ii) => ({ id: `rt-ll-audit-s${si}-i${ii}`, label })),
-      })),
-    }),
-  ];
-  const assigneeFor: Record<string, string> = { line_leader: 'u-karim', hancho: 'u-yann', quality: 'u-aicha' };
+  );
+
+  const schedules: Schedule[] = demoRoutines.flatMap((r) =>
+    r.schedules.map((s) =>
+      stamp(
+        {
+          id: s.id,
+          routineId: r.id,
+          startDate: addDays(today, -HISTORY_DAYS),
+          time: s.time ?? r.time,
+          recurrence: s.recurrence,
+          weekdays: s.weekdays ?? [],
+          assigneeId: s.assignee,
+          teamId: s.team,
+          lineId: lineId(r.line),
+          workstationId: r.ws,
+          status: 'active' as const,
+          skippedDates: [],
+          createdBy: 'u-admin',
+        },
+        configured,
+      ),
+    ),
+  );
+
+  /** Qui exécute une occurrence affectée à une équipe (le plus souvent la même personne). */
+  const TEAM_EXECUTORS: Record<string, [string, string]> = {
+    'team-a': ['u-nadia', 'u-yann'],
+    'team-b': ['u-ibrahim', 'u-lucia'],
+    'team-lqc': ['u-aicha', 'u-tom'],
+  };
+  /** Occurrences du jour laissées à faire, et une laissée en cours, pour que chaque profil ait du travail en attente. */
+  const LEFT_TODO_TODAY = new Set(['sc-op-start-a', 'sc-ll-audit', 'sc-q-conn']);
+  const LEFT_IN_PROGRESS_TODAY = 'sc-ll-safety';
+
+  const valueFor = (item: ChecklistItem): CheckValue => {
+    switch (item.type) {
+      case 'conformity':
+        return chance(0.04) ? 'ko' : 'ok';
+      case 'yes_no':
+        return !chance(0.04);
+      case 'number': {
+        const n = nominal.get(item.id) ?? ((item.min ?? 0) + (item.max ?? 0)) / 2;
+        const spread = ((item.max ?? n * 1.1) - (item.min ?? n * 0.9)) / 4;
+        return Math.round((n + (rnd() - 0.5) * 2 * spread * (chance(0.05) ? 3 : 1)) * 100) / 100;
+      }
+      case 'select':
+        return item.options?.[0] ?? '';
+      default:
+        return item.id === 'ref' ? pick(['FX-PORTE-AVD-12', 'FX-PORTE-ARG-08', 'FX-MOTEUR-1.5-A']) : pick(['Indice C', 'Indice D']);
+    }
+  };
 
   const routineRuns: RoutineRun[] = [];
+  const templateById = new Map(routineTemplates.map((t) => [t.id, t]));
   for (let d = HISTORY_DAYS - 1; d >= 0; d--) {
     const day = addDays(today, -d);
-    for (const t of routineTemplates) {
-      const items = t.sections.flatMap((s) => s.items);
-      const by = assigneeFor[t.role]!;
-      const results: Record<string, ItemResult> = {};
+    for (const s of schedules) {
+      if (!occursOn(s, day)) continue;
+      const routine = templateById.get(s.routineId)!;
+      const due = new Date(atTime(day, s.time)).getTime();
+      let complete: boolean;
       if (d === 0) {
-        // Aujourd'hui : seules les routines dont l'heure est passée depuis > 20 min sont (partiellement) faites.
-        const due = new Date(atTime(day, t.scheduledTime)).getTime();
-        if (nowMs - due < 20 * 60_000) continue;
-        if (t.id === 'rt-ll-audit' || t.id === 'rt-q-conn') continue; // laissées à faire pour la démonstration
-        items.forEach((it, i) => {
-          if (t.id === 'rt-ll-safety' && i === items.length - 1) return; // une routine partielle
-          results[it.id] = { status: 'ok', at: at(day, t.scheduledTime, 3 + i * 2), by };
-        });
+        // Aujourd'hui : rien avant l'heure prévue + 25 min ; quelques occurrences laissées à faire
+        if (nowMs - due < 25 * 60_000 || LEFT_TODO_TODAY.has(s.id)) continue;
+        complete = s.id !== LEFT_IN_PROGRESS_TODAY;
       } else {
-        const skipped = chance(0.08);
-        if (skipped) continue;
-        const completion = chance(0.82) ? 1 : 0.5;
-        items.forEach((it, i) => {
-          if (i / items.length >= completion) return;
-          const status: CheckResult = chance(0.05) ? 'ko' : chance(0.03) ? 'na' : 'ok';
-          results[it.id] = {
+        if (chance(0.07)) continue; // non réalisée
+        complete = !chance(0.1);
+      }
+      const executors = s.teamId ? TEAM_EXECUTORS[s.teamId] : undefined;
+      const by = s.assigneeId ?? (executors ? (chance(0.8) ? executors[0] : executors[1]) : 'u-karim');
+      let cursor = Math.floor(rnd() * 15);
+      const startedAt = at(day, s.time, cursor);
+      const results: Record<string, ItemResult> = {};
+      routine.tasks.forEach((task, ti) => {
+        if (!complete && ti >= Math.ceil(routine.tasks.length / 2)) return;
+        if (!task.required && chance(0.3)) return;
+        const checks = [...(task.checklistId ? (checklistById.get(task.checklistId)?.items ?? []) : []), ...task.checks];
+        const step = Math.max(1, Math.round((task.estimatedMin ?? 4) / Math.max(1, checks.length)));
+        if (checks.length === 0) {
+          cursor += step + Math.floor(rnd() * 3);
+          const status: CheckResult = chance(0.04) ? 'ko' : 'ok';
+          results[task.id] = {
             status,
-            at: at(day, t.scheduledTime, 4 + i * 2 + Math.floor(rnd() * 40)),
+            at: at(day, s.time, cursor),
             by,
             comment: status === 'ko' ? 'Écart constaté, traité avec l’équipe' : undefined,
           };
-        });
-      }
-      const done = Object.keys(results).length === items.length;
+          return;
+        }
+        for (const item of checks) {
+          cursor += step;
+          const value = valueFor(item);
+          const status = evaluateCheck(item, value);
+          results[checkKey(task.id, item.id)] = {
+            status,
+            value: item.type === 'conformity' ? undefined : value,
+            at: at(day, s.time, cursor),
+            by,
+          };
+        }
+      });
+      if (Object.keys(results).length === 0) continue;
+      const completedAt = complete ? at(day, s.time, cursor + 1) : undefined;
       routineRuns.push(
         stamp(
           {
             id: nextId('run'),
-            templateId: t.id,
+            scheduleId: s.id,
+            templateId: routine.id,
             date: day,
             assigneeId: by,
+            startedAt,
             results,
-            completedAt: done
-              ? Object.values(results)
-                  .map((r) => r.at)
-                  .sort()
-                  .at(-1)
-              : undefined,
+            completedAt,
+            completedBy: complete ? by : undefined,
           },
-          at(day, t.scheduledTime),
+          startedAt,
         ),
       );
     }
@@ -414,13 +536,14 @@ export function buildDemoData(now: Date = new Date()): Dataset {
             id: nextId('ad'),
             workstationId: pick(wsIds),
             type,
-            urgency: type === 'safety' ? ('critical' as const) : ('normal' as const),
+            urgency: type === 'safety' ? ('critical' as const) : chance(0.3) ? ('low' as const) : ('medium' as const),
             detail: pick(andonDetails[type]),
             status: 'resolved' as const,
             raisedBy: pick(['u-nadia', 'u-ibrahim', 'u-yann']),
             raisedAt,
             acknowledgedBy: 'u-yann',
             acknowledgedAt: plus(ackMin),
+            resolutionStartedAt: plus(ackMin + 1),
             resolvedBy: 'u-yann',
             resolvedAt: plus(resMin),
             rootCause: 'Cause identifiée sur place',
@@ -437,7 +560,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
         id: 'ad-live-1',
         workstationId: 'ws-p1',
         type: 'quality' as const,
-        urgency: 'normal' as const,
+        urgency: 'medium' as const,
         detail: 'Connecteur mal serti',
         status: 'active' as const,
         raisedBy: 'u-nadia',
@@ -450,13 +573,14 @@ export function buildDemoData(now: Date = new Date()): Dataset {
         id: 'ad-live-2',
         workstationId: 'ws-p5',
         type: 'equipment' as const,
-        urgency: 'normal' as const,
+        urgency: 'medium' as const,
         detail: 'Testeur de continuité en panne',
-        status: 'acknowledged' as const,
+        status: 'in_progress' as const,
         raisedBy: 'u-ibrahim',
         raisedAt: minutesAgo(14),
         acknowledgedBy: 'u-lucia',
         acknowledgedAt: minutesAgo(9),
+        resolutionStartedAt: minutesAgo(5),
       },
       minutesAgo(14),
     ),
@@ -469,7 +593,13 @@ export function buildDemoData(now: Date = new Date()): Dataset {
       name: 'Journée type du Line Leader',
       active: true,
       description: 'Enchaînement des rendez-vous clés de la journée, avec durée cible par étape.',
-      steps: DEMO_SEQUENCE_STEPS.map(([title, time, dur], i) => ({ id: `sq-day-${i}`, title, plannedTime: time, durationMin: dur })),
+      steps: DEMO_SEQUENCE_STEPS.map(([title, time, dur], i) => ({
+        id: `sq-day-${i}`,
+        title,
+        plannedTime: time,
+        durationMin: dur,
+        active: true,
+      })),
     }),
     stamp({
       id: 'sq-changeover',
@@ -481,8 +611,10 @@ export function buildDemoData(now: Date = new Date()): Dataset {
           id: 'sq-co-0',
           title: 'Arrêter la presse et consigner',
           instruction: 'Couper l’alimentation et poser le cadenas de consignation.',
+          validation: 'Cadenas posé et presse hors tension',
           durationMin: 2,
           knowledgeId: 'kb-sec-01',
+          active: true,
         },
         {
           id: 'sq-co-1',
@@ -490,15 +622,18 @@ export function buildDemoData(now: Date = new Date()): Dataset {
           instruction: 'Vérifier la correspondance outil / référence terminal.',
           durationMin: 6,
           knowledgeId: 'kb-std-02',
+          active: true,
         },
-        { id: 'sq-co-2', title: 'Charger la nouvelle bobine de terminaux', durationMin: 3 },
+        { id: 'sq-co-2', title: 'Charger la nouvelle bobine de terminaux', durationMin: 3, active: true },
         {
           id: 'sq-co-3',
           title: 'Réaliser 5 pièces d’essai',
           instruction: 'Mesurer la hauteur de sertissage et faire l’essai de traction.',
+          validation: 'Hauteur et traction conformes sur les 5 pièces',
           durationMin: 5,
+          active: true,
         },
-        { id: 'sq-co-4', title: 'Valider le premier article avec la qualité', durationMin: 4, knowledgeId: 'kb-qual-02' },
+        { id: 'sq-co-4', title: 'Valider le premier article avec la qualité', durationMin: 4, knowledgeId: 'kb-qual-02', active: true },
       ],
     }),
   ];
@@ -664,45 +799,121 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     });
   }
 
-  /* ---------- Réunions ---------- */
+  /* ---------- Agenda : briefs quotidiens (série), formation, audit, opération 5S ---------- */
   const agendaLabels = ['Sécurité et 5S', 'Production / OF du jour', 'Qualité et anomalies', 'Effectifs et absences', 'Suivi des actions'];
+  const briefTeams = ['team-a', 'team-b'];
+  const briefInvitees = users.filter((u) => u.teamId && briefTeams.includes(u.teamId)).map((u) => u.id);
+  const brief = (id: string, day: DateKey, done: boolean): Meeting =>
+    stamp(
+      {
+        id,
+        title: 'Brief de début de poste',
+        type: 'briefing' as const,
+        date: day,
+        startTime: '06:40',
+        endTime: '06:50',
+        location: 'Tableau d’équipe — ligne A',
+        organizerId: 'u-karim',
+        participantIds: ['u-aicha'],
+        teamIds: briefTeams,
+        attendeeIds: done ? ['u-karim', 'u-aicha', ...briefInvitees.filter(() => chance(0.85))] : [],
+        status: done ? ('done' as const) : ('planned' as const),
+        agenda: agendaLabels.map((label, i) => ({ id: `${id}-a${i}`, label, done: done && chance(0.9) })),
+        minutes: !done
+          ? ''
+          : day === addDays(today, -1)
+            ? 'Cadence correcte sur la ligne A. Suivi demandé sur la presse B. Un membre en congé.'
+            : 'Points passés en revue, pas de blocage majeur.',
+        seriesId: 'series-brief',
+      },
+      `${addDays(today, -HISTORY_DAYS - 1)}T08:00:00.000Z`,
+    );
   const meetings: Meeting[] = [];
   for (let d = HISTORY_DAYS - 1; d >= 1; d--) {
     const day = addDays(today, -d);
-    const id = d === 1 ? 'mt-yesterday' : nextId('mt');
-    meetings.push(
-      stamp(
-        {
-          id,
-          title: 'Brief de début de poste',
-          date: day,
-          startTime: '06:40',
-          durationMin: 10,
-          organizerId: 'u-karim',
-          participantIds: staff.filter(() => chance(0.7)).map((u) => u.id),
-          status: 'done' as const,
-          agenda: agendaLabels.map((label, i) => ({ id: `${id}-a${i}`, label, done: chance(0.9) })),
-          minutes:
-            d === 1
-              ? 'Cadence correcte sur la ligne A. Suivi demandé sur la presse B. Un membre en congé.'
-              : 'Points passés en revue, pas de blocage majeur.',
-        },
-        at(day, '06:40'),
-      ),
-    );
+    if (isoWeekday(day) > 5 && d !== 1) continue; // briefs les jours ouvrés
+    meetings.push(brief(d === 1 ? 'mt-yesterday' : nextId('mt'), day, true));
   }
+  meetings.push(brief('mt-today', today, false));
+  for (let d = 1; d <= 10; d++) {
+    const day = addDays(today, d);
+    if (isoWeekday(day) <= 5) meetings.push(brief(nextId('mt'), day, false));
+  }
+  const event = (
+    m: Partial<Meeting> & Pick<Meeting, 'id' | 'title' | 'type' | 'date' | 'startTime' | 'endTime' | 'organizerId'>,
+  ): Meeting =>
+    stamp(
+      { participantIds: [], teamIds: [], attendeeIds: [], agenda: [], minutes: '', status: 'planned' as const, ...m },
+      `${addDays(today, -3)}T09:00:00.000Z`,
+    );
   meetings.push(
-    stamp({
-      id: 'mt-today',
-      title: 'Brief de début de poste',
+    event({
+      id: 'ev-5s-a',
+      title: 'Opération 5S ligne A',
+      type: 'operational',
       date: today,
-      startTime: '06:40',
-      durationMin: 10,
+      startTime: '14:00',
+      endTime: '15:00',
+      location: 'Ligne A',
+      description: 'Rangement et marquage au sol de tous les postes de la ligne A.',
       organizerId: 'u-karim',
-      participantIds: [],
-      status: 'planned' as const,
-      minutes: '',
-      agenda: agendaLabels.map((label, i) => ({ id: `mt-today-a${i}`, label, done: false })),
+      teamIds: ['team-a'],
+    }),
+    event({
+      id: 'ev-training',
+      title: 'Formation — nouveau standard de rubanage',
+      type: 'training',
+      date: addDays(today, 1),
+      startTime: '14:00',
+      endTime: '15:00',
+      location: 'Salle de formation',
+      description: 'Présentation du standard STD-01 révisé et exercices pratiques.',
+      organizerId: 'u-aicha',
+      participantIds: ['u-nadia', 'u-ibrahim', 'u-yann'],
+      agenda: [
+        { id: 'ev-training-a0', label: 'Écarts constatés au contrôle', done: false },
+        { id: 'ev-training-a1', label: 'Nouveau standard STD-01', done: false },
+        { id: 'ev-training-a2', label: 'Exercice au poste', done: false },
+      ],
+    }),
+    event({
+      id: 'ev-audit-b',
+      title: 'Audit 5S ligne B',
+      type: 'audit',
+      date: addDays(today, 2),
+      startTime: '10:00',
+      endTime: '11:00',
+      location: 'Ligne B',
+      organizerId: 'u-dupont',
+      participantIds: ['u-sofia', 'u-lucia'],
+    }),
+    event({
+      id: 'ev-maint',
+      title: 'Maintenance préventive — presse A',
+      type: 'maintenance',
+      date: addDays(today, 3),
+      startTime: '12:30',
+      endTime: '13:30',
+      location: 'Poste 1',
+      description: 'Arrêt de la presse A pendant l’intervention : prévoir le report des OF.',
+      organizerId: 'u-karim',
+      participantIds: ['u-yann'],
+    }),
+    event({
+      id: 'ev-review',
+      title: 'Revue hebdomadaire des indicateurs',
+      type: 'meeting',
+      date: addDays(today, 2),
+      startTime: '15:00',
+      endTime: '16:00',
+      location: 'Bureau atelier',
+      organizerId: 'u-dupont',
+      participantIds: ['u-karim', 'u-sofia', 'u-aicha'],
+      agenda: [
+        { id: 'ev-review-a0', label: 'Réalisation des routines', done: false },
+        { id: 'ev-review-a1', label: 'Andon et temps de réaction', done: false },
+        { id: 'ev-review-a2', label: 'Actions correctives en retard', done: false },
+      ],
     }),
   );
 
@@ -771,17 +982,30 @@ export function buildDemoData(now: Date = new Date()): Dataset {
       },
       minutesAgo(240),
     ),
+    stamp(
+      {
+        id: 'nt-5',
+        userId: 'u-nadia',
+        kind: 'meeting_invited' as const,
+        title: 'Invitation : Formation — nouveau standard de rubanage (demain 14:00)',
+        link: '/reunions/ev-training',
+      },
+      at(addDays(today, -3), '09:00'),
+    ),
   ];
 
   const settings = [stamp({ id: 'app', plantName: 'Atelier de câblage', andonEscalationMinutes: 10, routineLateToleranceMinutes: 120 })];
 
   return {
     users,
+    teams,
     lines,
     workstations,
     presence,
     leaves,
+    checklists,
     routineTemplates,
+    schedules,
     routineRuns,
     actions,
     comments,

@@ -12,7 +12,7 @@ export type PolicyResource =
 export const isMeetingParticipant = (meeting: Meeting, user: User) =>
   meeting.organizerId === user.id ||
   meeting.participantIds.includes(user.id) ||
-  Boolean(user.teamId && (meeting.teamIds ?? []).includes(user.teamId));
+  Boolean(user.teamId && meeting.teamIds.includes(user.teamId));
 
 export function can(user: User | null | undefined, permission: Permission, resource?: PolicyResource): boolean {
   if (!user || !user.active) return false;

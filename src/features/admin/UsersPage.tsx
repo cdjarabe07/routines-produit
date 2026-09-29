@@ -1,32 +1,77 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Plus } from 'lucide-react';
 import { useCurrentUser } from '@/app/providers/AuthProvider';
 import { DataTable, type Column } from '@/components/data-display/DataTable';
 import { QueryBoundary } from '@/components/feedback/States';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Checkbox, FormActions, FormGrid, SelectField, TextField } from '@/components/ui/Field';
 import { Drawer } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
 import { SHIFT_SHORT, options } from '@/features/shared/labels';
-import { useLookups, type Lookups } from '@/features/shared/api';
+import { lineOptions, teamOptions, useLookups, workstationOptions, type Lookups } from '@/features/shared/api';
 import { useForm } from '@/hooks/useForm';
-import { ROLE_LABELS, ROLE_ORDER } from '@/services/auth/permissions';
+import { PROFILE_LABELS, ROLE_LABELS, ROLE_ORDER, ROLE_PROFILE } from '@/services/auth/permissions';
 import type { Role, Shift, User } from '@/types/domain';
+import { formatDateTime } from '@/utils/date';
 import { required } from '@/utils/validation';
 import { useSaveUser } from './api';
+import styles from './UsersPage.module.css';
 
+/** Utilisateurs : recherche, filtres, création, modification, désactivation, rôle, équipe, poste. */
 export function UsersPage() {
   const { queries, lookups } = useLookups();
-  const [editing, setEditing] = useState<User | 'new' | null>(null);
+  const [params, setParams] = useSearchParams();
+  const role = params.get('role') ?? '';
+  const team = params.get('equipe') ?? '';
+  const status = params.get('statut') ?? 'actifs';
+  const editingId = params.get('utilisateur');
+  const creating = params.get('nouveau') === '1';
+
+  const setParam = (patch: Record<string, string | null>) => {
+    const p = new URLSearchParams(params);
+    for (const [k, v] of Object.entries(patch)) {
+      if (v) p.set(k, v);
+      else p.delete(k);
+    }
+    setParams(p, { replace: true });
+  };
 
   const columns: Column<User>[] = [
     { id: 'name', header: 'Nom', mobile: 'title', cell: (u) => u.name, sortValue: (u) => u.name },
     { id: 'email', header: 'Email', mobile: 'meta', cell: (u) => u.email, sortValue: (u) => u.email },
-    { id: 'role', header: 'Rôle', mobile: 'meta', cell: (u) => ROLE_LABELS[u.role], sortValue: (u) => ROLE_ORDER.indexOf(u.role) },
-    { id: 'line', header: 'Ligne', mobile: 'meta', cell: (u) => (u.lineId ? lookups?.lineById.get(u.lineId)?.name : 'Toutes') },
-    { id: 'shift', header: 'Équipe', mobile: 'meta', cell: (u) => (u.shift ? SHIFT_SHORT[u.shift] : '—') },
+    {
+      id: 'role',
+      header: 'Rôle',
+      mobile: 'meta',
+      cell: (u) => (
+        <span>
+          {ROLE_LABELS[u.role]} <span className={styles.profile}>· {PROFILE_LABELS[ROLE_PROFILE[u.role]]}</span>
+        </span>
+      ),
+      sortValue: (u) => ROLE_ORDER.indexOf(u.role),
+    },
+    {
+      id: 'team',
+      header: 'Équipe',
+      mobile: 'meta',
+      cell: (u) => (u.teamId ? lookups?.teamName(u.teamId) : '—'),
+      sortValue: (u) => (u.teamId ? (lookups?.teamName(u.teamId) ?? '') : ''),
+    },
+    {
+      id: 'ws',
+      header: 'Poste',
+      mobile: 'meta',
+      cell: (u) => (u.workstationId ? (lookups?.workstationById.get(u.workstationId)?.code ?? '—') : '—'),
+    },
+    {
+      id: 'last',
+      header: 'Dernière activité',
+      mobile: 'meta',
+      cell: (u) => (u.lastSignInAt ? formatDateTime(u.lastSignInAt) : 'Jamais connecté'),
+      sortValue: (u) => u.lastSignInAt ?? '',
+    },
     {
       id: 'active',
       header: 'Statut',
@@ -44,7 +89,7 @@ export function UsersPage() {
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
-            setEditing(u);
+            setParam({ utilisateur: u.id });
           }}
         >
           Modifier
@@ -57,36 +102,75 @@ export function UsersPage() {
     <>
       <PageHeader
         title="Utilisateurs"
-        description="Comptes, rôles et rattachements. En production, les identités viennent du fournisseur d’authentification ; seuls le rôle et le rattachement sont gérés ici."
+        description="Comptes, rôles et rattachements. Le rôle détermine l’espace d’accueil et les droits (écran Rôles et droits)."
         actions={
-          <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setEditing('new')}>
+          <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setParam({ nouveau: '1' })}>
             Nouvel utilisateur
           </Button>
         }
       />
       <QueryBoundary queries={queries}>
-        {() => (
-          <Panel flush>
-            <DataTable
-              caption="Utilisateurs"
-              rows={lookups!.users}
-              columns={columns}
-              rowKey={(u) => u.id}
-              initialSort={{ id: 'name', direction: 'asc' }}
-              search={{ placeholder: 'Rechercher un nom, un email…', text: (u) => `${u.name} ${u.email} ${ROLE_LABELS[u.role]}` }}
-              empty={{ title: 'Aucun utilisateur.' }}
-            />
-          </Panel>
-        )}
+        {() => {
+          const rows = lookups!.users
+            .filter((u) => (status === 'actifs' ? u.active : status === 'desactives' ? !u.active : true))
+            .filter((u) => !role || u.role === role)
+            .filter((u) => !team || (team === 'aucune' ? !u.teamId : u.teamId === team));
+          return (
+            <Stack>
+              <div className={styles.filters}>
+                <SelectField
+                  label="Rôle"
+                  placeholder="Tous les rôles"
+                  options={ROLE_ORDER.map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+                  value={role}
+                  onChange={(e) => setParam({ role: e.target.value || null })}
+                />
+                <SelectField
+                  label="Équipe"
+                  placeholder="Toutes les équipes"
+                  options={[...teamOptions(lookups!.teams), { value: 'aucune', label: 'Sans équipe' }]}
+                  value={team}
+                  onChange={(e) => setParam({ equipe: e.target.value || null })}
+                />
+                <SelectField
+                  label="Statut"
+                  options={[
+                    { value: 'actifs', label: 'Actifs' },
+                    { value: 'desactives', label: 'Désactivés' },
+                    { value: 'tous', label: 'Tous' },
+                  ]}
+                  value={status}
+                  onChange={(e) => setParam({ statut: e.target.value === 'actifs' ? null : e.target.value })}
+                />
+              </div>
+              <Panel flush>
+                <DataTable
+                  caption="Utilisateurs"
+                  rows={rows}
+                  columns={columns}
+                  rowKey={(u) => u.id}
+                  initialSort={{ id: 'name', direction: 'asc' }}
+                  search={{ placeholder: 'Rechercher un nom, un email…', text: (u) => `${u.name} ${u.email} ${ROLE_LABELS[u.role]}` }}
+                  empty={{ title: 'Aucun utilisateur ne correspond à ces filtres.' }}
+                />
+              </Panel>
+            </Stack>
+          );
+        }}
       </QueryBoundary>
       <Drawer
-        open={editing !== null}
-        onClose={() => setEditing(null)}
-        title={editing === 'new' ? 'Nouvel utilisateur' : 'Modifier l’utilisateur'}
+        open={creating || Boolean(editingId)}
+        onClose={() => setParam({ utilisateur: null, nouveau: null })}
+        title={editingId ? 'Modifier l’utilisateur' : 'Nouvel utilisateur'}
         size="md"
       >
-        {editing !== null && lookups && (
-          <UserForm user={editing === 'new' ? undefined : editing} lookups={lookups} onDone={() => setEditing(null)} />
+        {(creating || editingId) && lookups && (
+          <UserForm
+            key={editingId ?? 'new'}
+            user={editingId ? lookups.userById.get(editingId) : undefined}
+            lookups={lookups}
+            onDone={() => setParam({ utilisateur: null, nouveau: null })}
+          />
         )}
       </Drawer>
     </>
@@ -101,7 +185,9 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
       name: user?.name ?? '',
       email: user?.email ?? '',
       role: user?.role ?? ('operator' as Role),
+      teamId: user?.teamId ?? '',
       lineId: user?.lineId ?? '',
+      workstationId: user?.workstationId ?? '',
       zoneLabel: user?.zoneLabel ?? '',
       shift: user?.shift ?? ('morning' as Shift),
       active: user?.active ?? true,
@@ -120,10 +206,13 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
           name: v.name.trim(),
           email: v.email,
           role: v.role,
+          teamId: v.teamId || undefined,
           lineId: v.lineId || undefined,
+          workstationId: v.workstationId || undefined,
           zoneLabel: v.zoneLabel.trim() || undefined,
           shift: v.shift,
           active: v.active,
+          lastSignInAt: user?.lastSignInAt,
         },
       });
       onDone();
@@ -131,6 +220,7 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
   });
   const { values, set, errors } = form;
   const isMe = user?.id === me.id;
+  const team = values.teamId ? lookups.teamById.get(values.teamId) : undefined;
   return (
     <form onSubmit={form.handleSubmit} noValidate>
       <FormGrid>
@@ -153,7 +243,7 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
         />
         <SelectField
           label="Rôle"
-          options={ROLE_ORDER.map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+          options={ROLE_ORDER.map((r) => ({ value: r, label: `${ROLE_LABELS[r]} — ${PROFILE_LABELS[ROLE_PROFILE[r]]}` }))}
           value={values.role}
           onChange={(e) => set('role', e.target.value as Role)}
           disabled={isMe}
@@ -161,18 +251,35 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
         />
         <SelectField
           label="Équipe"
+          placeholder="Aucune équipe"
+          options={teamOptions(lookups.teams)}
+          value={values.teamId}
+          onChange={(e) => set('teamId', e.target.value)}
+          hint={team ? `Quart et zone repris de l’équipe${team.shift ? ` (${SHIFT_SHORT[team.shift]})` : ''}.` : undefined}
+        />
+        <SelectField
+          label="Quart"
           options={options(SHIFT_SHORT)}
           value={values.shift}
           onChange={(e) => set('shift', e.target.value as Shift)}
+          disabled={Boolean(team?.shift)}
         />
         <SelectField
-          label="Ligne"
-          placeholder="Toutes les lignes"
-          options={lookups.lines.map((l) => ({ value: l.id, label: l.name }))}
+          label="Zone (ligne)"
+          placeholder="Toutes les zones"
+          options={lineOptions(lookups.lines)}
           value={values.lineId}
           onChange={(e) => set('lineId', e.target.value)}
+          disabled={Boolean(team?.lineId)}
         />
-        <TextField label="Zone / poste habituel" value={values.zoneLabel} onChange={(e) => set('zoneLabel', e.target.value)} />
+        <SelectField
+          label="Poste habituel"
+          placeholder="Aucun"
+          options={workstationOptions(lookups.workstations)}
+          value={values.workstationId}
+          onChange={(e) => set('workstationId', e.target.value)}
+        />
+        <TextField label="Libellé de zone affiché" value={values.zoneLabel} onChange={(e) => set('zoneLabel', e.target.value)} />
         <div className="full">
           <Checkbox
             label="Compte actif"
@@ -187,6 +294,11 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
           />
         </div>
       </FormGrid>
+      {!user && (
+        <p className={styles.note}>
+          Le compte peut se connecter avec son email et le mot de passe initial communiqué par l’administrateur.
+        </p>
+      )}
       <FormActions>
         <Button onClick={onDone}>Annuler</Button>
         <Button type="submit" variant="primary" loading={form.submitting}>

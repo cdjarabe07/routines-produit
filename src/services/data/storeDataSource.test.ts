@@ -89,12 +89,23 @@ describe('jeu de démonstration', () => {
     for (const a of data.actions) expect(users.has(a.assigneeId)).toBe(true);
     for (const a of data.anomalies) if (a.workstationId) expect(ws.has(a.workstationId)).toBe(true);
     for (const a of data.andonAlerts) expect(ws.has(a.workstationId)).toBe(true);
-    for (const r of data.routineRuns) expect(templates.has(r.templateId)).toBe(true);
+    const schedules = new Set(data.schedules.map((s) => s.id));
+    const checklists = new Set(data.checklists.map((c) => c.id));
+    const teams = new Set(data.teams.map((t) => t.id));
+    for (const r of data.routineRuns) expect(templates.has(r.templateId) && schedules.has(r.scheduleId)).toBe(true);
+    for (const s of data.schedules) {
+      expect(templates.has(s.routineId)).toBe(true);
+      expect(Boolean(s.assigneeId ? users.has(s.assigneeId) : s.teamId && teams.has(s.teamId))).toBe(true);
+    }
     for (const t of data.routineTemplates)
-      for (const item of t.sections.flatMap((s) => s.items)) if (item.knowledgeId) expect(kb.has(item.knowledgeId)).toBe(true);
+      for (const task of t.tasks) {
+        if (task.knowledgeId) expect(kb.has(task.knowledgeId)).toBe(true);
+        if (task.checklistId) expect(checklists.has(task.checklistId)).toBe(true);
+      }
+    for (const u of data.users) if (u.teamId) expect(teams.has(u.teamId)).toBe(true);
   });
 
-  it('marque les contenus de référence comme exemples', () => {
+  it('marque les contenus de référence « à valider »', () => {
     expect(data.knowledgeItems.every((k) => k.toReview)).toBe(true);
   });
 

@@ -36,6 +36,15 @@ export function enumerateDays(from: DateKey, to: DateKey): DateKey[] {
   return out;
 }
 
+/** Jour de la semaine ISO : 1 = lundi … 7 = dimanche. */
+export function isoWeekday(key: DateKey): number {
+  const d = parseDateKey(key).getDay();
+  return d === 0 ? 7 : d;
+}
+
+/** Lundi de la semaine contenant la date. */
+export const startOfWeek = (key: DateKey): DateKey => addDays(key, 1 - isoWeekday(key));
+
 export function timeToMinutes(time: TimeOfDay): number {
   const [h, m] = time.split(':').map(Number);
   return (h ?? 0) * 60 + (m ?? 0);

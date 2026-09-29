@@ -23,7 +23,8 @@ export function createMemoryStore(): KeyValueStore {
   };
 }
 
-const PREFIX = 'ra:v1:';
+/* v2 : modèle planification / tâches / équipes. Les données v1 ne sont pas migrées : le jeu initial est rechargé. */
+const PREFIX = 'ra:v2:';
 const META_KEY = `${PREFIX}meta`;
 const log = createLogger('data:store');
 

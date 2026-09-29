@@ -6,6 +6,7 @@ import type {
   AppNotification,
   AppSettings,
   BaseEntity,
+  Checklist,
   Comment,
   Favorite,
   GembaWalk,
@@ -21,9 +22,11 @@ import type {
   QualityCheck,
   RoutineRun,
   RoutineTemplate,
+  Schedule,
   SequenceRun,
   SequenceTemplate,
   StockMovement,
+  Team,
   User,
   Workstation,
 } from '@/types/domain';
@@ -31,11 +34,14 @@ import type {
 /** Toutes les collections persistées. Ajouter une entité = l'ajouter ici. */
 export interface CollectionMap {
   users: User;
+  teams: Team;
   lines: Line;
   workstations: Workstation;
   presence: PresenceRecord;
   leaves: Leave;
+  checklists: Checklist;
   routineTemplates: RoutineTemplate;
+  schedules: Schedule;
   routineRuns: RoutineRun;
   actions: Action;
   comments: Comment;
@@ -61,11 +67,14 @@ export type CollectionName = keyof CollectionMap;
 
 export const COLLECTIONS: CollectionName[] = [
   'users',
+  'teams',
   'lines',
   'workstations',
   'presence',
   'leaves',
+  'checklists',
   'routineTemplates',
+  'schedules',
   'routineRuns',
   'actions',
   'comments',
