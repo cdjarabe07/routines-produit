@@ -45,3 +45,7 @@
   .header { align-items: flex-start; flex-direction: column; margin-bottom: var(--space-4); }
   .actions { width: 100%; }
 }
+
+@media print {
+  .actions, .back { display: none; }
+}

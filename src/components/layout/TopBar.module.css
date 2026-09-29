@@ -96,3 +96,7 @@
   .quick { width: var(--touch-target); height: var(--touch-target); padding: 0; }
   .plant { font-size: var(--text-sm); }
 }
+
+@media print {
+  .bar { display: none; }
+}
