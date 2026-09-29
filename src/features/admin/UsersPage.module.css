@@ -15,3 +15,14 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
+.password {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-lg);
+  letter-spacing: 0.05em;
+  user-select: all;
+  word-break: break-all;
+  background: var(--color-surface-muted, var(--color-bg));
+  border-radius: var(--radius-sm, 4px);
+}

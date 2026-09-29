@@ -32,12 +32,12 @@ export function SettingsPage() {
               <Panel title="Seuils métier">
                 <SettingsForm key={query.settings.updatedAt ?? 'default'} settings={query.settings} />
               </Panel>
-              {ds.kind === 'demo' && (
-                <Panel title="Environnement" accent="warning">
+              {ds.resetDemoData && (ds.kind === 'demo' || query.settings.environment === 'demo') && (
+                <Panel title="Environnement de démonstration" accent="warning">
                   <p style={{ marginBottom: 'var(--space-3)', color: 'var(--color-text-muted)' }}>
-                    Les données sont enregistrées dans ce navigateur. Le jeu initial (organisation, routines, planification et historique de
-                    30 jours) est généré au premier lancement et daté par rapport à aujourd’hui. La réinitialisation le recharge et efface
-                    toutes les saisies faites sur ce poste.
+                    {ds.kind === 'demo'
+                      ? 'Les données sont enregistrées dans ce navigateur. Le jeu initial (organisation, routines, planification et historique de 30 jours) est généré au premier lancement et daté par rapport à aujourd’hui. La réinitialisation le recharge et efface toutes les saisies faites sur ce poste.'
+                      : 'Serveur de démonstration : la réinitialisation recharge le jeu initial pour tous les utilisateurs et efface leurs saisies. Les comptes et le journal d’audit sont conservés. Elle est refusée par le serveur sur un environnement de production.'}
                   </p>
                   <Button
                     variant="danger"
@@ -46,7 +46,9 @@ export function SettingsPage() {
                         await confirm({
                           title: 'Réinitialiser l’environnement ?',
                           message:
-                            'Toutes les saisies de ce navigateur seront effacées et le jeu initial rechargé. Cette action est irréversible.',
+                            ds.kind === 'demo'
+                              ? 'Toutes les saisies de ce navigateur seront effacées et le jeu initial rechargé. Cette action est irréversible.'
+                              : 'Toutes les saisies de tous les utilisateurs du serveur de démonstration seront effacées. Cette action est irréversible.',
                           confirmLabel: 'Réinitialiser',
                           tone: 'danger',
                         })
@@ -67,6 +69,10 @@ export function SettingsPage() {
                     value:
                       ds.kind === 'demo' ? (
                         <Badge tone="warning">Stockage local du navigateur</Badge>
+                      ) : ds.kind === 'supabase' ? (
+                        <Badge tone={query.settings.environment === 'production' ? 'info' : 'warning'}>
+                          Serveur Supabase — {query.settings.environment === 'production' ? 'production' : 'démonstration'}
+                        </Badge>
                       ) : (
                         <Badge tone="info">API — {env.apiBaseUrl}</Badge>
                       ),
@@ -76,6 +82,8 @@ export function SettingsPage() {
                     value:
                       env.authMode === 'demo' ? (
                         <Badge tone="warning">Comptes locaux — non sécurisé</Badge>
+                      ) : env.authMode === 'supabase' ? (
+                        <Badge tone="info">Comptes serveur (Supabase Auth)</Badge>
                       ) : (
                         <Badge tone="info">{env.authMode.toUpperCase()}</Badge>
                       ),

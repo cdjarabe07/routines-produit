@@ -8,16 +8,36 @@ import type { AppSettings, ID, Team, User, Workstation } from '@/types/domain';
 
 export function useSaveUser() {
   return useOperation(
-    async (ds, { id, input }: { id?: ID; input: NewEntity<User> }) => {
+    async (ds, { id, input }: { id?: ID; input: NewEntity<User> }): Promise<{ user: User; temporaryPassword?: string }> => {
       const email = input.email.trim().toLowerCase();
       const duplicate = (await ds.repo('users').list()).some((u) => u.email.toLowerCase() === email && u.id !== id);
       if (duplicate) throw new ValidationError('Un utilisateur utilise déjà cette adresse email.');
       // Rattachement à une équipe : le quart et la ligne sont repris de l'équipe (docs/role-model.md §3)
       const team = input.teamId ? await ds.repo('teams').get(input.teamId) : undefined;
       const payload = { ...input, email, shift: team?.shift ?? input.shift, lineId: team ? (team.lineId ?? input.lineId) : input.lineId };
-      return id ? ds.repo('users').update(id, payload) : ds.repo('users').create(payload);
+      if (ds.accounts) {
+        // Comptes serveur : création du compte d'authentification par l'API d'administration ; email et
+        // dernière connexion gérés par le serveur
+        if (!id) return ds.accounts.create(payload);
+        const editable: Partial<NewEntity<User>> = { ...payload };
+        delete editable.email;
+        delete editable.lastSignInAt;
+        return { user: await ds.repo('users').update(id, editable) };
+      }
+      return { user: id ? await ds.repo('users').update(id, payload) : await ds.repo('users').create(payload) };
     },
-    { invalidates: ['users'], success: 'Utilisateur enregistré.' },
+    { invalidates: ['users'], success: (r) => (r.temporaryPassword ? 'Compte créé.' : 'Utilisateur enregistré.') },
+  );
+}
+
+/** Nouveau mot de passe provisoire (sessions en cours révoquées). Comptes serveur uniquement. */
+export function useResetUserPassword() {
+  return useOperation(
+    async (ds, userId: ID) => {
+      if (!ds.accounts) throw new ValidationError('Réinitialisation indisponible avec les comptes de démonstration locaux.');
+      return ds.accounts.resetPassword(userId);
+    },
+    { invalidates: ['notifications'], success: 'Mot de passe réinitialisé.' },
   );
 }
 

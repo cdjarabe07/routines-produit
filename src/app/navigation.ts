@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  ScrollText,
   ArrowLeftRight,
   BarChart3,
   BookOpen,
@@ -174,6 +175,7 @@ export const SPACES: Space[] = [
         items: [
           { path: '/admin/roles', label: 'Rôles et droits', icon: ShieldCheck, permission: 'settings.manage' },
           { path: '/admin/parametres', label: 'Paramètres', icon: Settings, permission: 'settings.manage' },
+          { path: '/admin/journal', label: 'Journal d’audit', icon: ScrollText, permission: 'settings.manage' },
         ],
       },
     ],

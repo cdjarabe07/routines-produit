@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { Bell, CircleHelp, LogOut, Menu as MenuIcon, Siren, TriangleAlert } from 'lucide-react';
+import { Bell, CircleHelp, KeyRound, LogOut, Menu as MenuIcon, Siren, TriangleAlert } from 'lucide-react';
 import { helpFor } from '@/app/help';
 import { Can, useAuth } from '@/app/providers/AuthProvider';
 import { Button, IconButton } from '@/components/ui/Button';
@@ -13,10 +13,12 @@ import { ROLE_LABELS } from '@/services/auth/permissions';
 import { formatDateTime, formatLongDate, formatTime } from '@/utils/date';
 import { initials } from '@/utils/format';
 import { cx } from '@/utils/cx';
+import { ChangePasswordDialog } from './ChangePasswordDialog';
 import styles from './TopBar.module.css';
 
 export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, service } = useAuth();
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const now = useNow(30_000);
@@ -83,6 +85,9 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
             </div>
           }
           items={[
+            ...(service.changePassword
+              ? [{ label: 'Changer le mot de passe', icon: <KeyRound size={16} aria-hidden />, onSelect: () => setPasswordOpen(true) }]
+              : []),
             {
               label: 'Se déconnecter',
               icon: <LogOut size={16} aria-hidden />,
@@ -102,6 +107,8 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
           )}
         />
       </div>
+
+      {service.changePassword && <ChangePasswordDialog open={passwordOpen} onClose={() => setPasswordOpen(false)} />}
 
       <Drawer open={helpOpen} onClose={() => setHelpOpen(false)} title={`Aide — ${help.title}`} size="sm">
         <ul className={styles.helpList}>

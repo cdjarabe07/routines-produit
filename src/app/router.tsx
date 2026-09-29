@@ -61,6 +61,7 @@ const P = {
   AdminStations: page(() => import('@/features/admin/WorkstationsPage'), 'WorkstationsPage'),
   AdminRoles: page(() => import('@/features/admin/RolesPage'), 'RolesPage'),
   AdminSettings: page(() => import('@/features/admin/SettingsPage'), 'SettingsPage'),
+  AdminAudit: page(() => import('@/features/admin/AuditLogPage'), 'AuditLogPage'),
 };
 
 function guarded(Component: ComponentType, permission?: Permission, what?: string) {
@@ -143,6 +144,7 @@ export const appRoutes: RouteObject[] = [
         { path: 'postes', element: guarded(P.AdminStations, 'workstation.manage', 'la gestion des postes') },
         { path: 'roles', element: guarded(P.AdminRoles, 'settings.manage', 'les rôles et droits') },
         { path: 'parametres', element: guarded(P.AdminSettings, 'settings.manage', 'les paramètres') },
+        { path: 'journal', element: guarded(P.AdminAudit, 'settings.manage', 'le journal d’audit') },
       ]),
 
       // Écrans de détail communs : le contenu s'adapte aux droits

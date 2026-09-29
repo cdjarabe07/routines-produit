@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Plus } from 'lucide-react';
 import { useCurrentUser } from '@/app/providers/AuthProvider';
+import { useDataSource } from '@/app/providers/DataSourceProvider';
 import { DataTable, type Column } from '@/components/data-display/DataTable';
 import { QueryBoundary } from '@/components/feedback/States';
 import { PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Checkbox, FormActions, FormGrid, SelectField, TextField } from '@/components/ui/Field';
 import { Drawer } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
@@ -16,7 +19,7 @@ import { PROFILE_LABELS, ROLE_LABELS, ROLE_ORDER, ROLE_PROFILE } from '@/service
 import type { Role, Shift, User } from '@/types/domain';
 import { formatDateTime } from '@/utils/date';
 import { required } from '@/utils/validation';
-import { useSaveUser } from './api';
+import { useResetUserPassword, useSaveUser } from './api';
 import styles from './UsersPage.module.css';
 
 /** Utilisateurs : recherche, filtres, création, modification, désactivation, rôle, équipe, poste. */
@@ -179,7 +182,13 @@ export function UsersPage() {
 
 function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; onDone: () => void }) {
   const me = useCurrentUser();
+  const ds = useDataSource();
+  const confirm = useConfirm();
   const save = useSaveUser();
+  const resetPassword = useResetUserPassword();
+  // Mot de passe provisoire : affiché une seule fois, jamais stocké par l'application
+  const [issued, setIssued] = useState<{ email: string; password: string } | null>(null);
+  const serverAccounts = Boolean(ds.accounts);
   const form = useForm({
     initial: {
       name: user?.name ?? '',
@@ -200,7 +209,7 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
       ],
     },
     onSubmit: async (v) => {
-      await save.mutateAsync({
+      const result = await save.mutateAsync({
         id: user?.id,
         input: {
           name: v.name.trim(),
@@ -215,12 +224,14 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
           lastSignInAt: user?.lastSignInAt,
         },
       });
-      onDone();
+      if (result.temporaryPassword) setIssued({ email: result.user.email, password: result.temporaryPassword });
+      else onDone();
     },
   });
   const { values, set, errors } = form;
   const isMe = user?.id === me.id;
   const team = values.teamId ? lookups.teamById.get(values.teamId) : undefined;
+  if (issued) return <TemporaryPassword {...issued} onDone={onDone} />;
   return (
     <form onSubmit={form.handleSubmit} noValidate>
       <FormGrid>
@@ -240,6 +251,8 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
           value={values.email}
           onChange={(e) => set('email', e.target.value)}
           error={errors.email}
+          disabled={serverAccounts && Boolean(user)}
+          hint={serverAccounts && user ? 'Identifiant de connexion : non modifiable ici.' : undefined}
         />
         <SelectField
           label="Rôle"
@@ -296,7 +309,33 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
       </FormGrid>
       {!user && (
         <p className={styles.note}>
-          Le compte peut se connecter avec son email et le mot de passe initial communiqué par l’administrateur.
+          {serverAccounts
+            ? 'Un mot de passe provisoire sera généré par le serveur et affiché une seule fois, à transmettre à la personne.'
+            : 'Le compte peut se connecter avec son email et le mot de passe initial communiqué par l’administrateur.'}
+        </p>
+      )}
+      {serverAccounts && user?.active && !isMe && (
+        <p className={styles.note}>
+          <Button
+            size="sm"
+            variant="danger"
+            loading={resetPassword.isPending}
+            onClick={async () => {
+              if (
+                await confirm({
+                  title: 'Réinitialiser le mot de passe ?',
+                  message: `Un nouveau mot de passe provisoire sera généré pour ${user.name} et ses sessions ouvertes seront fermées.`,
+                  confirmLabel: 'Réinitialiser',
+                  tone: 'danger',
+                })
+              ) {
+                const result = await resetPassword.mutateAsync(user.id).catch(() => null); // erreur déjà affichée
+                if (result) setIssued({ email: user.email, password: result.temporaryPassword });
+              }
+            }}
+          >
+            Réinitialiser le mot de passe
+          </Button>
         </p>
       )}
       <FormActions>
@@ -306,5 +345,29 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
         </Button>
       </FormActions>
     </form>
+  );
+}
+
+function TemporaryPassword({ email, password, onDone }: { email: string; password: string; onDone: () => void }) {
+  return (
+    <Stack>
+      <Panel title="Mot de passe provisoire" accent="warning">
+        <p>
+          Compte : <strong>{email}</strong>
+        </p>
+        <p className={styles.password} aria-label="Mot de passe provisoire">
+          {password}
+        </p>
+        <p className={styles.note}>
+          Il ne sera plus affiché. Transmettez-le directement à la personne (pas par un canal partagé) et demandez-lui de le changer à la
+          première connexion (menu du compte → Changer le mot de passe).
+        </p>
+      </Panel>
+      <FormActions>
+        <Button variant="primary" onClick={onDone}>
+          J’ai transmis le mot de passe
+        </Button>
+      </FormActions>
+    </Stack>
   );
 }
