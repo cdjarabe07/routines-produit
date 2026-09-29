@@ -121,3 +121,13 @@ Aucun chatbot n'existe dans le prototype ni dans l'application (docs/current-sta
 ## D-030 — Clé de stockage `ra:v2`
 
 Le nouveau modèle n'est pas compatible avec les données locales de la version précédente : elles ne sont pas migrées, le jeu initial est rechargé au premier lancement.
+
+## D-031 — Backend Supabase (région UE) pour une sécurité réelle
+
+Audit de sécurité (docs/SECURITY_AUDIT.md) : sécurité réelle nulle tant que tout est décidé dans le navigateur. Choix validé : **Supabase** (Postgres managé, Supabase Auth, fonctions Edge), projet en région UE (Paris, eu-west-3), plutôt qu'un backend Node à écrire et à exploiter.
+
+- Autorisation dans la base (RLS + triggers), matrice de permissions générée depuis `permissions.ts` (source unique).
+- Aucun secret dans le frontend : URL et clé publique seulement ; la clé de service ne vit que dans les fonctions Edge.
+- Le mode démo local (stockage navigateur) est conservé pour le développement et les tests hors ligne ; il reste sans sécurité.
+- Projet actuel `routines-app-demo` : **démonstration uniquement**, aucune donnée réelle. La production exigera un projet distinct, sans comptes de démonstration (`settings.environment = 'production'`, figé).
+- Limites assumées : jeton de session lisible par le JavaScript de la page (SPA sans BFF), mot de passe oublié traité par l'administrateur faute de SMTP d'entreprise. Voir docs/SECURITY_ARCHITECTURE.md §11.
