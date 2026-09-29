@@ -167,7 +167,7 @@ export const PROFILE_LABELS: Record<Profile, string> = {
 };
 
 /** Écran d'accueil après connexion, selon le profil. */
-export const PROFILE_HOME: Record<Profile, string> = {
+const PROFILE_HOME: Record<Profile, string> = {
   user: '/app',
   manager: '/manager',
   admin: '/admin/dashboard',

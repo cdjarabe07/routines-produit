@@ -130,10 +130,3 @@ export function runSummary(routine: RoutineTemplate, checklists: Map<ID, Checkli
 /** Durée estimée : somme des tâches, ou durée prévue de la routine. */
 export const estimatedMinutes = (routine: RoutineTemplate) =>
   routine.tasks.reduce((sum, t) => sum + (t.estimatedMin ?? 0), 0) || routine.durationMin;
-
-/** Horodatage de fin d'une exécution : dernier point saisi. */
-export const lastResultAt = (run: RoutineRun) =>
-  Object.values(run.results)
-    .map((r) => r.at)
-    .sort()
-    .at(-1);

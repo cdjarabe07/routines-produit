@@ -63,8 +63,7 @@ function mulberry32(seed: number) {
 const HISTORY_DAYS = 30;
 
 /** prénom.nom@atelier.local, sans accents */
-export const emailOf = (name: string) =>
-  `${name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '.')}@atelier.local`;
+const emailOf = (name: string) => `${name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '.')}@atelier.local`;
 
 export function buildDemoData(now: Date = new Date()): Dataset {
   const rnd = mulberry32(20260929);

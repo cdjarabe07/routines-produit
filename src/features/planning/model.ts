@@ -42,7 +42,7 @@ export function occursOn(s: Schedule, date: DateKey): boolean {
 export const isAssignedTo = (s: Pick<Schedule, 'assigneeId' | 'teamId'>, user: Pick<User, 'id' | 'teamId'>) =>
   s.assigneeId === user.id || Boolean(s.teamId && user.teamId === s.teamId);
 
-export const occurrenceKey = (scheduleId: ID, date: DateKey) => `${scheduleId}~${date}`;
+const occurrenceKey = (scheduleId: ID, date: DateKey) => `${scheduleId}~${date}`;
 
 export interface Occurrence {
   key: string;

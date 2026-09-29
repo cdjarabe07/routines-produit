@@ -21,9 +21,6 @@ export const DEFAULT_AGENDA = [
 /** Types d'événements qui se tiennent avec ordre du jour, présences et compte-rendu. */
 export const hasMinutes = (type: EventType) => type === 'meeting' || type === 'briefing' || type === 'daily';
 
-export const durationMinutes = (m: Pick<Meeting, 'startTime' | 'endTime'>) =>
-  Math.max(0, timeToMinutes(m.endTime) - timeToMinutes(m.startTime));
-
 /** Événements auxquels la personne est invitée (directement, via son équipe, ou comme responsable). */
 export const meetingsForUser = (meetings: Meeting[], user: User) => meetings.filter((m) => isMeetingParticipant(m, user));
 

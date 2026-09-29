@@ -93,9 +93,7 @@ describe('routines', () => {
     expect(finish).toBeDisabled();
 
     for (const label of ['Outillage inutile retiré', 'Chaque outil à son emplacement', 'Plan de travail nettoyé']) {
-      await user.click(
-        within(screen.getByRole('group', { name: `Résultat : ${label}` })).getByRole('button', { name: 'Conforme', exact: true }),
-      );
+      await user.click(within(screen.getByRole('group', { name: `Résultat : ${label}` })).getByRole('button', { name: /^Conforme$/ }));
     }
     await user.click(
       within(screen.getByRole('group', { name: 'Réponse : Aucune chute de câble au sol' })).getByRole('button', { name: 'Oui' }),
@@ -118,7 +116,7 @@ describe('routines', () => {
     renderApp('/app/routines/sc-ha-crimp/2026-09-28', { userId: 'u-dupont' });
     expect(await screen.findByRole('heading', { level: 1, name: 'Contrôle presses de sertissage' }, TIMEOUT)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Démarrer|Terminer la routine/ })).not.toBeInTheDocument();
-    for (const b of screen.queryAllByRole('button', { name: 'Conforme', exact: true })) expect(b).toBeDisabled();
+    for (const b of screen.queryAllByRole('button', { name: /^Conforme$/ })) expect(b).toBeDisabled();
   });
 
   it('une routine non affectée est refusée à un opérateur', async () => {

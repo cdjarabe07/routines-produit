@@ -39,6 +39,15 @@ export function KnowledgeDetailPage() {
             />
           );
         }
+        if (item.status !== 'published' && !can('knowledge.manage')) {
+          return (
+            <EmptyState
+              title="Document non disponible"
+              description="Ce document n’est pas publié ou a été archivé."
+              action={<ButtonLink to="/app/connaissances">Retour au centre de connaissances</ButtonLink>}
+            />
+          );
+        }
         const fav = favorites.data!.find((f) => f.userId === user.id && f.knowledgeId === item.id);
         const url = safeExternalUrl(item.url);
         const usedInRoutines = templates.data!.filter(

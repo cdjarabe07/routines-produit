@@ -107,6 +107,8 @@ export function AdminDashboardPage() {
                   detail={`Tolérance ${settings.routineLateToleranceMinutes} min`}
                   to="/manager/routines?vue=retard"
                 />
+              </KpiStrip>
+              <KpiStrip>
                 <Kpi
                   label="Routines actives"
                   value={stats.activeRoutines}
