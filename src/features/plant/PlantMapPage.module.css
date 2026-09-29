@@ -90,12 +90,12 @@
   color: var(--color-warning);
 }
 .andon {
-  border-color: var(--color-danger-strong);
-  background: var(--color-danger-strong);
+  border-color: var(--color-danger);
+  background: var(--color-danger);
   color: #fff;
 }
 .andon .nodeProcess {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.92);
 }
 .selected {
   outline: 3px solid var(--color-primary);

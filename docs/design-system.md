@@ -27,7 +27,7 @@ Objectif : un logiciel métier industriel, sobre et dense, lisible sur tablette 
 | Bleu    | Information / en cours / action | Action en cours, bouton principal                         |
 | Gris    | Neutre                          | Planifié, annulé, non renseigné                           |
 
-La couleur n’est **jamais** le seul porteur d’information : chaque état a aussi un libellé.
+La couleur n’est **jamais** le seul porteur d’information : chaque état a aussi un libellé. Tous les couples texte / fond respectent un contraste ≥ 4,5:1 (vérifié automatiquement par axe dans `e2e/a11y.spec.ts`) ; le rouge vif `danger-strong` est réservé aux traits et pastilles, les fonds rouges avec texte blanc utilisent `danger`.
 
 ## Composants (`src/components`)
 

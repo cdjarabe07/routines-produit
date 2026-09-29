@@ -14,7 +14,7 @@
   /* Texte */
   --color-text: #151c26;
   --color-text-muted: #56606e;
-  --color-text-subtle: #7a8492;
+  --color-text-subtle: #646e7c;
   --color-text-inverse: #ffffff;
 
   /* Chrome applicatif (barre latérale, en-tête) */
@@ -32,7 +32,7 @@
   /* Statuts — sens métier */
   --color-success: #1d7a3a; /* conforme, OK, terminé */
   --color-success-soft: #e5f3e9;
-  --color-warning: #a55f00; /* attention, à surveiller, en retard léger */
+  --color-warning: #8a4f00; /* attention, à surveiller, en retard léger */
   --color-warning-strong: #d98300;
   --color-warning-soft: #fdf1dd;
   --color-danger: #b8261b; /* critique, arrêt, non conforme */

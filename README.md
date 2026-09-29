@@ -19,15 +19,16 @@ Ouvrir l’application, choisir un profil (opérateur, Hancho, Line Leader, qual
 
 ## Scripts
 
-| Commande          | Rôle                                                                                                                     |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `npm run dev`     | Serveur de développement                                                                                                 |
-| `npm run build`   | Vérification TypeScript (application et tests) puis build de production dans `dist/`                                     |
-| `npm run preview` | Sert le build de production                                                                                              |
-| `npm test`        | Tests unitaires et d’intégration (Vitest, 53 tests)                                                                      |
-| `npm run e2e`     | Tests de bout en bout dans Microsoft Edge (Playwright) : toutes les routes × 3 rôles, 4 largeurs d’écran, parcours Andon |
-| `npm run lint`    | ESLint (dont interdiction de `console.*` hors logger)                                                                    |
-| `npm run format`  | Prettier                                                                                                                 |
+| Commande          | Rôle                                                                                                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`     | Serveur de développement                                                                                                                                                              |
+| `npm run build`   | Vérification TypeScript (application et tests) puis build de production dans `dist/`                                                                                                  |
+| `npm run preview` | Sert le build de production                                                                                                                                                           |
+| `npm test`        | Tests unitaires et d’intégration (Vitest, 56 tests)                                                                                                                                   |
+| `npm run e2e`     | Tests de bout en bout dans Microsoft Edge (Playwright) : toutes les routes × 3 rôles, 4 largeurs d’écran, parcours Andon, audit d’accessibilité axe (WCAG 2.1 A/AA) sur les 31 écrans |
+| `npm run lint`    | ESLint (dont interdiction de `console.*` hors logger)                                                                                                                                 |
+| `npm run screens` | Captures d’écran pour l’audit visuel (`npm run screens -- <url> <dossier> <profil> <routes…>`)                                                                                        |
+| `npm run format`  | Prettier                                                                                                                                                                              |
 
 ## Configuration
 
