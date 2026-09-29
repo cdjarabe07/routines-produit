@@ -6,3 +6,7 @@ playwright-report
 test-results
 *.tsbuildinfo
 shots
+
+.vercel
+.env*
+!.env.example
