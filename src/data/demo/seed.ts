@@ -90,7 +90,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     ...DEMO_LINKS.map((l) =>
       stamp({
         id: l.id, code: l.code, title: l.title, category: l.category, kind: 'link' as const,
-        summary: 'Lien externe d’exemple (adresse fictive).', keyPoints: [], url: l.url, version: '—',
+        summary: 'Lien externe d’exemple (adresse fictive).', keyPoints: [], url: l.url, version: '1.0',
         owner: 'Exemple — prototype', status: 'published' as const, isExample: true,
       }, addDays(today, -40) + 'T08:00:00.000Z'),
     ),
