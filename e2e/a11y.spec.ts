@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { BACKEND } from './support/auth';
 import { expect, test } from '@playwright/test';
 
 /* Audit d'accessibilité automatique (axe-core, règles WCAG 2.1 A et AA) sur chaque écran.
@@ -63,6 +64,7 @@ const today = () => {
 };
 
 test('aucune violation WCAG A/AA détectée par axe', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Interface indépendante du serveur : vérifiée en mode démo');
   test.setTimeout(360_000);
   await page.goto('/#/login');
   await page.evaluate(() => localStorage.clear());

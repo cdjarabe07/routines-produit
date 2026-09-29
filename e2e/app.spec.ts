@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { BACKEND, signIn } from './support/auth';
 
 /* Vérifications dans un vrai navigateur :
    1. chaque route s'affiche sans erreur JavaScript pour chaque rôle ;
@@ -62,14 +63,6 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-async function signIn(page: Page, userId: string) {
-  await page.goto('/#/login');
-  await page.evaluate((id) => {
-    localStorage.clear();
-    sessionStorage.setItem('ra:session', JSON.stringify({ userId: id, startedAt: new Date().toISOString(), mode: 'demo' }));
-  }, userId);
-}
-
 async function visit(page: Page, route: string) {
   await page.goto(`/#${route.replace('TODAY', today())}`);
   await page.reload();
@@ -103,6 +96,7 @@ for (const viewport of [
   { name: 'grand écran', width: 1920, height: 1080 },
 ]) {
   test(`aucun débordement horizontal — ${viewport.name}`, async ({ page }) => {
+    test.skip(BACKEND === 'supabase', 'Mise en page indépendante du serveur : vérifiée en mode démo');
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await signIn(page, 'u-admin');
     const overflowing: string[] = [];

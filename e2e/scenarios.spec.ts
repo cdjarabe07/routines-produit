@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { loginWithForm } from './support/auth';
 
 /* Scénarios de la demande (§46), dans un vrai navigateur et une seule session :
    les données saisies par l'administrateur sont retrouvées par l'opératrice, puis par le manager.
@@ -9,11 +10,8 @@ import { expect, test, type Page } from '@playwright/test';
 const ROUTINE = 'Contrôle sécurité poste 4';
 const MEETING = 'Point qualité poste 4';
 
-async function login(page: Page, identifier: string) {
-  await page.goto('/#/login');
-  await page.getByLabel(/Identifiant ou email/).fill(identifier);
-  await page.getByLabel(/^Mot de passe/).fill('Routines2026');
-  await page.getByRole('button', { name: 'Se connecter' }).click();
+async function login(page: Page, who: string) {
+  await loginWithForm(page, who);
 }
 
 async function logout(page: Page) {
