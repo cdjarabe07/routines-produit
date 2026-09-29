@@ -45,6 +45,7 @@ export interface RecordInput {
 export function useRecordResult() {
   return useOperation(
     async (ds, { run, key, result, user }: RecordInput) => {
+      if (ds.recordRunResult) return ds.recordRunResult(run.id, key, result && { ...result, comment: result.comment?.trim() || undefined });
       const fresh = await ds.repo('routineRuns').get(run.id);
       if (fresh.completedAt) throw new ValidationError('Cette routine est terminée : elle n’est plus modifiable.');
       const results = { ...fresh.results };

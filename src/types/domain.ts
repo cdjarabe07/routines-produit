@@ -501,4 +501,8 @@ export interface AppSettings extends BaseEntity {
   plantName: string;
   andonEscalationMinutes: number;
   routineLateToleranceMinutes: number;
+  /** Fuseau de l'usine : le serveur en déduit la date du jour (mode Supabase). */
+  timezone?: string;
+  /** Environnement serveur : la réinitialisation n'est possible qu'en démonstration. */
+  environment?: 'demo' | 'production';
 }

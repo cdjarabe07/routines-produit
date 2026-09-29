@@ -6,12 +6,14 @@ import { useAuth } from './providers/AuthProvider';
 
 /** Accès réservé aux utilisateurs connectés ; sinon redirection vers la connexion (retour prévu). */
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { status } = useAuth();
+  const { status, signedOutFrom } = useAuth();
   const location = useLocation();
   if (status === 'loading') return <LoadingState label="Ouverture de la session…" />;
   if (status !== 'signedIn') {
+    // Retour proposé si la session manque (lien direct, expiration), pas sur la page quittée par « Se déconnecter »
     const from = location.pathname + location.search;
-    return <Navigate to={`/login${from !== '/' ? `?retour=${encodeURIComponent(from)}` : ''}`} replace />;
+    const back = from !== '/' && signedOutFrom !== `#${from}`;
+    return <Navigate to={`/login${back ? `?retour=${encodeURIComponent(from)}` : ''}`} replace />;
   }
   return <>{children}</>;
 }

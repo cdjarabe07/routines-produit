@@ -12,6 +12,7 @@ import type {
   GembaWalk,
   Handover,
   ID,
+  ItemResult,
   KnowledgeItem,
   Leave,
   Line,
@@ -112,13 +113,36 @@ export interface Repository<T extends BaseEntity> {
   remove(id: ID): Promise<void>;
 }
 
-export type DataMode = 'demo' | 'api';
+export type DataMode = 'demo' | 'api' | 'supabase';
 
 export interface DataSource {
   readonly kind: DataMode;
   repo<K extends CollectionName>(name: K): Repository<CollectionMap[K]>;
-  /** Recharge le jeu de démonstration. Indisponible en mode API. */
+  /** Recharge le jeu de démonstration. Indisponible en mode API et en production. */
   resetDemoData?: () => Promise<void>;
+  /** Notifications et journal d'audit produits par le serveur : le navigateur n'en écrit pas. */
+  readonly serverSideEffects?: boolean;
+  /** Gestion des comptes d'authentification (création, mot de passe provisoire) : opérations serveur réservées aux administrateurs. */
+  accounts?: AccountAdmin;
+  /** Saisie atomique d'un résultat de routine (auteur et heure imposés par le serveur). Sinon : relecture puis écriture. */
+  recordRunResult?(runId: ID, key: string, result: Omit<ItemResult, 'at' | 'by'> | null): Promise<RoutineRun>;
+  /** Journal d'audit tenu par le serveur (lecture seule, administration). */
+  auditLog?(limit: number): Promise<AuditEntry[]>;
+}
+
+export interface AuditEntry {
+  id: ID;
+  at: string;
+  actorId?: ID;
+  event: string;
+  resource: string;
+  resourceId?: string;
+  detail: Record<string, unknown>;
+}
+
+export interface AccountAdmin {
+  create(input: NewEntity<User>): Promise<{ user: User; temporaryPassword: string }>;
+  resetPassword(userId: ID): Promise<{ temporaryPassword: string }>;
 }
 
 export type Dataset = { [K in CollectionName]: CollectionMap[K][] };

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AuthService, Credentials, Session } from '@/services/auth/authService';
 import type { Permission } from '@/services/auth/permissions';
@@ -17,6 +17,8 @@ interface AuthContextValue {
   signIn: (credentials: Credentials) => Promise<User>;
   requestPasswordReset: (identifier: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Adresse (fragment) quittée par une déconnexion volontaire : aucune page de retour n'y est proposée. */
+  signedOutFrom: string | null;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -25,6 +27,34 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
   const ds = useDataSource();
   const queryClient = useQueryClient();
   const [session, setSession] = useState<Session | null>(() => service.getSession());
+  const [signedOutFrom, setSignedOutFrom] = useState<string | null>(null);
+  // Fournisseur serveur : la session est restaurée (et revérifiée) avant tout affichage protégé
+  const [initializing, setInitializing] = useState(() => Boolean(service.init));
+
+  useEffect(() => {
+    if (!service.init) return;
+    let cancelled = false;
+    service
+      .init()
+      .catch(() => null)
+      .then((restored) => {
+        if (cancelled) return;
+        setSession(restored);
+        setInitializing(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [service]);
+
+  useEffect(
+    () =>
+      service.onSessionEnded?.(() => {
+        setSession(null);
+        queryClient.clear();
+      }),
+    [service, queryClient],
+  );
 
   const userQuery = useQuery({
     queryKey: ['session-user', session?.userId],
@@ -42,6 +72,7 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
         queryKey: ['session-user', next.userId],
         queryFn: () => ds.repo('users').get(next.userId),
       });
+      setSignedOutFrom(null);
       setSession(next);
       return signedIn;
     },
@@ -51,7 +82,9 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
   const requestPasswordReset = useCallback((identifier: string) => service.requestPasswordReset(identifier), [service]);
 
   const signOut = useCallback(async () => {
+    const from = window.location.hash;
     await service.signOut();
+    setSignedOutFrom(from);
     setSession(null);
     queryClient.clear();
   }, [service, queryClient]);
@@ -59,11 +92,13 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
   const value = useMemo<AuthContextValue>(() => {
     const status = !service.available
       ? 'unavailable'
-      : !session || userQuery.isError || (userQuery.isSuccess && !user)
-        ? 'signedOut'
-        : user
-          ? 'signedIn'
-          : 'loading';
+      : initializing
+        ? 'loading'
+        : !session || userQuery.isError || (userQuery.isSuccess && !user)
+          ? 'signedOut'
+          : user
+            ? 'signedIn'
+            : 'loading';
     return {
       service,
       session,
@@ -73,8 +108,9 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
       signIn,
       signOut,
       requestPasswordReset,
+      signedOutFrom,
     };
-  }, [service, session, user, userQuery.isError, userQuery.isSuccess, signIn, signOut, requestPasswordReset]);
+  }, [service, signedOutFrom, initializing, session, user, userQuery.isError, userQuery.isSuccess, signIn, signOut, requestPasswordReset]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

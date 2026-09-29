@@ -13,6 +13,8 @@ export async function notify(
   payload: { kind: NotificationKind; title: string; link?: string },
   exceptUserId?: ID,
 ) {
+  // Backend Supabase : les notifications sont produites par les triggers du serveur (le navigateur n'écrit pas chez les autres)
+  if (ds.serverSideEffects) return;
   const targets = Array.from(new Set(userIds.filter((id): id is ID => Boolean(id) && id !== exceptUserId)));
   await Promise.all(targets.map((userId) => ds.repo('notifications').create({ userId, ...payload })));
 }
