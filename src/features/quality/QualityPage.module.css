@@ -1,0 +1,18 @@
+.catalog { display: flex; flex-direction: column; }
+.catalog li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); }
+.catalog li:last-child { border-bottom: 0; }
+.catalog li > span:first-child { display: flex; flex-direction: column; min-width: 0; }
+.catMeta { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+.gauge { display: inline-flex; align-items: center; gap: var(--space-2); }
+.gaugeBand {
+  position: relative;
+  width: 90px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-danger-soft) 0 8.33%, var(--color-success-soft) 8.33% 91.67%, var(--color-danger-soft) 91.67% 100%);
+  border: 1px solid var(--color-border);
+}
+.gaugeMark { position: absolute; top: -3px; width: 3px; height: 12px; margin-left: -1px; background: var(--color-success); border-radius: 1px; }
+.gaugeMark[data-out] { background: var(--color-danger-strong); }
+.gaugeText { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }

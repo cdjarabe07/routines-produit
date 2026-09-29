@@ -20,6 +20,8 @@ interface SeriesChartProps {
   reference?: { value: number; label: string };
   height?: number;
   max?: number;
+  /** Bas de l'axe (courbes uniquement) ; 0 par défaut. Les valeurs inférieures sont écrêtées. */
+  min?: number;
   unitLabel?: string;
 }
 
@@ -70,7 +72,7 @@ function Frame({ title, children, legend }: { title: string; children: ReactNode
 }
 
 function axisLabels(count: number) {
-  const step = count > 16 ? Math.ceil(count / 8) : 1;
+  const step = count > 10 ? Math.ceil(count / 7) : 1;
   return (i: number) => i % step === 0 || i === count - 1;
 }
 
@@ -127,16 +129,16 @@ export function BarChart({ title, data, compare, format, reference, height = 180
   );
 }
 
-export function LineChart({ title, data, compare, format, reference, height = 180, max }: SeriesChartProps) {
+export function LineChart({ title, data, compare, format, reference, height = 180, max, min = 0 }: SeriesChartProps) {
   const clipId = useId();
   const values = data.concat(compare ?? []).map((d) => d.value).filter((v): v is number => v !== null);
   const top = max ?? scaleMax(values.concat(reference ? [reference.value] : []));
-  const bottom = 0;
+  const bottom = min;
   const padL = 40, padB = 22, padT = 8;
   const innerW = W - padL - 8;
   const innerH = height - padB - padT;
   const x = (i: number) => padL + (data.length <= 1 ? innerW / 2 : (i / (data.length - 1)) * innerW);
-  const y = (v: number) => padT + innerH - ((v - bottom) / (top - bottom || 1)) * innerH;
+  const y = (v: number) => padT + innerH - ((Math.max(v, bottom) - bottom) / (top - bottom || 1)) * innerH;
   const path = (pts: Point[]) =>
     pts.reduce((acc, p, i) => (p.value === null ? acc : `${acc}${acc === '' || pts[i - 1]?.value === null ? 'M' : 'L'}${x(i)},${y(p.value)} `), '');
   const showLabel = axisLabels(data.length);
