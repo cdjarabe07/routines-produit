@@ -183,14 +183,12 @@ function StationDetail({ view }: { view: StationView | null }) {
             <p className={styles.muted}>Aucune.</p>
           ) : (
             <ItemList
-              items={view.openAnomalies
-                .slice(0, 5)
-                .map((a) => ({
-                  id: a.id,
-                  title: a.description,
-                  aside: <Badge tone={SEVERITY[a.severity].tone}>{SEVERITY[a.severity].label}</Badge>,
-                  to: `/anomalies/${a.id}`,
-                }))}
+              items={view.openAnomalies.slice(0, 5).map((a) => ({
+                id: a.id,
+                title: a.description,
+                aside: <Badge tone={SEVERITY[a.severity].tone}>{SEVERITY[a.severity].label}</Badge>,
+                to: `/anomalies/${a.id}`,
+              }))}
             />
           )}
         </section>

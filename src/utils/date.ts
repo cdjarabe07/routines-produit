@@ -36,8 +36,6 @@ export function enumerateDays(from: DateKey, to: DateKey): DateKey[] {
   return out;
 }
 
-export const isWithin = (key: DateKey, from: DateKey, to: DateKey) => key >= from && key <= to;
-
 export function timeToMinutes(time: TimeOfDay): number {
   const [h, m] = time.split(':').map(Number);
   return (h ?? 0) * 60 + (m ?? 0);

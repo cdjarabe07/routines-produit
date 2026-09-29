@@ -1,5 +1,5 @@
 import type { Tone } from '@/components/ui/Badge';
-import type { MaterialStock, ProductionOrder, ProductionStage } from '@/types/domain';
+import type { MaterialStock, ProductionStage } from '@/types/domain';
 import { PRODUCTION_STAGES } from '@/features/shared/labels';
 
 /* Règles kanban reprises du prototype :
@@ -28,11 +28,7 @@ export const needsReorder = (s: MaterialStock) => {
 /** Quantité à commander pour revenir à la cible. */
 export const reorderQuantity = (s: MaterialStock) => Math.max(0, s.target - s.quantity);
 
-export const orderProgress = (o: ProductionOrder) => (o.quantityPlanned > 0 ? Math.min(1, o.quantityDone / o.quantityPlanned) : 0);
-
 export const nextStage = (stage: ProductionStage): ProductionStage | null =>
   PRODUCTION_STAGES[PRODUCTION_STAGES.indexOf(stage) + 1] ?? null;
 export const previousStage = (stage: ProductionStage): ProductionStage | null =>
   PRODUCTION_STAGES[PRODUCTION_STAGES.indexOf(stage) - 1] ?? null;
-
-export const isActiveOrder = (o: ProductionOrder) => o.status !== 'done';

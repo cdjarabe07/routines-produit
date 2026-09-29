@@ -49,7 +49,7 @@ function mulberry32(seed: number) {
   };
 }
 
-export const HISTORY_DAYS = 30;
+const HISTORY_DAYS = 30;
 
 export function buildDemoData(now: Date = new Date()): Dataset {
   const rnd = mulberry32(20260929);

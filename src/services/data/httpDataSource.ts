@@ -1,5 +1,5 @@
 import type { ID } from '@/types/domain';
-import { ApiError, NetworkError } from '@/services/errors';
+import { ApiError, NetworkError, PermissionError } from '@/services/errors';
 import { createLogger } from '@/services/logger';
 import type { CollectionMap, CollectionName, DataSource, EntityPatch, ListFilter, NewEntity, Repository } from './types';
 
@@ -30,6 +30,8 @@ export function createHttpDataSource(baseUrl: string, getToken: () => string | n
     if (!response.ok) {
       const detail = await response.text().catch(() => '');
       log.error(`${method} ${path} — HTTP ${response.status}`, detail);
+      // 403 : le serveur applique la même matrice de droits que l'interface
+      if (response.status === 403) throw new PermissionError();
       throw new ApiError(response.status, detail);
     }
     return response.status === 204 ? (undefined as T) : ((await response.json()) as T);

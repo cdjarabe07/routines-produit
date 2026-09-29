@@ -47,22 +47,6 @@
   gap: var(--space-2);
 }
 
-.section {
-  min-width: 0;
-}
-.sectionHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-  min-height: 30px;
-}
-.sectionTitle {
-  font-size: var(--text-md);
-  font-weight: var(--weight-semibold);
-}
-
 .stack3 {
   display: flex;
   flex-direction: column;

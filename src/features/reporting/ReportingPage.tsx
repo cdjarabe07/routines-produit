@@ -10,7 +10,8 @@ import { Panel } from '@/components/ui/Panel';
 import { Tabs } from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
 import { ANOMALY_CATEGORY } from '@/features/shared/labels';
-import { useLookups } from '@/features/shared/api';
+import { DEFINITIONS } from '@/features/shared/definitions';
+import { useLookups, useSettings } from '@/features/shared/api';
 import { useCollection } from '@/hooks/useData';
 import { formatMinutes, formatShortDate, todayKey } from '@/utils/date';
 import { formatPercent } from '@/utils/format';
@@ -34,6 +35,7 @@ export function ReportingPage() {
   const [params, setParams] = useSearchParams();
   const toast = useToast();
   const today = todayKey();
+  const { settings } = useSettings();
   const preset = (params.get('periode') as PeriodPreset | null) ?? '7d';
   const lineId = params.get('ligne') ?? '';
   const period = resolvePeriod(preset, today, { from: params.get('du'), to: params.get('au') });
@@ -67,16 +69,17 @@ export function ReportingPage() {
   const report = useMemo(() => {
     if (!source) return null;
     const dims = { lineId: lineId || undefined };
+    const opts = { toleranceMin: settings.routineLateToleranceMinutes, now: new Date() };
     return {
-      kpis: computeKpis(source, period, dims),
-      prev: computeKpis(source, previous, dims),
+      kpis: computeKpis(source, period, dims, opts),
+      prev: computeKpis(source, previous, dims, opts),
       daily: dailySeries(source, period, dims),
       prevDaily: dailySeries(source, previous, dims),
       byCategory: anomaliesByCategory(source, period, dims),
       byStation: anomaliesByWorkstation(source, period, dims),
       comparable: coverage(source, previous) > 0,
     };
-  }, [source, period.from, period.to, previous.from, previous.to, lineId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [source, period.from, period.to, previous.from, previous.to, lineId, settings.routineLateToleranceMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = (next: Record<string, string | undefined>) => {
     const merged = {
@@ -159,9 +162,17 @@ export function ReportingPage() {
                 <KpiStrip>
                   <Kpi
                     label="Routines réalisées"
+                    definition={DEFINITIONS.routinePct}
                     value={formatPercent(kpis.routinePct)}
                     detail="points traités / prévus"
                     delta={d(kpis.routinePct, 'routinePct', true, 'pts')}
+                  />
+                  <Kpi
+                    label="Routines à l’heure"
+                    definition={DEFINITIONS.routineOnTime}
+                    value={formatPercent(kpis.onTimePct)}
+                    detail={`tolérance ${settings.routineLateToleranceMinutes} min`}
+                    delta={d(kpis.onTimePct, 'onTimePct', true, 'pts')}
                   />
                   <Kpi
                     label="Anomalies déclarées"
@@ -177,11 +188,13 @@ export function ReportingPage() {
                   />
                   <Kpi
                     label="Délai moyen de clôture"
+                    definition={DEFINITIONS.closureDelay}
                     value={kpis.avgClosureDays === null ? '—' : `${kpis.avgClosureDays.toFixed(1).replace('.', ',')} j`}
                     delta={d(kpis.avgClosureDays, 'avgClosureDays', false)}
                   />
                   <Kpi
                     label="En retard en fin de période"
+                    definition={DEFINITIONS.overdueAtEnd}
                     value={kpis.overdueAtEnd}
                     tone={kpis.overdueAtEnd ? 'danger' : 'neutral'}
                     delta={d(kpis.overdueAtEnd, 'overdueAtEnd', false)}
@@ -191,18 +204,21 @@ export function ReportingPage() {
                   <Kpi label="Andon déclenchés" value={kpis.andonCount} delta={d(kpis.andonCount, 'andonCount', false)} />
                   <Kpi
                     label="Prise en charge Andon"
+                    definition={DEFINITIONS.andonAck}
                     value={kpis.andonAvgAckMin === null ? '—' : formatMinutes(kpis.andonAvgAckMin)}
                     detail="moyenne"
                     delta={d(kpis.andonAvgAckMin, 'andonAvgAckMin', false)}
                   />
                   <Kpi
                     label="Résolution Andon"
+                    definition={DEFINITIONS.andonResolution}
                     value={kpis.andonAvgResMin === null ? '—' : formatMinutes(kpis.andonAvgResMin)}
                     detail="moyenne"
                     delta={d(kpis.andonAvgResMin, 'andonAvgResMin', false)}
                   />
                   <Kpi
                     label="Conformité LQC"
+                    definition={DEFINITIONS.quality}
                     value={formatPercent(kpis.qualityPct, 1)}
                     detail={`${kpis.qualityCount} mesures`}
                     delta={d(kpis.qualityPct, 'qualityPct', true, 'pts')}

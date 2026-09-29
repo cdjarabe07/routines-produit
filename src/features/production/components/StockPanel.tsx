@@ -5,15 +5,18 @@ import { ItemList } from '@/components/data-display/ItemList';
 import { EmptyState } from '@/components/feedback/States';
 import { Stack } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { FormActions, SelectField, TextField } from '@/components/ui/Field';
-import { Modal } from '@/components/ui/Overlay';
+import { FormActions, FormGrid, SelectField, TextField } from '@/components/ui/Field';
+import { Drawer, Modal } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
 import { Progress } from '@/components/ui/Progress';
-import type { Lookups } from '@/features/shared/api';
+import { workstationOptions, type Lookups } from '@/features/shared/api';
+import { useForm } from '@/hooks/useForm';
+import { numberRange, required } from '@/utils/validation';
 import type { MaterialStock, StockMovement, StockMovementReason } from '@/types/domain';
 import { formatDateTime } from '@/utils/date';
-import { useStockMovement } from '../api';
+import { useSaveStock, useStockMovement } from '../api';
 import { STOCK_STATE, reorderQuantity, stockState } from '../model';
 
 const REASONS: Record<StockMovementReason, string> = {
@@ -34,6 +37,7 @@ export function StockPanel({
   editable: boolean;
 }) {
   const [target, setTarget] = useState<MaterialStock | null>(null);
+  const [editing, setEditing] = useState<MaterialStock | 'new' | null>(null);
   const stockById = useMemo(() => new Map(stocks.map((s) => [s.id, s])), [stocks]);
   const shortStation = (id: string) => {
     const w = lookups.workstationById.get(id);
@@ -102,9 +106,14 @@ export function StockPanel({
             align: 'right' as const,
             mobile: 'meta' as const,
             cell: (s: MaterialStock) => (
-              <Button size="sm" onClick={() => setTarget(s)}>
-                Saisir
-              </Button>
+              <div style={{ display: 'inline-flex', gap: 6 }}>
+                <Button size="sm" onClick={() => setTarget(s)}>
+                  Saisir
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditing(s)}>
+                  Seuils
+                </Button>
+              </div>
             ),
           },
         ]
@@ -115,7 +124,18 @@ export function StockPanel({
 
   return (
     <Stack>
-      <Panel flush title="Stocks aux postes" description="Règle kanban : sous le minimum, réapprovisionner jusqu’à la cible.">
+      <Panel
+        flush
+        title="Stocks aux postes"
+        description="Règle kanban : sous le minimum, réapprovisionner jusqu’à la cible."
+        actions={
+          editable && (
+            <Button size="sm" icon={<Plus size={15} aria-hidden />} onClick={() => setEditing('new')}>
+              Nouvelle référence
+            </Button>
+          )
+        }
+      >
         <DataTable
           caption="Stocks matières"
           rows={stocks}
@@ -144,6 +164,17 @@ export function StockPanel({
         )}
       </Panel>
       <MovementDialog stock={target} onClose={() => setTarget(null)} />
+      <Drawer
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        title={editing === 'new' ? 'Nouvelle référence matière' : 'Seuils kanban'}
+        description={editing !== null && editing !== 'new' ? editing.material : undefined}
+        size="sm"
+      >
+        {editing !== null && (
+          <StockForm stock={editing === 'new' ? undefined : editing} lookups={lookups} onDone={() => setEditing(null)} />
+        )}
+      </Drawer>
     </Stack>
   );
 }
@@ -214,5 +245,110 @@ function MovementDialog({ stock, onClose }: { stock: MaterialStock | null; onClo
         </FormActions>
       </form>
     </Modal>
+  );
+}
+
+/** Création d'une référence (avec stock initial) ou modification des seuils. Le stock ne se modifie que par mouvement tracé. */
+function StockForm({ stock, lookups, onDone }: { stock?: MaterialStock; lookups: Lookups; onDone: () => void }) {
+  const save = useSaveStock();
+  const form = useForm({
+    initial: {
+      material: stock?.material ?? '',
+      workstationId: stock?.workstationId ?? '',
+      unit: stock?.unit ?? 'pcs',
+      quantity: String(stock?.quantity ?? 0),
+      min: String(stock?.min ?? ''),
+      target: String(stock?.target ?? ''),
+    },
+    rules: {
+      material: [required('Nom de la matière obligatoire')],
+      workstationId: [required('Choisissez le poste')],
+      unit: [required()],
+      quantity: [required(), numberRange(0)],
+      min: [required('Seuil minimum obligatoire'), numberRange(0)],
+      target: [required('Cible obligatoire'), numberRange(1)],
+    },
+    onSubmit: async (v) => {
+      await save.mutateAsync({
+        id: stock?.id,
+        input: {
+          material: v.material.trim(),
+          workstationId: v.workstationId,
+          unit: v.unit.trim(),
+          quantity: stock ? stock.quantity : Number(v.quantity),
+          min: Number(v.min),
+          target: Number(v.target),
+        },
+      });
+      onDone();
+    },
+  });
+  const { values, set, errors } = form;
+  const inverted = values.min !== '' && values.target !== '' && Number(values.min) >= Number(values.target);
+  return (
+    <form onSubmit={form.handleSubmit} noValidate>
+      <FormGrid columns={1}>
+        <TextField
+          label="Matière"
+          required
+          value={values.material}
+          onChange={(e) => set('material', e.target.value)}
+          error={errors.material}
+          disabled={Boolean(stock)}
+        />
+        <SelectField
+          label="Poste"
+          required
+          placeholder="Choisir…"
+          options={workstationOptions(lookups.workstations)}
+          value={values.workstationId}
+          onChange={(e) => set('workstationId', e.target.value)}
+          error={errors.workstationId}
+          disabled={Boolean(stock)}
+        />
+        <TextField
+          label="Unité"
+          required
+          value={values.unit}
+          onChange={(e) => set('unit', e.target.value)}
+          error={errors.unit}
+          disabled={Boolean(stock)}
+        />
+        {!stock && (
+          <TextField
+            label="Stock initial"
+            type="number"
+            min={0}
+            value={values.quantity}
+            onChange={(e) => set('quantity', e.target.value)}
+            error={errors.quantity}
+          />
+        )}
+        <TextField
+          label="Seuil minimum (réappro)"
+          required
+          type="number"
+          min={0}
+          value={values.min}
+          onChange={(e) => set('min', e.target.value)}
+          error={errors.min}
+        />
+        <TextField
+          label="Cible"
+          required
+          type="number"
+          min={1}
+          value={values.target}
+          onChange={(e) => set('target', e.target.value)}
+          error={errors.target ?? (inverted ? 'La cible doit être supérieure au minimum' : undefined)}
+        />
+      </FormGrid>
+      <FormActions>
+        <Button onClick={onDone}>Annuler</Button>
+        <Button type="submit" variant="primary" loading={form.submitting} disabled={inverted}>
+          Enregistrer
+        </Button>
+      </FormActions>
+    </form>
   );
 }

@@ -30,21 +30,6 @@ export function PageHeader({ title, description, actions, back, meta }: PageHead
   );
 }
 
-/** Section de page sans cadre : titre + contenu. */
-export function Section({ title, actions, children, id }: { title: string; actions?: ReactNode; children: ReactNode; id?: string }) {
-  return (
-    <section className={styles.section} aria-labelledby={id}>
-      <div className={styles.sectionHead}>
-        <h2 id={id} className={styles.sectionTitle}>
-          {title}
-        </h2>
-        {actions && <div className={styles.actions}>{actions}</div>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 /** Pile verticale standard entre les blocs d'une page. */
 export function Stack({ children, gap = 5 }: { children: ReactNode; gap?: 3 | 4 | 5 | 6 }) {
   return <div className={styles[`stack${gap}`]}>{children}</div>;

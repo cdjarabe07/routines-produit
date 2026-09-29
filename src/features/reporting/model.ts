@@ -12,8 +12,8 @@ import type {
 import { closureDays, isOpenAction } from '@/features/actions/model';
 import { andonStats } from '@/features/andon/model';
 import { conformity } from '@/features/quality/model';
-import { dayCompletion } from '@/features/routines/model';
-import { addDays, dateKeyOf, daysBetween, enumerateDays, formatDate, parseDateKey, toDateKey } from '@/utils/date';
+import { completedOnTime, dayCompletion, findRun } from '@/features/routines/model';
+import { addDays, atTime, dateKeyOf, daysBetween, enumerateDays, formatDate, parseDateKey, toDateKey } from '@/utils/date';
 import { ratio } from '@/utils/format';
 
 /* ---------- Périodes ---------- */
@@ -79,6 +79,7 @@ const inPeriod = (key: DateKey, p: Period) => key >= p.from && key <= p.to;
 
 export interface ReportKpis {
   routinePct: number | null;
+  onTimePct: number | null;
   anomalies: number;
   criticalAnomalies: number;
   actionsCreated: number;
@@ -92,15 +93,36 @@ export interface ReportKpis {
   qualityCount: number;
 }
 
-export function computeKpis(source: ReportSource, p: Period, dims: Dimensions = {}): ReportKpis {
+export interface KpiOptions {
+  /** Tolérance de retard des routines (paramètre de l'atelier) */
+  toleranceMin: number;
+  /** Instant de calcul : les routines dont l'échéance n'est pas encore passée ne comptent pas comme en retard */
+  now: Date;
+}
+
+export function computeKpis(
+  source: ReportSource,
+  p: Period,
+  dims: Dimensions = {},
+  opts: KpiOptions = { toleranceMin: 120, now: new Date() },
+): ReportKpis {
   const s = scope(source, dims);
   const days = enumerateDays(p.from, p.to);
   let treated = 0;
   let total = 0;
+  let due = 0;
+  let onTime = 0;
   for (const d of days) {
     const c = dayCompletion(s.templates, s.runs, d);
     treated += c.treated;
     total += c.total;
+    for (const t of s.templates.filter((x) => x.active)) {
+      const run = findRun(s.runs, t.id, d);
+      const deadline = new Date(atTime(d, t.scheduledTime)).getTime() + opts.toleranceMin * 60_000;
+      if (deadline > opts.now.getTime() && !run?.completedAt) continue; // pas encore échue
+      due += 1;
+      if (completedOnTime(t, run, opts.toleranceMin)) onTime += 1;
+    }
   }
   const anomalies = s.anomalies.filter((a) => inPeriod(dateKeyOf(a.createdAt), p));
   const created = s.actions.filter((a) => inPeriod(dateKeyOf(a.createdAt), p));
@@ -117,6 +139,7 @@ export function computeKpis(source: ReportSource, p: Period, dims: Dimensions = 
 
   return {
     routinePct: ratio(treated, total),
+    onTimePct: ratio(onTime, due),
     anomalies: anomalies.length,
     criticalAnomalies: anomalies.filter((a) => a.severity === 'critical').length,
     actionsCreated: created.length,

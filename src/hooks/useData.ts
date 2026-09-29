@@ -10,22 +10,13 @@ import { createLogger } from '@/services/logger';
 
 const log = createLogger('data');
 
-export const collectionKey = (name: CollectionName) => ['collection', name] as const;
+const collectionKey = (name: CollectionName) => ['collection', name] as const;
 
 export function useCollection<K extends CollectionName>(name: K) {
   const ds = useDataSource();
   return useQuery({
     queryKey: collectionKey(name),
     queryFn: () => ds.repo(name).list() as Promise<CollectionMap[K][]>,
-  });
-}
-
-export function useEntity<K extends CollectionName>(name: K, id: string | undefined) {
-  const ds = useDataSource();
-  return useQuery({
-    queryKey: [...collectionKey(name), id],
-    queryFn: () => ds.repo(name).get(id!) as Promise<CollectionMap[K]>,
-    enabled: Boolean(id),
   });
 }
 

@@ -1,7 +1,7 @@
 /* Erreurs typées : distinguer validation, permission, réseau, API, stockage.
    L'UI affiche toUserMessage(error) ; le détail technique part dans le logger. */
 
-export class AppError extends Error {
+class AppError extends Error {
   readonly userMessage: string;
   constructor(userMessage: string, options?: { cause?: unknown }) {
     super(userMessage, options);

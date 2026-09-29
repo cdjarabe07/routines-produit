@@ -7,20 +7,20 @@ import { EmptyState, QueryBoundary } from '@/components/feedback/States';
 import { Columns, PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
-import { FormActions, TextAreaField } from '@/components/ui/Field';
+import { FormActions, FormGrid, SelectField, TextAreaField } from '@/components/ui/Field';
 import { Drawer, Modal } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
 import { ActionForm } from '@/features/actions/components/ActionForm';
 import { ActionStatusBadge } from '@/features/actions/components/ActionBadges';
 import { PRIORITY_BY_SEVERITY, defaultDueDate, isOpenAction } from '@/features/actions/model';
 import { CommentThread } from '@/features/shared/components/CommentThread';
-import { ANOMALY_CATEGORY, ANOMALY_STATUS, SEVERITY } from '@/features/shared/labels';
-import { useLookups, type Lookups } from '@/features/shared/api';
+import { ANOMALY_CATEGORY, ANOMALY_STATUS, SEVERITY, options } from '@/features/shared/labels';
+import { useLookups, workstationOptions, type Lookups } from '@/features/shared/api';
 import { useCollection } from '@/hooks/useData';
-import type { Action, Anomaly } from '@/types/domain';
+import type { Action, Anomaly, AnomalyCategory, Severity } from '@/types/domain';
 import { formatDate, formatDateTime, todayKey } from '@/utils/date';
 import { truncate } from '@/utils/format';
-import { useUpdateAnomalyStatus } from '../api';
+import { useQualifyAnomaly, useUpdateAnomalyStatus } from '../api';
 
 const ORIGIN_LABEL: Record<Anomaly['origin']['type'], string> = {
   manual: 'Déclaration directe',
@@ -55,6 +55,7 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
   const updateStatus = useUpdateAnomalyStatus();
   const [creatingAction, setCreatingAction] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [qualifying, setQualifying] = useState(false);
   const [note, setNote] = useState('');
   const today = todayKey();
   const openActions = linked.filter(isOpenAction).length;
@@ -83,6 +84,7 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
                   Prendre en charge
                 </Button>
               )}
+              {anomaly.status !== 'closed' && <Button onClick={() => setQualifying(true)}>Qualifier</Button>}
               {anomaly.status !== 'closed' && (
                 <Button variant="success" onClick={() => setClosing(true)}>
                   Clôturer
@@ -193,6 +195,16 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
       </Columns>
 
       <Drawer
+        open={qualifying}
+        onClose={() => setQualifying(false)}
+        title="Qualifier l’anomalie"
+        description="Corriger la catégorie, la gravité ou le poste déclarés."
+        size="sm"
+      >
+        {qualifying && <QualifyForm anomaly={anomaly} lookups={lookups} onDone={() => setQualifying(false)} />}
+      </Drawer>
+
+      <Drawer
         open={creatingAction}
         onClose={() => setCreatingAction(false)}
         title="Action corrective"
@@ -242,5 +254,49 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
         </form>
       </Modal>
     </>
+  );
+}
+
+function QualifyForm({ anomaly, lookups, onDone }: { anomaly: Anomaly; lookups: Lookups; onDone: () => void }) {
+  const qualify = useQualifyAnomaly();
+  const [category, setCategory] = useState<AnomalyCategory>(anomaly.category);
+  const [severity, setSeverity] = useState<Severity>(anomaly.severity);
+  const [workstationId, setWorkstationId] = useState(anomaly.workstationId ?? '');
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        await qualify.mutateAsync({ id: anomaly.id, patch: { category, severity, workstationId: workstationId || undefined } });
+        onDone();
+      }}
+    >
+      <FormGrid columns={1}>
+        <SelectField
+          label="Catégorie"
+          options={options(ANOMALY_CATEGORY)}
+          value={category}
+          onChange={(e) => setCategory(e.target.value as AnomalyCategory)}
+        />
+        <SelectField
+          label="Gravité"
+          options={options(SEVERITY)}
+          value={severity}
+          onChange={(e) => setSeverity(e.target.value as Severity)}
+        />
+        <SelectField
+          label="Poste"
+          placeholder="Non précisé"
+          options={workstationOptions(lookups.workstations)}
+          value={workstationId}
+          onChange={(e) => setWorkstationId(e.target.value)}
+        />
+      </FormGrid>
+      <FormActions>
+        <Button onClick={onDone}>Annuler</Button>
+        <Button type="submit" variant="primary" loading={qualify.isPending}>
+          Enregistrer
+        </Button>
+      </FormActions>
+    </form>
   );
 }

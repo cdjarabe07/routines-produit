@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
 import { cx } from '@/utils/cx';
 import styles from './Tabs.module.css';
 
@@ -15,12 +15,10 @@ interface TabsProps<V extends string> {
   label: string;
   /** « tabs » = onglets soulignés ; « segmented » = bascule compacte */
   variant?: 'tabs' | 'segmented';
-  /** id du panneau contrôlé (aria-controls) */
-  panelId?: string;
 }
 
 /** Onglets accessibles : flèches gauche/droite, Début/Fin. */
-export function Tabs<V extends string>({ items, value, onChange, label, variant = 'tabs', panelId }: TabsProps<V>) {
+export function Tabs<V extends string>({ items, value, onChange, label, variant = 'tabs' }: TabsProps<V>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onKeyDown = (e: KeyboardEvent, index: number) => {
@@ -61,7 +59,6 @@ export function Tabs<V extends string>({ items, value, onChange, label, variant 
             role="tab"
             type="button"
             aria-selected={selected}
-            aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
             className={cx(styles.tab, selected && styles.selected)}
             onClick={() => onChange(item.value)}
@@ -72,14 +69,6 @@ export function Tabs<V extends string>({ items, value, onChange, label, variant 
           </button>
         );
       })}
-    </div>
-  );
-}
-
-export function TabPanel({ id, children }: { id: string; children: ReactNode }) {
-  return (
-    <div role="tabpanel" id={id} tabIndex={-1}>
-      {children}
     </div>
   );
 }

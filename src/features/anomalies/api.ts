@@ -50,3 +50,12 @@ export function useUpdateAnomalyStatus() {
     },
   );
 }
+
+/** Qualification par l'encadrement : correction de la catégorie, de la gravité ou du poste. */
+export function useQualifyAnomaly() {
+  return useOperation(
+    (ds, { id, patch }: { id: ID; patch: Pick<Anomaly, 'category' | 'severity' | 'workstationId'> }) =>
+      ds.repo('anomalies').update(id, patch),
+    { invalidates: ['anomalies'], success: 'Qualification enregistrée.' },
+  );
+}

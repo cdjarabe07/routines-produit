@@ -24,8 +24,6 @@ export const ANDON_PRESETS: Record<AndonType, string[]> = {
 
 export const isOpenAlert = (a: AndonAlert) => a.status !== 'resolved';
 
-export const alertElapsedMin = (a: AndonAlert, now: Date) => minutesBetween(a.raisedAt, a.resolvedAt ?? now);
-
 /** Escaladé = toujours en attente de prise en charge au-delà du seuil. */
 export const isEscalated = (a: AndonAlert, now: Date, thresholdMin: number) =>
   a.status === 'active' && minutesBetween(a.raisedAt, now) >= thresholdMin;

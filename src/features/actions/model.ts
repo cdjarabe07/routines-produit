@@ -56,7 +56,7 @@ export function sortActions(actions: Action[], today: DateKey): Action[] {
 }
 
 /** Règles héritées du prototype (Gemba) : délai et priorité selon la gravité. */
-export const DUE_DAYS_BY_SEVERITY: Record<Severity, number> = { critical: 1, major: 3, minor: 7 };
+const DUE_DAYS_BY_SEVERITY: Record<Severity, number> = { critical: 1, major: 3, minor: 7 };
 export const PRIORITY_BY_SEVERITY: Record<Severity, Priority> = { critical: 'critical', major: 'high', minor: 'medium' };
 
 export const defaultDueDate = (severity: Severity, from: DateKey) => addDays(from, DUE_DAYS_BY_SEVERITY[severity]);

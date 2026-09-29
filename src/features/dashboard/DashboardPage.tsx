@@ -10,6 +10,7 @@ import { Kpi, KpiStrip } from '@/components/ui/Kpi';
 import { Panel } from '@/components/ui/Panel';
 import { buildDayAgenda } from '@/features/meetings/model';
 import { ROUTINE_STATE, findRun, routineState, runProgress, templatesForRole } from '@/features/routines/model';
+import { DEFINITIONS } from '@/features/shared/definitions';
 import { SHIFT } from '@/features/shared/labels';
 import { useLookups, useSettings } from '@/features/shared/api';
 import { useCollection } from '@/hooks/useData';
@@ -149,9 +150,16 @@ export function DashboardPage() {
                   </Panel>
 
                   <KpiStrip>
-                    <Kpi label="Routines du jour" value={formatPercent(ind.routinePct)} detail={ind.routineDetail} to="/routines" />
+                    <Kpi
+                      label="Routines du jour"
+                      definition={DEFINITIONS.routinePct}
+                      value={formatPercent(ind.routinePct)}
+                      detail={ind.routineDetail}
+                      to="/routines"
+                    />
                     <Kpi
                       label="Actions en retard"
+                      definition={DEFINITIONS.overdueActions}
                       value={ind.overdueActions}
                       tone={ind.overdueActions ? 'danger' : 'success'}
                       detail={`${ind.dueToday} à échéance aujourd’hui`}
@@ -159,6 +167,7 @@ export function DashboardPage() {
                     />
                     <Kpi
                       label="Anomalies ouvertes"
+                      definition={DEFINITIONS.openAnomalies}
                       value={ind.openAnomalies}
                       tone={ind.criticalAnomalies ? 'danger' : 'neutral'}
                       detail={`${ind.criticalAnomalies} critique(s)`}
@@ -166,6 +175,7 @@ export function DashboardPage() {
                     />
                     <Kpi
                       label="Conformité LQC"
+                      definition={DEFINITIONS.quality}
                       value={formatPercent(ind.qualityPct, 1)}
                       tone={ind.qualityPct !== null && ind.qualityPct < 95 ? 'warning' : 'neutral'}
                       detail={ind.qualityCount ? `${ind.qualityCount} mesure(s) aujourd’hui` : 'Aucune mesure aujourd’hui'}

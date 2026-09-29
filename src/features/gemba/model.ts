@@ -10,7 +10,7 @@ export const GEMBA_STATUS: Record<GembaStatus, { label: string; tone: Tone }> = 
 };
 
 /** Checklist par défaut, reprise du prototype. */
-export const DEFAULT_GEMBA_CHECKLIST = [
+const DEFAULT_GEMBA_CHECKLIST = [
   'Sécurité et EPI au poste',
   '5S : rangement, nettoyage, marquage au sol',
   'Respect du standard / mode opératoire',

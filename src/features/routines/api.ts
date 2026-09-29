@@ -35,7 +35,7 @@ export interface RecordItemInput {
   userId: ID;
 }
 
-export async function recordItem(ds: DataSource, input: RecordItemInput): Promise<RoutineRun> {
+async function recordItem(ds: DataSource, input: RecordItemInput): Promise<RoutineRun> {
   const run = await ensureRun(ds, input.template.id, input.date, input.userId);
   const results = { ...run.results };
   if (input.status === null) {
