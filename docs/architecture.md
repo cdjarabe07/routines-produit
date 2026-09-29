@@ -2,19 +2,19 @@
 
 ## 1. Stack
 
-| Besoin | Choix | Pourquoi |
-|---|---|---|
-| UI | **React 19 + TypeScript (strict)** | Standard du marché, typage du modèle métier, recrutement facile |
-| Build | **Vite** | Démarrage instantané, build statique déployable sur n'importe quel serveur web |
-| Routing | **React Router 7** (routeur hash) | Routes paresseuses par module ; le routeur hash fonctionne sur un simple hébergement statique d'intranet et dans les QR codes sans réécriture serveur |
-| Données serveur | **TanStack Query 5** | Cache, invalidation, états loading/error uniformes ; indépendant de la source de données |
-| Styles | **CSS Modules + tokens CSS** | Pas de framework CSS : un fichier de styles par composant, des variables de design centralisées |
-| Icônes | **lucide-react** | Icônes vectorielles sobres, importées une par une (tree-shaking) |
-| Police | **IBM Plex Sans** (auto-hébergée via `@fontsource`) | Lisible, industrielle, chiffres tabulaires ; fonctionne sans accès Internet |
-| QR codes | **qrcode** | Génération à la volée depuis la liste des postes |
-| Graphiques | **SVG maison** (barres, courbes) | Besoins simples ; évite 100+ Ko de bibliothèque |
-| Tests unitaires/intégration | **Vitest + Testing Library** | Même configuration que Vite |
-| Tests de bout en bout | **Playwright** (canal `msedge`) | Parcours critiques et vérification responsive dans un vrai navigateur |
+| Besoin                      | Choix                                               | Pourquoi                                                                                                                                              |
+| --------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI                          | **React 19 + TypeScript (strict)**                  | Standard du marché, typage du modèle métier, recrutement facile                                                                                       |
+| Build                       | **Vite**                                            | Démarrage instantané, build statique déployable sur n'importe quel serveur web                                                                        |
+| Routing                     | **React Router 7** (routeur hash)                   | Routes paresseuses par module ; le routeur hash fonctionne sur un simple hébergement statique d'intranet et dans les QR codes sans réécriture serveur |
+| Données serveur             | **TanStack Query 5**                                | Cache, invalidation, états loading/error uniformes ; indépendant de la source de données                                                              |
+| Styles                      | **CSS Modules + tokens CSS**                        | Pas de framework CSS : un fichier de styles par composant, des variables de design centralisées                                                       |
+| Icônes                      | **lucide-react**                                    | Icônes vectorielles sobres, importées une par une (tree-shaking)                                                                                      |
+| Police                      | **IBM Plex Sans** (auto-hébergée via `@fontsource`) | Lisible, industrielle, chiffres tabulaires ; fonctionne sans accès Internet                                                                           |
+| QR codes                    | **qrcode**                                          | Génération à la volée depuis la liste des postes                                                                                                      |
+| Graphiques                  | **SVG maison** (barres, courbes)                    | Besoins simples ; évite 100+ Ko de bibliothèque                                                                                                       |
+| Tests unitaires/intégration | **Vitest + Testing Library**                        | Même configuration que Vite                                                                                                                           |
+| Tests de bout en bout       | **Playwright** (canal `msedge`)                     | Parcours critiques et vérification responsive dans un vrai navigateur                                                                                 |
 
 Aucune bibliothèque de composants : le design system est interne (`src/components`) pour garder la maîtrise du rendu industriel et éviter le « look SaaS ».
 
@@ -120,14 +120,14 @@ Si `VITE_AUTH_MODE` vaut autre chose que `demo` sans implémentation branchée, 
 
 ## 8. Variables d'environnement
 
-| Variable | Valeurs | Défaut |
-|---|---|---|
-| `VITE_DATA_MODE` | `demo` \| `api` | `demo` |
-| `VITE_API_BASE_URL` | URL | — (obligatoire si `api`) |
-| `VITE_AUTH_MODE` | `demo` \| `oidc` | `demo` |
-| `VITE_BI_EMBED_URL` | URL https | — (BI non connecté) |
-| `VITE_BI_ALLOWED_ORIGIN` | origine https | — |
-| `VITE_LOG_LEVEL` | `debug` \| `info` \| `warn` \| `error` | `warn` |
+| Variable                 | Valeurs                                | Défaut                   |
+| ------------------------ | -------------------------------------- | ------------------------ |
+| `VITE_DATA_MODE`         | `demo` \| `api`                        | `demo`                   |
+| `VITE_API_BASE_URL`      | URL                                    | — (obligatoire si `api`) |
+| `VITE_AUTH_MODE`         | `demo` \| `oidc`                       | `demo`                   |
+| `VITE_BI_EMBED_URL`      | URL https                              | — (BI non connecté)      |
+| `VITE_BI_ALLOWED_ORIGIN` | origine https                          | —                        |
+| `VITE_LOG_LEVEL`         | `debug` \| `info` \| `warn` \| `error` | `warn`                   |
 
 ## 9. Performance
 
