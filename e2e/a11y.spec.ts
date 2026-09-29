@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
    L'audit automatique ne remplace pas un test avec lecteur d'écran, mais bloque les régressions. */
 
 const ROUTES = [
-  '/connexion',
+  '/login',
   '/',
   '/routines',
   '/routines/rt-ll-audit/TODAY',
@@ -45,7 +45,7 @@ const today = () => {
 
 test('aucune violation WCAG A/AA détectée par axe', async ({ page }) => {
   test.setTimeout(180_000);
-  await page.goto('/#/connexion');
+  await page.goto('/#/login');
   await page.evaluate(() => localStorage.clear());
   const report: string[] = [];
 
@@ -54,7 +54,7 @@ test('aucune violation WCAG A/AA détectée par axe', async ({ page }) => {
       if (signedIn)
         sessionStorage.setItem('ra:session', JSON.stringify({ userId: 'u-admin', startedAt: new Date().toISOString(), mode: 'demo' }));
       else sessionStorage.removeItem('ra:session');
-    }, route !== '/connexion');
+    }, route !== '/login');
     await page.goto(`/#${route.replace('TODAY', today())}`);
     await page.reload();
     await expect(page.getByRole('status', { name: /Chargement/ })).toHaveCount(0, { timeout: 10_000 });

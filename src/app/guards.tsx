@@ -11,9 +11,15 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   if (status === 'loading') return <LoadingState label="Ouverture de la session…" />;
   if (status !== 'signedIn') {
     const from = location.pathname + location.search;
-    return <Navigate to={`/connexion${from !== '/' ? `?retour=${encodeURIComponent(from)}` : ''}`} replace />;
+    return <Navigate to={`/login${from !== '/' ? `?retour=${encodeURIComponent(from)}` : ''}`} replace />;
   }
   return <>{children}</>;
+}
+
+/** Ancienne adresse : redirige en conservant les paramètres (liens enregistrés, favoris). */
+export function LegacyRedirect({ to }: { to: string }) {
+  const { search } = useLocation();
+  return <Navigate to={`${to}${search}`} replace />;
 }
 
 /** Garde de route par permission : affiche un état « accès refusé » explicite. */

@@ -3,7 +3,7 @@ import { createHashRouter, type RouteObject } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoginPage } from '@/features/auth/LoginPage';
 import type { Permission } from '@/services/auth/permissions';
-import { RequireAuth, RequirePermission } from './guards';
+import { LegacyRedirect, RequireAuth, RequirePermission } from './guards';
 import { NotFoundPage, RouteErrorPage } from './RouteErrorPage';
 
 /* Table des routes. Chaque page est chargée à la demande et protégée par sa permission. */
@@ -55,7 +55,8 @@ function guarded(Component: ComponentType, permission?: Permission, what?: strin
 
 /** Table des routes, partagée par l'application (routeur hash) et les tests (routeur mémoire). */
 export const appRoutes: RouteObject[] = [
-  { path: '/connexion', element: <LoginPage /> },
+  { path: '/login', element: <LoginPage /> },
+  { path: '/connexion', element: <LegacyRedirect to="/login" /> },
   {
     path: '/',
     element: (

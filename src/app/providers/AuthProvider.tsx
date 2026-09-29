@@ -1,9 +1,9 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AuthService, Session } from '@/services/auth/authService';
+import type { AuthService, Credentials, Session } from '@/services/auth/authService';
 import type { Permission } from '@/services/auth/permissions';
 import { can as authorize, type PolicyResource } from '@/services/auth/policies';
-import type { ID, User } from '@/types/domain';
+import type { User } from '@/types/domain';
 import { useDataSource } from './DataSourceProvider';
 
 interface AuthContextValue {
@@ -13,7 +13,9 @@ interface AuthContextValue {
   status: 'unavailable' | 'signedOut' | 'loading' | 'signedIn';
   /** Droit du rôle, et règle de la ressource si elle est fournie (services/auth/policies.ts). */
   can: (permission: Permission, resource?: PolicyResource) => boolean;
-  signIn: (userId: ID) => Promise<void>;
+  /** Connecte l'utilisateur et renvoie son profil (pour la redirection selon le rôle). */
+  signIn: (credentials: Credentials) => Promise<User>;
+  requestPasswordReset: (identifier: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -34,11 +36,19 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
   const user = userQuery.data && userQuery.data.active ? userQuery.data : null;
 
   const signIn = useCallback(
-    async (userId: ID) => {
-      setSession(await service.signIn({ userId }));
+    async (credentials: Credentials) => {
+      const next = await service.signIn(credentials);
+      const signedIn = await queryClient.fetchQuery({
+        queryKey: ['session-user', next.userId],
+        queryFn: () => ds.repo('users').get(next.userId),
+      });
+      setSession(next);
+      return signedIn;
     },
-    [service],
+    [service, queryClient, ds],
   );
+
+  const requestPasswordReset = useCallback((identifier: string) => service.requestPasswordReset(identifier), [service]);
 
   const signOut = useCallback(async () => {
     await service.signOut();
@@ -62,8 +72,9 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
       can: (permission, resource) => authorize(user, permission, resource),
       signIn,
       signOut,
+      requestPasswordReset,
     };
-  }, [service, session, user, userQuery.isError, userQuery.isSuccess, signIn, signOut]);
+  }, [service, session, user, userQuery.isError, userQuery.isSuccess, signIn, signOut, requestPasswordReset]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

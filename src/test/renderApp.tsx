@@ -8,7 +8,8 @@ import { DataSourceProvider } from '@/app/providers/DataSourceProvider';
 import { ConfirmProvider } from '@/components/ui/ConfirmDialog';
 import { ToastProvider } from '@/components/ui/Toast';
 import { buildDemoData } from '@/data/demo/seed';
-import { createDemoAuthService } from '@/services/auth/authService';
+import { createMockAuthProvider } from '@/services/auth/mock/mockAuthProvider';
+import { createUserDirectory } from '@/services/auth/userDirectory';
 import { createMemoryStore, createStoreDataSource } from '@/services/data/storeDataSource';
 
 /** Rend l'application complète (vraies routes, vrais écrans) sur une source de données en mémoire. */
@@ -20,7 +21,7 @@ export function renderApp(path: string, options: { userId?: string } = {}) {
       JSON.stringify({ userId: options.userId, startedAt: new Date().toISOString(), mode: 'demo' }),
     );
   }
-  const auth = createDemoAuthService(window.sessionStorage);
+  const auth = createMockAuthProvider(window.sessionStorage, createUserDirectory(ds));
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: 0 } } });
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] });
   const user = userEvent.setup();

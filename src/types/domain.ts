@@ -324,8 +324,8 @@ export interface KnowledgeItem extends BaseEntity {
   version: string;
   owner: string;
   status: KnowledgeStatus;
-  /** Contenu d'exemple issu du prototype, à remplacer par les standards réels */
-  isExample: boolean;
+  /** Contenu initial à faire valider par son propriétaire (visible uniquement des gestionnaires du centre) */
+  toReview: boolean;
 }
 
 export interface Favorite extends BaseEntity {
@@ -375,7 +375,8 @@ export interface Announcement extends BaseEntity {
 
 /* ---------- Notifications & paramètres ---------- */
 
-export type NotificationKind = 'action_assigned' | 'andon_raised' | 'comment_added' | 'anomaly_reported';
+export type NotificationKind =
+  'action_assigned' | 'andon_raised' | 'comment_added' | 'anomaly_reported' | 'routine_assigned' | 'meeting_invited' | 'access_request';
 
 export interface AppNotification extends BaseEntity {
   userId: ID;

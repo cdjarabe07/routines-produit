@@ -7,7 +7,9 @@ import { DataSourceProvider } from '@/app/providers/DataSourceProvider';
 import { ConfirmProvider } from '@/components/ui/ConfirmDialog';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ConfigErrorScreen } from '@/components/feedback/ConfigErrorScreen';
-import { createDemoAuthService, createUnconfiguredAuthService } from '@/services/auth/authService';
+import { createUnconfiguredAuthService } from '@/services/auth/authService';
+import { createMockAuthProvider } from '@/services/auth/mock/mockAuthProvider';
+import { createUserDirectory } from '@/services/auth/userDirectory';
 import { createDataSource } from '@/services/data/createDataSource';
 import { createAppRouter } from './router';
 
@@ -22,8 +24,14 @@ function createQueryClient() {
 
 export function App() {
   const [services] = useState(() => {
-    const auth = env.authMode === 'demo' ? createDemoAuthService(window.sessionStorage) : createUnconfiguredAuthService(env.authMode);
-    const dataSource = createDataSource(env, () => auth.getAccessToken());
+    // Le jeton est lu à chaque requête : la source de données peut être créée avant le fournisseur d'authentification
+    let getToken: () => string | null = () => null;
+    const dataSource = createDataSource(env, () => getToken());
+    const auth =
+      env.authMode === 'demo'
+        ? createMockAuthProvider(window.sessionStorage, createUserDirectory(dataSource))
+        : createUnconfiguredAuthService(env.authMode);
+    getToken = () => auth.getAccessToken();
     return { auth, dataSource, queryClient: createQueryClient(), router: createAppRouter() };
   });
 

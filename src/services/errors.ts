@@ -24,6 +24,13 @@ export class PermissionError extends AppError {
   }
 }
 
+export class AuthenticationError extends AppError {
+  constructor(message = 'Identifiant ou mot de passe incorrect.') {
+    super(message);
+    this.name = 'AuthenticationError';
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(what = 'L’élément demandé') {
     super(`${what} est introuvable. Il a peut-être été supprimé.`);

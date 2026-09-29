@@ -13,12 +13,38 @@ afterAll(() => vi.useRealTimers());
 const TIMEOUT = { timeout: 4000 };
 
 describe('connexion et droits', () => {
-  it('connexion DÉMO par choix de profil, puis accueil personnalisé', async () => {
+  it('connexion par identifiant et mot de passe ; aucune mention du mode démo', async () => {
     const { user } = renderApp('/');
-    expect(await screen.findByText(/Mode démonstration\./, {}, TIMEOUT)).toBeInTheDocument();
-    await user.click(await screen.findByRole('button', { name: /Karim Benali/ }));
+    await user.type(await screen.findByLabelText(/Identifiant ou email/, {}, TIMEOUT), 'karim.benali@atelier.local');
+    await user.type(screen.getByLabelText(/^Mot de passe/), 'Routines2026');
+    await user.click(screen.getByRole('button', { name: 'Se connecter' }));
     expect(await screen.findByRole('heading', { level: 1, name: /Bonjour Karim/ }, TIMEOUT)).toBeInTheDocument();
-    expect(screen.getByText(/MODE DÉMO/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/démo|démonstration|fictive/i);
+  });
+
+  it('refuse un mauvais mot de passe et un compte désactivé', async () => {
+    const { user, ds } = renderApp('/login');
+    await ds.repo('users').update('u-tom', { active: false });
+    await user.type(await screen.findByLabelText(/Identifiant ou email/, {}, TIMEOUT), 'operateur');
+    await user.type(screen.getByLabelText(/^Mot de passe/), 'mauvais');
+    await user.click(screen.getByRole('button', { name: 'Se connecter' }));
+    expect(await screen.findByText('Identifiant ou mot de passe incorrect.', {}, TIMEOUT)).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText(/Identifiant ou email/));
+    await user.type(screen.getByLabelText(/Identifiant ou email/), 'tom.berg@atelier.local');
+    await user.type(screen.getByLabelText(/^Mot de passe/), 'Routines2026');
+    await user.click(screen.getByRole('button', { name: 'Se connecter' }));
+    expect(await screen.findByText(/Ce compte est désactivé/, {}, TIMEOUT)).toBeInTheDocument();
+  });
+
+  it('mot de passe oublié : la demande est transmise aux administrateurs', async () => {
+    const { user, ds } = renderApp('/login');
+    await user.click(await screen.findByRole('button', { name: 'Mot de passe oublié ?' }, TIMEOUT));
+    await user.type(screen.getByLabelText(/Identifiant ou email/), 'operateur');
+    await user.click(screen.getByRole('button', { name: 'Transmettre la demande' }));
+    expect(await screen.findByText(/Demande transmise/, {}, TIMEOUT)).toBeInTheDocument();
+    const notes = await ds.repo('notifications').list({ where: { userId: 'u-admin' } });
+    expect(notes.some((n) => n.kind === 'access_request' && n.title.includes('Nadia Roussel'))).toBe(true);
   });
 
   it('un opérateur ne voit pas le reporting et reçoit un refus explicite', async () => {

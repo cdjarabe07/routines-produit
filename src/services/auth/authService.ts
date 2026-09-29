@@ -1,9 +1,14 @@
 import type { ID, ISODateTime } from '@/types/domain';
 import type { AuthMode } from '@/app/config/env';
 
-/* Contrat d'authentification, indépendant de l'UI.
-   - DemoAuthService : choix d'un profil, AUCUNE vérification d'identité.
-   - Fournisseur réel (Entra ID / OIDC) : à implémenter derrière la même interface (docs/deployment.md). */
+/* Contrat d'authentification, indépendant de l'interface.
+
+     Écran de connexion
+            ↓
+       AuthService              ← ce contrat
+            ↓
+   MockAuthProvider             ← mock/mockAuthProvider.ts (développement, NON sécurisé)
+   Fournisseur réel (OIDC)      ← à brancher ici (docs/deployment.md), sans toucher à l'interface */
 
 export interface Session {
   userId: ID;
@@ -11,59 +16,37 @@ export interface Session {
   mode: AuthMode;
 }
 
+export interface Credentials {
+  /** Identifiant court ou adresse email */
+  identifier: string;
+  password: string;
+}
+
 export interface AuthService {
   readonly mode: AuthMode;
   /** true si le fournisseur est opérationnel dans cette configuration */
   readonly available: boolean;
   getSession(): Session | null;
-  signIn(credentials: { userId: ID }): Promise<Session>;
+  /** Rejette une AuthenticationError si les identifiants sont refusés. */
+  signIn(credentials: Credentials): Promise<Session>;
   signOut(): Promise<void>;
+  /** Transmet une demande de réinitialisation. Ne révèle jamais si le compte existe. */
+  requestPasswordReset(identifier: string): Promise<void>;
   getAccessToken(): string | null;
-}
-
-const SESSION_KEY = 'ra:session';
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
-
-export function createDemoAuthService(storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>): AuthService {
-  return {
-    mode: 'demo',
-    available: true,
-    getSession() {
-      try {
-        const raw = storage.getItem(SESSION_KEY);
-        if (!raw) return null;
-        const session = JSON.parse(raw) as Session;
-        if (Date.now() - new Date(session.startedAt).getTime() > SESSION_TTL_MS) {
-          storage.removeItem(SESSION_KEY);
-          return null;
-        }
-        return session;
-      } catch {
-        return null;
-      }
-    },
-    async signIn({ userId }) {
-      const session: Session = { userId, startedAt: new Date().toISOString(), mode: 'demo' };
-      storage.setItem(SESSION_KEY, JSON.stringify(session));
-      return session;
-    },
-    async signOut() {
-      storage.removeItem(SESSION_KEY);
-    },
-    getAccessToken: () => null,
-  };
 }
 
 /** Fournisseur non branché : l'application refuse l'accès et explique quoi configurer. */
 export function createUnconfiguredAuthService(mode: AuthMode): AuthService {
+  const refuse = async () => {
+    throw new Error('Fournisseur d’authentification non configuré');
+  };
   return {
     mode,
     available: false,
     getSession: () => null,
-    signIn: async () => {
-      throw new Error('Fournisseur d’authentification non configuré');
-    },
+    signIn: refuse,
     signOut: async () => undefined,
+    requestPasswordReset: refuse,
     getAccessToken: () => null,
   };
 }

@@ -45,7 +45,7 @@ const today = () => {
 };
 
 async function signIn(page: Page, userId: string) {
-  await page.goto('/#/connexion');
+  await page.goto('/#/login');
   await page.evaluate((id) => {
     localStorage.clear();
     sessionStorage.setItem('ra:session', JSON.stringify({ userId: id, startedAt: new Date().toISOString(), mode: 'demo' }));
