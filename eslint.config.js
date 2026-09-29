@@ -20,4 +20,9 @@ export default tseslint.config(
     files: ['src/services/logger.ts'],
     rules: { 'no-console': 'off' },
   },
+  {
+    // Fonctions Edge (Deno) : la console alimente les journaux du serveur
+    files: ['supabase/functions/**/*.ts'],
+    rules: { 'no-console': 'off' },
+  },
 );
