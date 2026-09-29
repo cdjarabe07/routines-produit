@@ -69,6 +69,8 @@ export const SHIFT: Record<Shift, string> = {
   night: 'Équipe de nuit',
 };
 
+export const SHIFT_SHORT: Record<Shift, string> = { morning: 'Matin', afternoon: 'Après-midi', night: 'Nuit' };
+
 export const PRODUCTION_STAGE: Record<ProductionStage, string> = {
   cutting: 'Coupe',
   crimping: 'Sertissage',
