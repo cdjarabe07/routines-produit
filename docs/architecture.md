@@ -46,7 +46,7 @@ src/
 │       └── pages/           Pages routées (chargées à la demande)
 ├── services/
 │   ├── data/                Contrat DataSource, implémentations DÉMO (localStorage) et API (HTTP)
-│   ├── auth/                AuthService, implémentation DÉMO, permissions
+│   ├── auth/                AuthService, fournisseur simulé (mock/), annuaire, permissions, policies
 │   ├── logger.ts            Journalisation par niveaux
 │   └── errors.ts            Erreurs typées + message utilisateur
 ├── data/demo/               Jeu de données de démonstration (généré, daté par rapport à « aujourd'hui »)
@@ -78,7 +78,7 @@ Un module peut utiliser le `model.ts` ou les hooks `api.ts` d'un autre module (p
 
 - `Repository<T>` : `list(filter?)`, `get(id)`, `create(input)`, `update(id, patch)`, `remove(id)`.
 - `DataSource` : un repository par collection (`actions`, `anomalies`, `andonAlerts`…), plus `kind` (`demo` | `api`) et `resetDemoData()` (DÉMO uniquement).
-- **DÉMO** : un driver `localStorage` (une clé par collection, préfixe versionné `ra:v1:`). Au premier lancement, le jeu de données de `src/data/demo` est chargé. Les photos sont réduites (max 1280 px, JPEG) avant stockage.
+- **DÉMO** : un driver `localStorage` (une clé par collection, préfixe versionné `ra:v2:`). Au premier lancement, le jeu de données de `src/data/demo` est chargé. Les photos sont réduites (max 1280 px, JPEG) avant stockage.
 - **API** : driver HTTP REST générique (`GET/POST/PATCH/DELETE {VITE_API_BASE_URL}/{collection}`), jeton porté par l'`AuthService`. Contrat décrit dans `docs/deployment.md`.
 - Les opérations qui touchent plusieurs entités (valider une Gemba Walk crée des actions et des notifications) sont écrites dans `features/*/api.ts` au-dessus du `DataSource`. Avec un vrai backend, elles pourront être déplacées dans des endpoints transactionnels sans toucher l'UI (même signature de hook).
 - Les **valeurs calculées ne sont jamais stockées** (retard, conformité, état d'un poste) : elles sont dérivées dans `model.ts`.
@@ -86,15 +86,17 @@ Un module peut utiliser le `model.ts` ou les hooks `api.ts` d'un autre module (p
 ## 4. Authentification et permissions
 
 ```text
-AuthService (interface)        signIn / signOut / getSession / listDemoProfiles?
-  ├── DemoAuthService          Choix d'un profil de démonstration, session en sessionStorage.
-  │                            Affiché partout comme « MODE DÉMO — aucune authentification ».
+AuthService (interface)        signIn({identifier, password}) / signOut / getSession / requestPasswordReset / getAccessToken
+  ├── MockAuthProvider         services/auth/mock : identifiant ou email + mot de passe vérifiés contre l'annuaire local,
+  │                            comptes dans mock/accounts.ts. NON sécurisé (code livré au navigateur).
   └── (à brancher) OidcAuthService   Microsoft Entra ID / MSAL — voir docs/deployment.md
-AuthProvider (React)           expose { user, session, can(permission), signOut }
-permissions.ts                 matrice rôle → permissions, fonction can()
+UserDirectory                  services/auth/userDirectory.ts : annuaire adossé au DataSource (dernière activité, demandes d'accès)
+AuthProvider (React)           expose { user, session, can(permission, ressource?), signIn, signOut, requestPasswordReset }
+permissions.ts                 matrice rôle → permissions, profils, écran d'accueil (homePath)
+policies.ts                    can(user, permission, ressource) : règles par ressource (action confiée, réunion dont on est responsable…)
 <Can permission="…">           affichage conditionnel
-route.meta.permission          garde de route → écran « Accès refusé »
-navigation.ts                  menu filtré par permission
+RequirePermission              garde d'espace (space.*) et de page → écran « Accès non autorisé »
+navigation.ts                  trois espaces, menus filtrés par permission, sélecteur d'espace
 ```
 
 Aucune condition de rôle n'apparaît dans les composants : ils ne connaissent que des permissions.
@@ -103,7 +105,8 @@ Si `VITE_AUTH_MODE` vaut autre chose que `demo` sans implémentation branchée, 
 
 ## 5. Routing
 
-- Routeur hash : `/#/routines`, `/#/signaler?poste=P4`.
+- Routeur hash. Espaces : `/app` (Mon travail), `/manager` (Supervision), `/admin` (Administration) ; détails communs hors préfixe (`/andon/:id`, `/actions/:id`, `/reunions/:id`, `/signaler?poste=P4`…). Table complète : `docs/implementation-plan.md` §3.
+- `/` redirige vers l'espace d'accueil du profil ; les anciennes adresses (`/routines`, `/agenda`…) sont redirigées.
 - Chaque page est chargée à la demande (`lazy`), ce qui découpe le bundle par module.
 - Chaque route déclare sa permission ; la garde affiche `AccessDenied`.
 - Erreurs de rendu : `errorElement` au niveau de la coque avec un message compréhensible.

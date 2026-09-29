@@ -3,11 +3,13 @@
 > Produit : application métier de digitalisation des routines d'un atelier de câblage automobile.
 > Utilisateurs : terrain (poste fixe, tablette, smartphone) et encadrement (poste de bureau).
 > Référence : `docs/legacy-audit.md`. Les hypothèses sont dans `docs/decisions.md`.
+>
+> **Mise à jour (séparation administration / exécution)** : les rôles, espaces, permissions et routes sont désormais décrits dans `docs/role-model.md`, `docs/permission-matrix.md` et `docs/implementation-plan.md`, qui remplacent les sections 2 à 4 ci-dessous. Les définitions d’indicateurs (§7) restent valables ; la réalisation des routines est calculée sur les occurrences planifiées.
 
 ## 1. Principes produit
 
 1. **Une question par écran.** L'accueil répond à « qu'est-ce qui se passe maintenant et que dois-je faire ? ».
-2. **Aucune donnée inventée présentée comme réelle.** Tout indicateur est calculé à partir d'enregistrements saisis. Le mode DÉMO est signalé en permanence.
+2. **Aucune donnée inventée présentée comme réelle.** Tout indicateur est calculé à partir d'enregistrements. Le caractère simulé de l'environnement est indiqué à l'administrateur et dans la documentation (D-023).
 3. **L'historique est conservé.** On ne « remet pas à zéro » une journée : chaque jour crée de nouvelles exécutions.
 4. **Une seule notion d'action.** Toute action (réunion, anomalie, Gemba, manuelle) vit dans le même registre, avec sa source.
 5. **Les droits sont centralisés.** Un bouton qu'on n'a pas le droit d'utiliser n'est pas affiché, et la route renvoie un état « accès refusé ».

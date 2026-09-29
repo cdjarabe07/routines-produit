@@ -13,11 +13,11 @@ Recommandations serveur : HTTPS obligatoire, en-têtes `Content-Security-Policy`
 
 ## 2. Niveaux d’environnement
 
-| Niveau        | Données                                | Authentification                       | Usage                            |
-| ------------- | -------------------------------------- | -------------------------------------- | -------------------------------- |
-| DÉMO          | localStorage du navigateur, jeu fictif | Choix de profil, **aucune sécurité**   | Présentation, tests utilisateurs |
-| DÉVELOPPEMENT | Backend local + données d’amorçage     | Fournisseur de test                    | Intégration                      |
-| PRODUCTION    | Backend + base de données              | Fournisseur d’identité de l’entreprise | Exploitation                     |
+| Niveau        | Données                                | Authentification                                        | Usage                            |
+| ------------- | -------------------------------------- | ------------------------------------------------------- | -------------------------------- |
+| DÉMO          | localStorage du navigateur, jeu fictif | Identifiant + mot de passe simulés, **aucune sécurité** | Présentation, tests utilisateurs |
+| DÉVELOPPEMENT | Backend local + données d’amorçage     | Fournisseur de test                                     | Intégration                      |
+| PRODUCTION    | Backend + base de données              | Fournisseur d’identité de l’entreprise                  | Exploitation                     |
 
 Le niveau DÉMO ne doit jamais contenir de données réelles.
 
@@ -33,7 +33,7 @@ Le niveau DÉMO ne doit jamais contenir de données réelles.
 | PATCH   | `/{collection}/{id}`         | Champs modifiés → entité à jour       |
 | DELETE  | `/{collection}/{id}`         | 204                                   |
 
-Collections (kebab-case) : `users`, `lines`, `workstations`, `presence`, `leaves`, `routine-templates`, `routine-runs`, `actions`, `comments`, `anomalies`, `andon-alerts`, `sequence-templates`, `sequence-runs`, `production-orders`, `material-stocks`, `stock-movements`, `gemba-walks`, `quality-checks`, `knowledge-items`, `favorites`, `meetings`, `handovers`, `announcements`, `notifications`, `settings`. Schémas : `docs/data-model.md`.
+Collections (kebab-case) : `users`, `teams`, `checklists`, `schedules`, `lines`, `workstations`, `presence`, `leaves`, `routine-templates`, `routine-runs`, `actions`, `comments`, `anomalies`, `andon-alerts`, `sequence-templates`, `sequence-runs`, `production-orders`, `material-stocks`, `stock-movements`, `gemba-walks`, `quality-checks`, `knowledge-items`, `favorites`, `meetings`, `handovers`, `announcements`, `notifications`, `settings`. Schémas : `docs/data-model.md`.
 
 Le jeton est transmis en `Authorization: Bearer`. Codes d’erreur interprétés : 401 (session expirée), 403, 404, 5xx, erreur réseau — messages utilisateur dans `src/services/errors.ts`.
 
@@ -47,7 +47,7 @@ Le jeton est transmis en `Authorization: Bearer`. Codes d’erreur interprétés
 
 ## 4. Authentification
 
-`src/services/auth/authService.ts` définit l’interface `AuthService` (`getSession`, `signIn`, `signOut`, `getAccessToken`).
+`src/services/auth/authService.ts` définit l’interface `AuthService` (`getSession`, `signIn`, `signOut`, `requestPasswordReset`, `getAccessToken`). L’implémentation actuelle, `MockAuthProvider`, vérifie un identifiant et un mot de passe codés dans le navigateur : elle doit être remplacée avant toute donnée réelle. L’écran de connexion n’a pas à changer : avec Entra ID, il est remplacé par la redirection du fournisseur.
 
 Cible présumée (écosystème Power Platform du prototype) : **Microsoft Entra ID** via `@azure/msal-browser`.
 
