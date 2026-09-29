@@ -15,7 +15,16 @@ export interface ListItem {
 }
 
 /** Liste dense de lignes (cockpit, panneaux latéraux). Les lignes avec « to » sont des liens. */
-export function ItemList({ items, label }: { items: ListItem[]; label?: string }) {
+export function ItemList({
+  items,
+  label,
+  empty,
+}: {
+  items: ListItem[];
+  label?: string;
+  /** Message si la liste est vide */ empty?: string;
+}) {
+  if (items.length === 0 && empty) return <p className={styles.empty}>{empty}</p>;
   return (
     <ul className={styles.list} aria-label={label}>
       {items.map((item) => {

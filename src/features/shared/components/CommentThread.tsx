@@ -13,6 +13,10 @@ import styles from './CommentThread.module.css';
 interface Props {
   targetType: CommentTarget;
   targetId: ID;
+  /** Élément précis commenté dans la cible (ex. une tâche de routine) ; absent = commentaires généraux */
+  anchorId?: ID;
+  /** Libellé du champ de saisie */
+  label?: string;
   /** Personnes notifiées à chaque nouveau commentaire (hors auteur) */
   notifyUserIds: (ID | undefined)[];
   title: string;
@@ -21,7 +25,16 @@ interface Props {
 }
 
 /** Fil de commentaires horodatés, du plus ancien au plus récent. L'auteur peut modifier son commentaire. */
-export function CommentThread({ targetType, targetId, notifyUserIds, title, link, userName }: Props) {
+export function CommentThread({
+  targetType,
+  targetId,
+  anchorId,
+  label = 'Ajouter un commentaire',
+  notifyUserIds,
+  title,
+  link,
+  userName,
+}: Props) {
   const user = useCurrentUser();
   const comments = useCollection('comments');
   const add = useAddComment();
@@ -31,9 +44,9 @@ export function CommentThread({ targetType, targetId, notifyUserIds, title, link
   const thread = useMemo(
     () =>
       (comments.data ?? [])
-        .filter((c) => c.targetType === targetType && c.targetId === targetId)
+        .filter((c) => c.targetType === targetType && c.targetId === targetId && c.anchorId === anchorId)
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
-    [comments.data, targetType, targetId],
+    [comments.data, targetType, targetId, anchorId],
   );
 
   const submit = async () => {
@@ -42,7 +55,7 @@ export function CommentThread({ targetType, targetId, notifyUserIds, title, link
       return;
     }
     setError(null);
-    await add.mutateAsync({ targetType, targetId, text, author: user, notifyUserIds, title, link });
+    await add.mutateAsync({ targetType, targetId, anchorId, text, author: user, notifyUserIds, title, link });
     setText('');
   };
 
@@ -66,13 +79,7 @@ export function CommentThread({ targetType, targetId, notifyUserIds, title, link
               void submit().catch(() => undefined);
             }}
           >
-            <TextAreaField
-              label="Ajouter un commentaire"
-              rows={2}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              error={error ?? undefined}
-            />
+            <TextAreaField label={label} rows={2} value={text} onChange={(e) => setText(e.target.value)} error={error ?? undefined} />
             <div>
               <Button type="submit" variant="primary" size="sm" loading={add.isPending}>
                 Publier

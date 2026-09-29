@@ -1,180 +1,327 @@
-import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { BookOpen, MessageSquarePlus, RotateCcw, TriangleAlert } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
+import { BookOpen, CheckCircle2, Clock, MessageSquare, Play, RotateCcw, TriangleAlert } from 'lucide-react';
 import { useAuth, useCurrentUser } from '@/app/providers/AuthProvider';
-import { EmptyState, QueryBoundary } from '@/components/feedback/States';
+import { AccessDenied, EmptyState, QueryBoundary } from '@/components/feedback/States';
 import { PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button, IconButton } from '@/components/ui/Button';
-import { TextAreaField } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
 import { Progress } from '@/components/ui/Progress';
 import { AnomalyForm } from '@/features/anomalies/components/AnomalyForm';
 import { KnowledgeQuickView } from '@/features/knowledge/components/KnowledgeQuickView';
+import { usePlanningData } from '@/features/planning/api';
+import {
+  OCCURRENCE_STATE,
+  assignmentLabel,
+  findOccurrence,
+  isAssignedTo,
+  occurrenceState,
+  type Occurrence,
+} from '@/features/planning/model';
+import { useLookups, useSettings, type Lookups } from '@/features/shared/api';
 import { CheckResultToggle } from '@/features/shared/components/CheckResultToggle';
-import { useLookups, useSettings } from '@/features/shared/api';
-import { useCollection } from '@/hooks/useData';
+import { CommentThread } from '@/features/shared/components/CommentThread';
+import { PRIORITY } from '@/features/shared/labels';
 import { useNow } from '@/hooks/useNow';
 import { ROLE_LABELS } from '@/services/auth/permissions';
-import type { CheckResult, ItemResult, RoutineItem, RoutineTemplate, Workstation } from '@/types/domain';
-import { formatLongDate, formatTime, todayKey } from '@/utils/date';
-import { useRecordItem } from '../api';
-import { ROUTINE_STATE, canEditRun, findRun, routineState, runProgress } from '../model';
+import type { Checklist, ChecklistItem, CheckResult, CheckValue, ID, ItemResult, RoutineRun, RoutineTask } from '@/types/domain';
+import { formatDuration, formatLongDate, formatTime, todayKey } from '@/utils/date';
+import { useCompleteRoutine, useRecordResult, useStartRoutine } from '../api';
+import { CheckInput } from '../components/CheckInput';
+import { checkKey, estimatedMinutes, formatCheckValue, runSummary, taskChecks, taskProgress, type TaskState } from '../model';
 import styles from './RoutineRunPage.module.css';
 
+const TASK_STATE: Record<TaskState, { label: string; tone: 'neutral' | 'info' | 'success' }> = {
+  todo: { label: 'À faire', tone: 'neutral' },
+  partial: { label: 'En cours', tone: 'info' },
+  done: { label: 'Faite', tone: 'success' },
+};
+
+/** Exécution d'une routine planifiée : Démarrer → tâches et contrôles → Terminer (durée réelle enregistrée). */
 export function RoutineRunPage() {
-  const { templateId = '', date = todayKey() } = useParams();
-  const templates = useCollection('routineTemplates');
-  const runs = useCollection('routineRuns');
-  const { queries, lookups } = useLookups();
+  const { scheduleId = '', date = todayKey() } = useParams();
+  const { queries, source, checklistById } = usePlanningData();
+  const lookup = useLookups();
+  const { can } = useAuth();
+  const user = useCurrentUser();
 
   return (
-    <QueryBoundary queries={[templates, runs, ...queries]}>
+    <QueryBoundary queries={[...queries, ...lookup.queries]}>
       {() => {
-        const template = templates.data!.find((t) => t.id === templateId);
-        if (!template) {
+        const occurrence = findOccurrence(source!, scheduleId, date);
+        if (!occurrence) {
           return (
             <EmptyState
               title="Routine introuvable"
-              description="Ce modèle de routine n’existe plus."
-              action={<Link to="/routines">Retour aux routines</Link>}
+              description="Cette routine n’est pas planifiée à cette date, ou son occurrence a été annulée."
+              action={<Link to="/app/routines">Retour à mes routines</Link>}
             />
           );
         }
-        return (
-          <RunView
-            template={template}
-            date={date}
-            run={findRun(runs.data!, template.id, date)}
-            userName={lookups!.userName}
-            workstations={lookups!.workstations}
-          />
-        );
+        const assigned = isAssignedTo(occurrence.schedule, user);
+        if (!assigned && !can('routine.supervise')) return <AccessDenied what="cette routine" />;
+        return <RunView occurrence={occurrence} assigned={assigned} checklists={checklistById} lookups={lookup.lookups!} />;
       }}
     </QueryBoundary>
   );
 }
 
 interface RunViewProps {
-  template: RoutineTemplate;
-  date: string;
-  run: ReturnType<typeof findRun>;
-  userName: (id?: string) => string;
-  workstations: Workstation[];
+  occurrence: Occurrence;
+  assigned: boolean;
+  checklists: Map<ID, Checklist>;
+  lookups: Lookups;
 }
 
-function RunView({ template, date, run, userName, workstations }: RunViewProps) {
+function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
   const user = useCurrentUser();
   const { can } = useAuth();
-  const now = useNow(60_000);
+  const navigate = useNavigate();
+  const now = useNow(1000);
   const today = todayKey();
   const { settings } = useSettings();
-  const record = useRecordItem();
+  const start = useStartRoutine();
+  const record = useRecordResult();
+  const complete = useCompleteRoutine();
   const [knowledgeId, setKnowledgeId] = useState<string | null>(null);
-  const [anomalyFor, setAnomalyFor] = useState<RoutineItem | null>(null);
+  const [anomalyFor, setAnomalyFor] = useState<{ task: RoutineTask; item?: ChecklistItem } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const editable = canEditRun(template, user.role, can('routine.manage'), date, today);
-  const progress = runProgress(template, run);
-  const state = routineState(template, run, date, today, now, settings.routineLateToleranceMinutes);
+  const { routine, schedule, run, date } = occurrence;
+  const state = occurrenceState(occurrence, today, now, settings.routineLateToleranceMinutes);
+  const summary = runSummary(routine, checklists, run);
+  const editable = assigned && can('routine.execute') && date === today && Boolean(run) && !run?.completedAt;
+  const canStart = assigned && can('routine.execute') && date === today && !run;
+  const backTo = assigned ? '/app/routines' : '/manager/routines';
+  const elapsedMs = run ? (run.completedAt ? new Date(run.completedAt).getTime() : now.getTime()) - new Date(run.startedAt).getTime() : 0;
+  const plannedMin = routine.durationMin;
+  const overTime = run && !run.completedAt && elapsedMs > plannedMin * 60_000;
 
-  const save = (item: RoutineItem, status: CheckResult | null, comment?: string, anomalyId?: string) =>
-    record.mutateAsync({ template, date, itemId: item.id, status, comment, anomalyId, userId: user.id });
+  const save = (key: string, result: Omit<ItemResult, 'at' | 'by'> | null) => record.mutateAsync({ run: run!, key, result, user });
 
-  const readOnlyReason = useMemo(() => {
-    if (editable) return null;
-    if (date !== today) return 'Journée passée : consultation uniquement.';
-    return `Cette routine est réservée au rôle ${ROLE_LABELS[template.role]}.`;
-  }, [editable, date, today, template.role]);
+  const where = [
+    lookups.lineName(schedule.lineId ?? routine.lineId),
+    schedule.workstationId || routine.workstationId ? lookups.workstationName(schedule.workstationId ?? routine.workstationId) : null,
+  ]
+    .filter((v) => v && v !== '—')
+    .join(' · ');
 
   return (
     <>
       <PageHeader
-        back={{ to: date === today ? '/routines' : `/routines?date=${date}`, label: 'Routines' }}
-        title={template.title}
-        description={template.description}
+        back={{ to: backTo, label: assigned ? 'Mes routines' : 'Suivi des routines' }}
+        title={routine.title}
+        description={routine.description}
         meta={
           <>
-            <Badge tone={ROUTINE_STATE[state].tone}>{ROUTINE_STATE[state].label}</Badge>
+            <Badge tone={OCCURRENCE_STATE[state].tone}>{OCCURRENCE_STATE[state].label}</Badge>
             <span className={styles.metaText}>
-              Prévue à {template.scheduledTime} · {ROLE_LABELS[template.role]} · {formatLongDate(date)}
+              {formatLongDate(date)} · {schedule.time} · {plannedMin} min prévues
+              {where && ` · ${where}`} · {assignmentLabel(schedule, lookups.userName, lookups.teamName)}
             </span>
           </>
         }
       />
 
-      <div className={styles.progressBar}>
-        <Progress
-          value={progress.treated}
-          max={progress.total}
-          label="Avancement de la routine"
-          tone={state === 'done' ? 'success' : 'info'}
-        />
-        <span className={styles.progressText}>
-          {progress.treated}/{progress.total} points
-          {progress.ko > 0 && (
-            <Badge tone="danger">
-              {progress.ko} non conforme{progress.ko > 1 ? 's' : ''}
-            </Badge>
+      {run && (
+        <div className={styles.progressBar} role="region" aria-label="Avancement">
+          <Progress value={summary.tasksDone} max={summary.tasks} label="Tâches faites" tone={run.completedAt ? 'success' : 'info'} />
+          <span className={styles.progressText}>
+            {summary.tasksDone}/{summary.tasks} tâches
+            {summary.ko > 0 && (
+              <Badge tone="danger">
+                {summary.ko} non conforme{summary.ko > 1 ? 's' : ''}
+              </Badge>
+            )}
+          </span>
+          <span className={styles.timer} data-over={overTime || undefined} aria-live="off">
+            <Clock size={16} aria-hidden />
+            <span className="visually-hidden">{run.completedAt ? 'Durée réelle' : 'Temps écoulé'} :</span>
+            {formatDuration(elapsedMs)} <span className={styles.timerPlanned}>/ {plannedMin} min</span>
+          </span>
+        </div>
+      )}
+
+      {!run && (
+        <Panel
+          title={canStart ? 'Prête à démarrer' : date < today ? 'Non réalisée' : 'Pas encore démarrée'}
+          description={
+            canStart
+              ? `${routine.tasks.length} tâche(s) · environ ${estimatedMinutes(routine)} min. Le chronomètre démarre avec la routine.`
+              : date < today
+                ? 'Cette routine n’a pas été exécutée ce jour-là.'
+                : assigned
+                  ? date > today
+                    ? 'Elle pourra être démarrée le jour prévu.'
+                    : 'Vous n’avez pas le droit d’exécuter des routines.'
+                  : 'La personne affectée ne l’a pas encore démarrée.'
+          }
+          actions={
+            canStart && (
+              <Button
+                variant="primary"
+                size="lg"
+                icon={<Play size={18} aria-hidden />}
+                loading={start.isPending}
+                onClick={() => start.mutate({ schedule, date, user })}
+              >
+                Démarrer
+              </Button>
+            )
+          }
+        >
+          <ol className={styles.preview}>
+            {routine.tasks.map((t) => (
+              <li key={t.id}>
+                <span>{t.title}</span>
+                <span className={styles.previewMeta}>
+                  {t.estimatedMin ? `${t.estimatedMin} min` : ''}
+                  {!t.required && ' · facultative'}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </Panel>
+      )}
+
+      {run?.completedAt && (
+        <Panel accent="success" title="Routine terminée">
+          <p className={styles.doneSummary} role="status">
+            Terminée à {formatTime(run.completedAt)} par {lookups.userName(run.completedBy ?? run.assigneeId)} · durée réelle{' '}
+            <strong>{summary.durationMin} min</strong> (prévue {plannedMin} min) · tâches complétées{' '}
+            <strong>
+              {summary.tasksDone}/{summary.tasks}
+            </strong>
+            {summary.ko > 0 && ` · ${summary.ko} non-conformité(s)`}
+          </p>
+        </Panel>
+      )}
+
+      {run && (
+        <Stack gap={4}>
+          {!editable && !run.completedAt && (
+            <p className={styles.readonly} role="note">
+              {date !== today
+                ? 'Journée passée : consultation uniquement.'
+                : `Exécution en cours par ${lookups.userName(run.assigneeId)} — consultation uniquement.`}
+            </p>
           )}
-        </span>
-      </div>
+          {routine.tasks.map((task, index) => (
+            <TaskCard
+              key={task.id}
+              index={index}
+              task={task}
+              checks={taskChecks(task, checklists)}
+              run={run}
+              editable={editable}
+              busyKey={record.isPending ? record.variables?.key : undefined}
+              userName={lookups.userName}
+              onSave={save}
+              onOpenKnowledge={setKnowledgeId}
+              onDeclare={(item) => setAnomalyFor({ task, item })}
+              canDeclare={can('anomaly.create')}
+              title={routine.title}
+            />
+          ))}
 
-      {readOnlyReason && (
-        <p className={styles.readonly} role="note">
-          {readOnlyReason}
-        </p>
-      )}
-
-      <Stack gap={4}>
-        {template.sections.map((section) => (
-          <Panel key={section.id} title={template.sections.length > 1 ? section.title : undefined} flush>
-            <ul className={styles.items}>
-              {section.items.map((item) => (
-                <ItemRow
-                  key={item.id}
-                  item={item}
-                  result={run?.results[item.id]}
-                  editable={editable}
-                  busy={record.isPending && record.variables?.itemId === item.id}
-                  userName={userName}
-                  onOpenKnowledge={setKnowledgeId}
-                  onSave={async (status, comment) => {
-                    await save(item, status, comment);
-                    if (status === 'ko' && !run?.results[item.id]?.anomalyId && can('anomaly.create')) setAnomalyFor(item);
-                  }}
-                  onDeclare={() => setAnomalyFor(item)}
-                />
-              ))}
-            </ul>
+          <Panel title="Commentaires sur la routine">
+            <CommentThread
+              targetType="routineRun"
+              targetId={run.id}
+              notifyUserIds={[run.assigneeId]}
+              title={routine.title}
+              link={`/app/routines/${schedule.id}/${date}`}
+              userName={lookups.userName}
+            />
           </Panel>
-        ))}
-      </Stack>
 
-      {state === 'done' && (
-        <p className={styles.done} role="status">
-          Routine terminée{run?.completedAt ? ` à ${formatTime(run.completedAt)}` : ''}.
-        </p>
+          {editable && (
+            <div className={styles.finish}>
+              <p>
+                {summary.canComplete
+                  ? 'Toutes les tâches obligatoires sont faites.'
+                  : `Il reste ${summary.required - summary.requiredDone} tâche(s) obligatoire(s) à faire avant de terminer.`}
+              </p>
+              <Button
+                variant="primary"
+                size="lg"
+                icon={<CheckCircle2 size={18} aria-hidden />}
+                disabled={!summary.canComplete}
+                onClick={() => setConfirmOpen(true)}
+              >
+                Terminer la routine
+              </Button>
+            </div>
+          )}
+        </Stack>
       )}
+
+      <Modal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Routine terminée"
+        size="sm"
+        footer={
+          <>
+            <Button onClick={() => setConfirmOpen(false)}>Revenir aux tâches</Button>
+            <Button
+              variant="primary"
+              loading={complete.isPending}
+              onClick={async () => {
+                await complete.mutateAsync({ run: run!, routine, checklists, user });
+                setConfirmOpen(false);
+                navigate('/app', { replace: false });
+              }}
+            >
+              Terminer
+            </Button>
+          </>
+        }
+      >
+        <dl className={styles.recap}>
+          <div>
+            <dt>Durée réelle</dt>
+            <dd>{Math.max(1, Math.round(elapsedMs / 60_000))} min</dd>
+          </div>
+          <div>
+            <dt>Tâches complétées</dt>
+            <dd>
+              {summary.tasksDone}/{summary.tasks}
+            </dd>
+          </div>
+          <div>
+            <dt>Non-conformités</dt>
+            <dd>{summary.ko}</dd>
+          </div>
+        </dl>
+      </Modal>
 
       <KnowledgeQuickView knowledgeId={knowledgeId} onClose={() => setKnowledgeId(null)} />
 
       <Modal
         open={anomalyFor !== null}
         onClose={() => setAnomalyFor(null)}
-        title="Déclarer une anomalie ?"
-        description="Le point est enregistré comme non conforme. Déclarez une anomalie pour en assurer le suivi, ou fermez cette fenêtre."
+        title="Déclarer une anomalie"
+        description="Le contrôle est enregistré comme non conforme. Déclarez une anomalie pour en assurer le suivi."
         size="md"
       >
-        {anomalyFor && (
+        {anomalyFor && run && (
           <AnomalyForm
-            workstations={workstations}
-            origin={{ type: 'routine', id: run?.id }}
-            initial={{ description: `${template.title} — ${anomalyFor.label}`, category: 'standard' }}
+            workstations={lookups.workstations}
+            origin={{ type: 'routine', id: run.id }}
+            initial={{
+              description: `${routine.title} — ${anomalyFor.task.title}${anomalyFor.item ? ` : ${anomalyFor.item.label}` : ''}`,
+              category: 'standard',
+              workstationId: schedule.workstationId ?? routine.workstationId,
+            }}
             onCancel={() => setAnomalyFor(null)}
             onCreated={async (anomaly) => {
-              const current = run?.results[anomalyFor.id];
-              await save(anomalyFor, 'ko', current?.comment, anomaly.id);
+              const key = anomalyFor.item ? checkKey(anomalyFor.task.id, anomalyFor.item.id) : anomalyFor.task.id;
+              const current = run.results[key];
+              if (current)
+                await save(key, { status: current.status, value: current.value, comment: current.comment, anomalyId: anomaly.id });
               setAnomalyFor(null);
             }}
           />
@@ -184,101 +331,230 @@ function RunView({ template, date, run, userName, workstations }: RunViewProps) 
   );
 }
 
-interface ItemRowProps {
-  item: RoutineItem;
-  result?: ItemResult;
+interface TaskCardProps {
+  index: number;
+  task: RoutineTask;
+  checks: ChecklistItem[];
+  run: RoutineRun;
   editable: boolean;
-  busy: boolean;
+  busyKey?: string;
   userName: (id?: string) => string;
+  onSave: (key: string, result: Omit<ItemResult, 'at' | 'by'> | null) => Promise<unknown>;
   onOpenKnowledge: (id: string) => void;
-  onSave: (status: CheckResult | null, comment?: string) => Promise<unknown>;
-  onDeclare: () => void;
+  onDeclare: (item?: ChecklistItem) => void;
+  canDeclare: boolean;
+  title: string;
 }
 
-function ItemRow({ item, result, editable, busy, userName, onOpenKnowledge, onSave, onDeclare }: ItemRowProps) {
-  const [commentOpen, setCommentOpen] = useState(false);
-  const [comment, setComment] = useState(result?.comment ?? '');
+function TaskCard({
+  index,
+  task,
+  checks,
+  run,
+  editable,
+  busyKey,
+  userName,
+  onSave,
+  onOpenKnowledge,
+  onDeclare,
+  canDeclare,
+  title,
+}: TaskCardProps) {
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const progress = taskProgress(task, checks, run);
+  const taskResult = run.results[task.id];
+
+  const saveCheck = (key: string, status: CheckResult, value?: CheckValue) =>
+    onSave(key, { status, value, anomalyId: status === 'ko' ? run.results[key]?.anomalyId : undefined });
 
   return (
-    <li className={styles.item} data-status={result?.status ?? 'none'}>
-      <div className={styles.itemMain}>
-        <div className={styles.itemText}>
-          <span className={styles.itemLabel}>{item.label}</span>
-          {result && (
-            <span className={styles.itemMeta}>
-              {userName(result.by)} · {formatTime(result.at)}
-              {result.comment && <> · « {result.comment} »</>}
-            </span>
+    <Panel
+      className={styles.task}
+      title={
+        <span className={styles.taskTitle}>
+          <span className={styles.taskIndex}>{index + 1}</span>
+          {task.title}
+        </span>
+      }
+      description={[
+        task.estimatedMin ? `${task.estimatedMin} min` : null,
+        task.required ? 'Obligatoire' : 'Facultative',
+        task.responsibleRole ? `Responsable : ${ROLE_LABELS[task.responsibleRole]}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')}
+      actions={
+        <span className={styles.taskActions}>
+          {(task.priority === 'high' || task.priority === 'critical') && (
+            <Badge tone={PRIORITY[task.priority].tone}>Priorité {PRIORITY[task.priority].label.toLowerCase()}</Badge>
           )}
-          {result?.anomalyId && (
-            <Link to={`/anomalies/${result.anomalyId}`} className={styles.anomalyLink}>
-              <TriangleAlert size={14} aria-hidden /> Anomalie liée
-            </Link>
+          <Badge tone={TASK_STATE[progress.state].tone}>{TASK_STATE[progress.state].label}</Badge>
+        </span>
+      }
+    >
+      {(task.instructions || task.description) && (
+        <div className={styles.instructions}>
+          {task.description && <p>{task.description}</p>}
+          {task.instructions && (
+            <p>
+              <strong>Consigne : </strong>
+              {task.instructions}
+            </p>
           )}
         </div>
-        <div className={styles.itemControls}>
-          {item.knowledgeId && (
-            <IconButton label="Voir le standard associé" icon={<BookOpen size={18} />} onClick={() => onOpenKnowledge(item.knowledgeId!)} />
-          )}
-          {editable && (
-            <IconButton
-              label="Ajouter un commentaire"
-              icon={<MessageSquarePlus size={18} />}
-              onClick={() => setCommentOpen((o) => !o)}
-              aria-expanded={commentOpen}
-            />
-          )}
+      )}
+
+      {checks.length === 0 ? (
+        <div className={styles.check} data-status={taskResult?.status ?? 'none'}>
+          <div className={styles.checkText}>
+            <span className={styles.checkLabel}>Résultat de la tâche</span>
+            {taskResult && (
+              <span className={styles.checkMeta}>
+                {userName(taskResult.by)} · {formatTime(taskResult.at)}
+              </span>
+            )}
+          </div>
           <CheckResultToggle
-            itemLabel={item.label}
-            value={result?.status}
-            disabled={!editable || busy}
-            onChange={(status) => void onSave(status, comment || result?.comment)}
+            itemLabel={task.title}
+            value={taskResult?.status}
+            disabled={!editable || busyKey === task.id}
+            onChange={(status) => void onSave(task.id, { status, anomalyId: taskResult?.anomalyId })}
+          />
+          <ResultFollowUp
+            result={taskResult}
+            editable={editable}
+            canDeclare={canDeclare}
+            onDeclare={() => onDeclare()}
+            onUndo={() => void onSave(task.id, null)}
           />
         </div>
-      </div>
+      ) : (
+        <ul className={styles.checks}>
+          {checks.map((item) => {
+            const key = checkKey(task.id, item.id);
+            const result = run.results[key];
+            return (
+              <li key={item.id} className={styles.check} data-status={result?.status ?? 'none'}>
+                <div className={styles.checkText}>
+                  <span className={styles.checkLabel}>
+                    {item.label}
+                    {item.required && (
+                      <span className={styles.required} aria-label="obligatoire">
+                        {' '}
+                        *
+                      </span>
+                    )}
+                  </span>
+                  {result && (
+                    <span className={styles.checkMeta}>
+                      {item.type !== 'conformity' && (
+                        <>
+                          <strong>{formatCheckValue(item, result)}</strong>
+                          {item.type === 'number' && result.status === 'ko' && ' — hors tolérance'}
+                          {' · '}
+                        </>
+                      )}
+                      {userName(result.by)} · {formatTime(result.at)}
+                    </span>
+                  )}
+                </div>
+                <div className={styles.checkControl}>
+                  {item.knowledgeId && (
+                    <IconButton
+                      label="Voir le standard associé"
+                      icon={<BookOpen size={18} />}
+                      onClick={() => onOpenKnowledge(item.knowledgeId!)}
+                    />
+                  )}
+                  <CheckInput
+                    key={`${key}-${result?.at ?? 'vide'}`}
+                    item={item}
+                    result={result}
+                    disabled={!editable || busyKey === key}
+                    onSave={(status, value) => void saveCheck(key, status, value)}
+                  />
+                </div>
+                <ResultFollowUp
+                  result={result}
+                  editable={editable}
+                  canDeclare={canDeclare}
+                  onDeclare={() => onDeclare(item)}
+                  onUndo={() => void onSave(key, null)}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
-      {editable && result?.status === 'ko' && !result.anomalyId && (
-        <div className={styles.itemFollowUp}>
+      <div className={styles.taskFooter}>
+        {task.knowledgeId && (
+          <Button size="sm" variant="ghost" icon={<BookOpen size={15} aria-hidden />} onClick={() => onOpenKnowledge(task.knowledgeId!)}>
+            Standard associé
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={<MessageSquare size={15} aria-hidden />}
+          aria-expanded={commentsOpen}
+          onClick={() => setCommentsOpen((o) => !o)}
+        >
+          Commentaires de la tâche
+        </Button>
+      </div>
+      {commentsOpen && (
+        <div className={styles.taskComments}>
+          <CommentThread
+            targetType="routineRun"
+            targetId={run.id}
+            anchorId={task.id}
+            label={`Commenter « ${task.title} »`}
+            notifyUserIds={[run.assigneeId]}
+            title={`${title} — ${task.title}`}
+            link={`/app/routines/${run.scheduleId}/${run.date}`}
+            userName={userName}
+          />
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function ResultFollowUp({
+  result,
+  editable,
+  canDeclare,
+  onDeclare,
+  onUndo,
+}: {
+  result?: ItemResult;
+  editable: boolean;
+  canDeclare: boolean;
+  onDeclare: () => void;
+  onUndo: () => void;
+}) {
+  if (!result) return null;
+  return (
+    <div className={styles.followUp}>
+      {result.anomalyId ? (
+        <Link to={`/anomalies/${result.anomalyId}`} className={styles.anomalyLink}>
+          <TriangleAlert size={14} aria-hidden /> Anomalie liée
+        </Link>
+      ) : (
+        editable &&
+        canDeclare &&
+        result.status === 'ko' && (
           <Button size="sm" variant="secondary" icon={<TriangleAlert size={15} aria-hidden />} onClick={onDeclare}>
             Déclarer une anomalie
           </Button>
-        </div>
+        )
       )}
-
-      {editable && commentOpen && (
-        <div className={styles.itemFollowUp}>
-          <TextAreaField
-            label="Commentaire"
-            rows={2}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Précision, mesure, preuve…"
-          />
-          <div className={styles.commentActions}>
-            <Button size="sm" onClick={() => setCommentOpen(false)}>
-              Fermer
-            </Button>
-            <Button
-              size="sm"
-              variant="primary"
-              disabled={!result}
-              title={result ? undefined : 'Choisissez d’abord un résultat'}
-              onClick={async () => {
-                await onSave(result!.status, comment);
-                setCommentOpen(false);
-              }}
-            >
-              Enregistrer le commentaire
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {editable && result && (
-        <button type="button" className={styles.undo} onClick={() => void onSave(null)}>
+      {editable && (
+        <button type="button" className={styles.undo} onClick={onUndo}>
           <RotateCcw size={12} aria-hidden /> Annuler la saisie
         </button>
       )}
-    </li>
+    </div>
   );
 }

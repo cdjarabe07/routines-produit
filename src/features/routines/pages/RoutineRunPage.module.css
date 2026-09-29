@@ -3,6 +3,7 @@
   color: var(--color-text-muted);
 }
 
+/* Barre d'avancement et chronomètre, toujours visibles pendant l'exécution */
 .progressBar {
   position: sticky;
   top: var(--topbar-height);
@@ -17,6 +18,7 @@
 }
 .progressBar > :first-child {
   flex: 1;
+  min-width: 120px;
 }
 .progressText {
   display: flex;
@@ -26,9 +28,50 @@
   font-weight: var(--weight-medium);
   white-space: nowrap;
 }
+.timer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+.timer[data-over] {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}
+.timerPlanned {
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-5);
+  list-style: decimal;
+}
+.preview li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.previewMeta {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.doneSummary {
+  font-size: var(--text-md);
+}
 
 .readonly {
-  margin-bottom: var(--space-4);
   padding: var(--space-2) var(--space-3);
   background: var(--color-neutral-soft);
   border-radius: var(--radius-md);
@@ -36,47 +79,100 @@
   color: var(--color-text-muted);
 }
 
-.items {
+/* Tâche */
+.task {
+  scroll-margin-top: calc(var(--topbar-height) + 64px);
+}
+.taskTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.taskIndex {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-surface-sunken);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  flex-shrink: 0;
+}
+.taskActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.instructions {
   display: flex;
   flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-info);
+  background: var(--color-info-soft);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
 }
-.item {
-  position: relative;
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border);
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
-.item:last-child {
-  border-bottom: 0;
+.check {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3);
 }
-.item[data-status='ok'] {
+.checks .check + .check {
+  border-top: 1px solid var(--color-border);
+}
+.check[data-status='ok'] {
   box-shadow: inset 3px 0 0 var(--color-success);
 }
-.item[data-status='ko'] {
+.check[data-status='ko'] {
   box-shadow: inset 3px 0 0 var(--color-danger-strong);
   background: #fffafa;
 }
-.item[data-status='na'] {
+.check[data-status='na'] {
   box-shadow: inset 3px 0 0 var(--color-neutral);
 }
-
-.itemMain {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-.itemText {
+.checkText {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
-.itemLabel {
+.checkLabel {
   font-weight: var(--weight-medium);
 }
-.itemMeta {
+.required {
+  color: var(--color-danger);
+}
+.checkMeta {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
+}
+.checkControl {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  justify-self: end;
+}
+.followUp {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.followUp:empty {
+  display: none;
 }
 .anomalyLink {
   display: inline-flex;
@@ -86,36 +182,10 @@
   color: var(--color-danger);
   font-weight: var(--weight-medium);
 }
-.itemControls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-}
-
-.itemFollowUp {
-  margin-top: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  align-items: flex-start;
-}
-.itemFollowUp > :first-child {
-  width: 100%;
-}
-.itemFollowUp > button:first-child {
-  width: auto;
-}
-.commentActions {
-  display: flex;
-  gap: var(--space-2);
-}
-
 .undo {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: var(--space-1);
   padding: 2px 0;
   border: 0;
   background: none;
@@ -127,10 +197,47 @@
   text-decoration: underline;
 }
 
-.done {
-  margin-top: var(--space-4);
-  font-weight: var(--weight-medium);
-  color: var(--color-success);
+.taskFooter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.taskComments {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.finish {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.recap {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+.recap div {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+.recap dt {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+.recap dd {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
 }
 
 @media (max-width: 1023px) {
@@ -141,18 +248,23 @@
 }
 
 @media (max-width: 720px) {
-  .itemMain {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-2);
+  .progressBar {
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
   }
-  .itemControls {
-    justify-content: flex-end;
+  .progressBar > :first-child {
+    flex-basis: 100%;
   }
-  .itemControls > [role='group'] {
+  .check {
+    grid-template-columns: 1fr;
+  }
+  .checkControl {
+    justify-self: stretch;
+  }
+  .checkControl > [role='group'] {
     flex: 1;
   }
-  .item {
-    padding: var(--space-3);
+  .recap {
+    grid-template-columns: 1fr;
   }
 }
