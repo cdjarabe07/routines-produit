@@ -1,5 +1,5 @@
 import type { Tone } from '@/components/ui/Badge';
-import type { ID, ISODateTime, SequenceRun, SequenceRunStatus, SequenceTemplate } from '@/types/domain';
+import type { ID, ISODateTime, SequenceRun, SequenceRunStatus, SequenceStep, SequenceTemplate } from '@/types/domain';
 import { toDateKey } from '@/utils/date';
 
 /* Séquence guidée : machine à états pure.
@@ -26,7 +26,14 @@ export function stepElapsedMs(run: RunState, index: number, now: Date): number {
 
 export const totalElapsedMs = (run: RunState, now: Date) => run.steps.reduce((sum, _, i) => sum + stepElapsedMs(run, i, now), 0);
 
-export const plannedMs = (template: SequenceTemplate) => template.steps.reduce((s, st) => s + st.durationMin * 60_000, 0);
+/** Étapes exécutées : les étapes désactivées sont ignorées. */
+export const activeSteps = (template: SequenceTemplate) => template.steps.filter((s) => s.active);
+
+/** Étapes d'une exécution, dans son ordre (celui du démarrage), même si le modèle a changé depuis. */
+export const runSteps = (template: SequenceTemplate, run: Pick<SequenceRun, 'steps'>) =>
+  run.steps.map((log) => template.steps.find((s) => s.id === log.stepId)).filter((s): s is SequenceStep => Boolean(s));
+
+export const plannedMs = (template: SequenceTemplate) => activeSteps(template).reduce((s, st) => s + st.durationMin * 60_000, 0);
 
 /** Clôt le segment en cours (ajoute son temps à l'étape courante). */
 function closeSegment(run: RunState, now: Date): RunState['steps'] {
@@ -43,7 +50,7 @@ export function startRun(template: SequenceTemplate, userId: ID, now: Date): Omi
     status: 'running',
     currentStepIndex: 0,
     segmentStartedAt: now.toISOString(),
-    steps: template.steps.map((s) => ({ stepId: s.id, elapsedMs: 0 })),
+    steps: activeSteps(template).map((s) => ({ stepId: s.id, elapsedMs: 0 })),
   };
 }
 

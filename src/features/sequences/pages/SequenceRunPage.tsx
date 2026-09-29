@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router';
 import { BookOpen, Check, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { EmptyState, QueryBoundary } from '@/components/feedback/States';
+import { Checkbox } from '@/components/ui/Field';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -16,7 +17,7 @@ import type { SequenceRun, SequenceTemplate } from '@/types/domain';
 import { formatDateTime, formatDuration } from '@/utils/date';
 import { cx } from '@/utils/cx';
 import { useSequenceTransition, type Transition } from '../api';
-import { RUN_STATUS, isLive, plannedMs, stepElapsedMs, totalElapsedMs } from '../model';
+import { RUN_STATUS, isLive, plannedMs, runSteps, stepElapsedMs, totalElapsedMs } from '../model';
 import styles from './SequenceRunPage.module.css';
 
 export function SequenceRunPage() {
@@ -30,7 +31,7 @@ export function SequenceRunPage() {
         const run = runs.data!.find((r) => r.id === runId);
         const template = run && templates.data!.find((t) => t.id === run.templateId);
         if (!run || !template)
-          return <EmptyState title="Exécution introuvable" action={<ButtonLink to="/sequences">Retour aux séquences</ButtonLink>} />;
+          return <EmptyState title="Exécution introuvable" action={<ButtonLink to="/app/sequences">Retour aux séquences</ButtonLink>} />;
         return <RunScreen run={run} template={template} starterName={lookups!.userName(run.startedBy)} />;
       }}
     </QueryBoundary>
@@ -42,19 +43,22 @@ function RunScreen({ run, template, starterName }: { run: SequenceRun; template:
   const transition = useSequenceTransition();
   const confirm = useConfirm();
   const [knowledgeId, setKnowledgeId] = useState<string | null>(null);
+  const [validated, setValidated] = useState<string | null>(null);
   const live = isLive(run);
+  const steps = runSteps(template, run);
   const index = run.currentStepIndex;
-  const step = template.steps[index];
+  const step = steps[index];
+  const needsValidation = Boolean(step?.validation) && validated !== step?.id;
   const elapsed = stepElapsedMs(run, index, now);
   const target = (step?.durationMin ?? 0) * 60_000;
   const over = elapsed - target;
   const act = (t: Transition) => transition.mutate({ run, transition: t });
-  const last = index === template.steps.length - 1;
+  const last = index === steps.length - 1;
 
   return (
     <>
       <PageHeader
-        back={{ to: '/sequences', label: 'Séquences guidées' }}
+        back={{ to: '/app/sequences', label: 'Séquences guidées' }}
         title={template.name}
         meta={
           <>
@@ -90,7 +94,7 @@ function RunScreen({ run, template, starterName }: { run: SequenceRun; template:
         {live && step ? (
           <section className={styles.focus} aria-labelledby="current-step">
             <p className={styles.stepCount}>
-              Étape {index + 1} sur {template.steps.length}
+              Étape {index + 1} sur {steps.length}
               {step.plannedTime ? ` · prévue à ${step.plannedTime}` : ''}
             </p>
             <h2 id="current-step" className={styles.stepTitle}>
@@ -101,6 +105,16 @@ function RunScreen({ run, template, starterName }: { run: SequenceRun; template:
               <Button size="sm" variant="ghost" icon={<BookOpen size={16} aria-hidden />} onClick={() => setKnowledgeId(step.knowledgeId!)}>
                 Voir le standard
               </Button>
+            )}
+            {step.validation && (
+              <div className={styles.validation}>
+                <Checkbox
+                  label={`Validé : ${step.validation}`}
+                  description="À confirmer avant de passer à l’étape suivante."
+                  checked={validated === step.id}
+                  onChange={(e) => setValidated(e.target.checked ? step.id : null)}
+                />
+              </div>
             )}
 
             <div
@@ -144,8 +158,12 @@ function RunScreen({ run, template, starterName }: { run: SequenceRun; template:
                 size="lg"
                 variant={last ? 'success' : 'primary'}
                 iconRight={last ? <Check size={20} aria-hidden /> : <ChevronRight size={20} aria-hidden />}
-                disabled={transition.isPending}
-                onClick={() => act('next')}
+                disabled={transition.isPending || needsValidation}
+                title={needsValidation ? 'Confirmez d’abord le critère de validation' : undefined}
+                onClick={() => {
+                  setValidated(null);
+                  act('next');
+                }}
               >
                 {last ? 'Terminer' : 'Étape suivante'}
               </Button>
@@ -165,7 +183,7 @@ function RunScreen({ run, template, starterName }: { run: SequenceRun; template:
 
         <Panel title="Étapes" flush>
           <ol className={styles.steps}>
-            {template.steps.map((s, i) => {
+            {steps.map((s, i) => {
               const log = run.steps[i];
               const spent = stepElapsedMs(run, i, now);
               const state = log?.completedAt ? 'done' : live && i === index ? 'current' : 'todo';

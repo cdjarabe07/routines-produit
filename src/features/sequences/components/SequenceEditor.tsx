@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { Button, IconButton } from '@/components/ui/Button';
-import { FormActions, FormGrid, SelectField, TextAreaField, TextField } from '@/components/ui/Field';
+import { Checkbox, FormActions, FormGrid, SelectField, TextAreaField, TextField } from '@/components/ui/Field';
 import { useForm } from '@/hooks/useForm';
 import type { KnowledgeItem, SequenceStep, SequenceTemplate } from '@/types/domain';
 import { createId } from '@/utils/id';
@@ -14,7 +14,7 @@ interface Values {
   steps: SequenceStep[];
 }
 
-const blankStep = (): SequenceStep => ({ id: createId(), title: '', durationMin: 5 });
+const blankStep = (): SequenceStep => ({ id: createId(), title: '', durationMin: 5, active: true });
 
 export function SequenceEditor({
   template,
@@ -36,8 +36,8 @@ export function SequenceEditor({
       name: [required('Nommez la séquence')],
       steps: [
         (steps) =>
-          steps.filter((s) => s.title.trim()).length === 0
-            ? 'Ajoutez au moins une étape'
+          steps.filter((s) => s.title.trim() && s.active).length === 0
+            ? 'Ajoutez au moins une étape active'
             : steps.some((s) => s.title.trim() && !(s.durationMin > 0))
               ? 'Chaque étape doit avoir une durée positive'
               : null,
@@ -56,6 +56,7 @@ export function SequenceEditor({
               ...s,
               title: s.title.trim(),
               instruction: s.instruction?.trim() || undefined,
+              validation: s.validation?.trim() || undefined,
               plannedTime: s.plannedTime || undefined,
             })),
         },
@@ -87,7 +88,10 @@ export function SequenceEditor({
         {values.steps.map((step, i) => (
           <li key={step.id} className={styles.step}>
             <div className={styles.stepHead}>
-              <strong>Étape {i + 1}</strong>
+              <strong>
+                Étape {i + 1}
+                {!step.active && ' (désactivée)'}
+              </strong>
               <div className={styles.stepTools}>
                 <IconButton
                   size="sm"
@@ -147,6 +151,21 @@ export function SequenceEditor({
                 value={step.instruction ?? ''}
                 onChange={(e) => updateStep(i, { instruction: e.target.value })}
               />
+              <TextField
+                className="full"
+                label="Critère de validation (facultatif)"
+                value={step.validation ?? ''}
+                onChange={(e) => updateStep(i, { validation: e.target.value })}
+                hint="L’opérateur devra le confirmer avant de passer à l’étape suivante."
+              />
+              <div className="full">
+                <Checkbox
+                  label="Étape active"
+                  description="Une étape désactivée est conservée mais ignorée lors des prochaines exécutions."
+                  checked={step.active}
+                  onChange={(e) => updateStep(i, { active: e.target.checked })}
+                />
+              </div>
             </FormGrid>
           </li>
         ))}

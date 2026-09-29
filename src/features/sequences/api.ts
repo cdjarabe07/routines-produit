@@ -36,6 +36,13 @@ export function useSequenceTransition() {
   );
 }
 
+export function useSetSequenceActive() {
+  return useOperation((ds, { id, active }: { id: ID; active: boolean }) => ds.repo('sequenceTemplates').update(id, { active }), {
+    invalidates: ['sequenceTemplates'],
+    success: (t) => (t.active ? 'Séquence réactivée.' : 'Séquence archivée : elle n’est plus proposée aux opérateurs.'),
+  });
+}
+
 export function useSaveSequenceTemplate() {
   return useOperation(
     (ds, { id, input }: { id?: ID; input: NewEntity<SequenceTemplate> }) =>

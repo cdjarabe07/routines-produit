@@ -1,14 +1,12 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Pencil, Play, Plus } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { useAuth, useCurrentUser } from '@/app/providers/AuthProvider';
 import { DataTable, type Column } from '@/components/data-display/DataTable';
 import { ItemList } from '@/components/data-display/ItemList';
 import { EmptyState, QueryBoundary } from '@/components/feedback/States';
 import { PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
-import { Button, IconButton } from '@/components/ui/Button';
-import { Drawer } from '@/components/ui/Overlay';
+import { Button } from '@/components/ui/Button';
 import { Panel } from '@/components/ui/Panel';
 import { useLookups } from '@/features/shared/api';
 import { useCollection } from '@/hooks/useData';
@@ -16,8 +14,7 @@ import { useNow } from '@/hooks/useNow';
 import type { SequenceRun, SequenceTemplate } from '@/types/domain';
 import { formatDateTime, formatDuration } from '@/utils/date';
 import { useStartSequence } from '../api';
-import { SequenceEditor } from '../components/SequenceEditor';
-import { RUN_STATUS, isLive, plannedMs, totalElapsedMs } from '../model';
+import { RUN_STATUS, activeSteps, isLive, plannedMs, runSteps, totalElapsedMs } from '../model';
 import styles from './SequencesPage.module.css';
 
 export function SequencesPage() {
@@ -27,10 +24,8 @@ export function SequencesPage() {
   const now = useNow(1000);
   const templates = useCollection('sequenceTemplates');
   const runs = useCollection('sequenceRuns');
-  const knowledge = useCollection('knowledgeItems');
   const { queries, lookups } = useLookups();
   const start = useStartSequence();
-  const [editing, setEditing] = useState<SequenceTemplate | 'new' | null>(null);
 
   const launch = async (template: SequenceTemplate) => {
     const run = await start.mutateAsync({ template, user });
@@ -42,15 +37,8 @@ export function SequencesPage() {
       <PageHeader
         title="Séquences guidées"
         description="Enchaînements d’étapes chronométrées : démarrage de poste, changement de série, journée type."
-        actions={
-          can('sequence.manage') && (
-            <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setEditing('new')}>
-              Nouvelle séquence
-            </Button>
-          )
-        }
       />
-      <QueryBoundary queries={[templates, runs, knowledge, ...queries]}>
+      <QueryBoundary queries={[templates, runs, ...queries]}>
         {() => {
           const byId = new Map(templates.data!.map((t) => [t.id, t]));
           const live = runs.data!.filter(isLive).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -93,7 +81,7 @@ export function SequencesPage() {
                       return {
                         id: r.id,
                         title: t?.name ?? 'Séquence',
-                        meta: `Étape ${r.currentStepIndex + 1}/${r.steps.length} · ${t?.steps[r.currentStepIndex]?.title ?? ''} · démarrée par ${lookups!.userName(r.startedBy)}`,
+                        meta: `Étape ${r.currentStepIndex + 1}/${r.steps.length} · ${t ? (runSteps(t, r)[r.currentStepIndex]?.title ?? '') : ''} · démarrée par ${lookups!.userName(r.startedBy)}`,
                         aside: <Badge tone={RUN_STATUS[r.status].tone}>{RUN_STATUS[r.status].label}</Badge>,
                         to: `/sequences/execution/${r.id}`,
                       };
@@ -105,7 +93,11 @@ export function SequencesPage() {
               {templates.data!.filter((t) => t.active).length === 0 ? (
                 <EmptyState
                   title="Aucune séquence disponible."
-                  description={can('sequence.manage') ? 'Créez une première séquence.' : 'Demandez à un responsable d’en créer une.'}
+                  description={
+                    can('sequence.manage')
+                      ? 'Créez une première séquence dans l’administration.'
+                      : 'Les séquences sont créées par l’administrateur.'
+                  }
                 />
               ) : (
                 <ul className={styles.grid}>
@@ -115,19 +107,18 @@ export function SequencesPage() {
                       <li key={t.id} className={styles.card}>
                         <div className={styles.cardHead}>
                           <h2 className={styles.cardTitle}>{t.name}</h2>
-                          {can('sequence.manage') && (
-                            <IconButton size="sm" label={`Modifier ${t.name}`} icon={<Pencil size={15} />} onClick={() => setEditing(t)} />
-                          )}
                         </div>
                         {t.description && <p className={styles.cardText}>{t.description}</p>}
                         <p className={styles.cardMeta}>
-                          {t.steps.length} étapes · durée cible {formatDuration(plannedMs(t))}
+                          {activeSteps(t).length} étapes · durée cible {formatDuration(plannedMs(t))}
                         </p>
                         <ol className={styles.stepPreview}>
-                          {t.steps.slice(0, 4).map((s) => (
-                            <li key={s.id}>{s.title}</li>
-                          ))}
-                          {t.steps.length > 4 && <li className={styles.more}>+ {t.steps.length - 4} autres étapes</li>}
+                          {activeSteps(t)
+                            .slice(0, 4)
+                            .map((s) => (
+                              <li key={s.id}>{s.title}</li>
+                            ))}
+                          {activeSteps(t).length > 4 && <li className={styles.more}>+ {activeSteps(t).length - 4} autres étapes</li>}
                         </ol>
                         <Button
                           variant="primary"
@@ -158,16 +149,6 @@ export function SequencesPage() {
           );
         }}
       </QueryBoundary>
-      <Drawer
-        open={editing !== null}
-        onClose={() => setEditing(null)}
-        title={editing === 'new' ? 'Nouvelle séquence' : 'Modifier la séquence'}
-        size="lg"
-      >
-        {editing !== null && knowledge.data && (
-          <SequenceEditor template={editing === 'new' ? undefined : editing} knowledge={knowledge.data} onDone={() => setEditing(null)} />
-        )}
-      </Drawer>
     </>
   );
 }
