@@ -1,8 +1,9 @@
 /* Définitions des indicateurs, affichées en info-bulle. Même texte que docs/functional-spec.md §7. */
 
 export const DEFINITIONS = {
-  routinePct: 'Points traités (conforme, non conforme ou N.A.) / points prévus par les routines actives de la période.',
-  routineOnTime: 'Routines terminées au plus tard à l’heure prévue + la tolérance de retard / routines prévues.',
+  routinePct: 'Routines terminées / routines planifiées échues (heure prévue + tolérance dépassée) sur la période.',
+  routineOnTime: 'Routines terminées le jour prévu, au plus tard à l’heure prévue + durée prévue + tolérance / routines planifiées échues.',
+  routineDuration: 'Moyenne, pour les routines terminées, du temps entre « Démarrer » et « Terminer ».',
   overdueActions: 'Actions ni terminées ni annulées dont l’échéance est dépassée.',
   overdueAtEnd: 'Actions ouvertes à la fin de la période avec une échéance antérieure à cette date.',
   closureDelay: 'Moyenne, pour les actions terminées dans la période, du délai entre création et clôture.',

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { Download } from 'lucide-react';
 import { BarChart, LineChart, RankedBars } from '@/components/data-display/Charts';
+import { DataTable } from '@/components/data-display/DataTable';
 import { QueryBoundary } from '@/components/feedback/States';
 import { Columns, PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +13,7 @@ import { useToast } from '@/components/ui/Toast';
 import { ANOMALY_CATEGORY } from '@/features/shared/labels';
 import { DEFINITIONS } from '@/features/shared/definitions';
 import { useLookups, useSettings } from '@/features/shared/api';
+import { usePlanningData } from '@/features/planning/api';
 import { useCollection } from '@/hooks/useData';
 import { formatMinutes, formatShortDate, todayKey } from '@/utils/date';
 import { formatPercent } from '@/utils/format';
@@ -25,6 +27,7 @@ import {
   delta,
   previousPeriod,
   resolvePeriod,
+  routinesByTemplate,
   toCsv,
   type PeriodPreset,
   type ReportSource,
@@ -41,21 +44,19 @@ export function ReportingPage() {
   const period = resolvePeriod(preset, today, { from: params.get('du'), to: params.get('au') });
   const previous = previousPeriod(period);
 
-  const templates = useCollection('routineTemplates');
-  const runs = useCollection('routineRuns');
+  const planning = usePlanningData();
   const anomalies = useCollection('anomalies');
   const actions = useCollection('actions');
   const alerts = useCollection('andonAlerts');
   const checks = useCollection('qualityChecks');
   const { queries, lookups } = useLookups();
-  const all = [templates, runs, anomalies, actions, alerts, checks, ...queries];
+  const all = [...planning.queries, anomalies, actions, alerts, checks, ...queries];
 
   const source = useMemo<ReportSource | null>(
     () =>
-      templates.data && runs.data && anomalies.data && actions.data && alerts.data && checks.data && lookups
+      planning.source && anomalies.data && actions.data && alerts.data && checks.data && lookups
         ? {
-            templates: templates.data,
-            runs: runs.data,
+            ...planning.source,
             anomalies: anomalies.data,
             actions: actions.data,
             alerts: alerts.data,
@@ -63,7 +64,7 @@ export function ReportingPage() {
             workstations: lookups.workstations,
           }
         : null,
-    [templates.data, runs.data, anomalies.data, actions.data, alerts.data, checks.data, lookups],
+    [planning.source, anomalies.data, actions.data, alerts.data, checks.data, lookups],
   );
 
   const report = useMemo(() => {
@@ -73,8 +74,9 @@ export function ReportingPage() {
     return {
       kpis: computeKpis(source, period, dims, opts),
       prev: computeKpis(source, previous, dims, opts),
-      daily: dailySeries(source, period, dims),
-      prevDaily: dailySeries(source, previous, dims),
+      daily: dailySeries(source, period, dims, opts),
+      prevDaily: dailySeries(source, previous, dims, opts),
+      byRoutine: routinesByTemplate(source, period, dims, opts),
       byCategory: anomaliesByCategory(source, period, dims),
       byStation: anomaliesByWorkstation(source, period, dims),
       comparable: coverage(source, previous) > 0,
@@ -141,7 +143,7 @@ export function ReportingPage() {
         </div>
         <p className={styles.periodLabel}>
           <strong>{period.label}</strong> · comparé au {formatShortDate(previous.from)} – {formatShortDate(previous.to)}
-          {lineId && ' · les routines et actions restent au périmètre atelier'}
+          {lineId && ' · les actions restent au périmètre atelier'}
         </p>
 
         <QueryBoundary queries={all}>
@@ -160,11 +162,28 @@ export function ReportingPage() {
                   </p>
                 )}
                 <KpiStrip>
+                  <Kpi label="Routines programmées" value={kpis.routinesPlanned} detail={`${kpis.routinesPending} à venir ou à faire`} />
+                  <Kpi label="Terminées" value={kpis.routinesDone} tone="success" delta={d(kpis.routinesDone, 'routinesDone', true)} />
+                  <Kpi label="En cours" value={kpis.routinesInProgress} />
+                  <Kpi
+                    label="En retard ou non réalisées"
+                    value={kpis.routinesLate}
+                    tone={kpis.routinesLate ? 'danger' : 'neutral'}
+                    delta={d(kpis.routinesLate, 'routinesLate', false)}
+                  />
+                  <Kpi
+                    label="Durée réelle moyenne"
+                    definition={DEFINITIONS.routineDuration}
+                    value={kpis.avgRoutineMin === null ? '—' : formatMinutes(kpis.avgRoutineMin)}
+                    delta={d(kpis.avgRoutineMin, 'avgRoutineMin', false)}
+                  />
+                </KpiStrip>
+                <KpiStrip>
                   <Kpi
                     label="Routines réalisées"
                     definition={DEFINITIONS.routinePct}
                     value={formatPercent(kpis.routinePct)}
-                    detail="points traités / prévus"
+                    detail="terminées / échues"
                     delta={d(kpis.routinePct, 'routinePct', true, 'pts')}
                   />
                   <Kpi
@@ -224,6 +243,52 @@ export function ReportingPage() {
                     delta={d(kpis.qualityPct, 'qualityPct', true, 'pts')}
                   />
                 </KpiStrip>
+
+                <Panel title="Réalisation par routine" flush>
+                  <DataTable
+                    caption="Réalisation par routine sur la période"
+                    rows={report.byRoutine}
+                    rowKey={(r) => r.routine.id}
+                    initialSort={{ id: 'pct', direction: 'asc' }}
+                    columns={[
+                      { id: 'title', header: 'Routine', mobile: 'title', cell: (r) => r.routine.title, sortValue: (r) => r.routine.title },
+                      {
+                        id: 'planned',
+                        header: 'Programmées',
+                        align: 'center',
+                        mobile: 'meta',
+                        cell: (r) => r.planned,
+                        sortValue: (r) => r.planned,
+                      },
+                      { id: 'done', header: 'Terminées', align: 'center', mobile: 'meta', cell: (r) => r.done, sortValue: (r) => r.done },
+                      {
+                        id: 'late',
+                        header: 'En retard / non réalisées',
+                        align: 'center',
+                        mobile: 'meta',
+                        cell: (r) => r.late || '—',
+                        sortValue: (r) => r.late,
+                      },
+                      {
+                        id: 'pct',
+                        header: 'Réalisation',
+                        align: 'center',
+                        mobile: 'aside',
+                        cell: (r) => formatPercent(r.pct),
+                        sortValue: (r) => r.pct ?? 2,
+                      },
+                      {
+                        id: 'avg',
+                        header: 'Durée moyenne',
+                        align: 'center',
+                        mobile: 'meta',
+                        cell: (r) => (r.avgMin === null ? '—' : formatMinutes(r.avgMin)),
+                        sortValue: (r) => r.avgMin ?? 0,
+                      },
+                    ]}
+                    empty={{ title: 'Aucune routine planifiée sur la période.' }}
+                  />
+                </Panel>
 
                 <Columns ratio="equal">
                   <Panel title="Réalisation des routines par jour">
