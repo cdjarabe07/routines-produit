@@ -11,8 +11,7 @@ import { Drawer } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
 import { KNOWLEDGE_CATEGORY } from '@/features/shared/labels';
 import { useCollection } from '@/hooks/useData';
-import { ROLE_LABELS } from '@/services/auth/permissions';
-import { formatDate, todayKey } from '@/utils/date';
+import { formatDate } from '@/utils/date';
 import { safeExternalUrl } from '@/utils/validation';
 import { useToggleFavorite } from '../api';
 import { KnowledgeForm } from '../components/KnowledgeForm';
@@ -36,20 +35,20 @@ export function KnowledgeDetailPage() {
           return (
             <EmptyState
               title="Document introuvable"
-              action={<ButtonLink to="/connaissances">Retour au centre de connaissances</ButtonLink>}
+              action={<ButtonLink to="/app/connaissances">Retour au centre de connaissances</ButtonLink>}
             />
           );
         }
         const fav = favorites.data!.find((f) => f.userId === user.id && f.knowledgeId === item.id);
         const url = safeExternalUrl(item.url);
         const usedInRoutines = templates.data!.filter(
-          (t) => t.active && t.sections.some((s) => s.items.some((i) => i.knowledgeId === item.id)),
+          (t) => t.active && t.tasks.some((task) => task.knowledgeId === item.id || task.checks.some((c) => c.knowledgeId === item.id)),
         );
         const usedInSequences = sequences.data!.filter((s) => s.active && s.steps.some((st) => st.knowledgeId === item.id));
         return (
           <>
             <PageHeader
-              back={{ to: '/connaissances', label: 'Centre de connaissances' }}
+              back={{ to: '/app/connaissances', label: 'Centre de connaissances' }}
               title={`${item.code} · ${item.title}`}
               meta={
                 <>
@@ -119,10 +118,10 @@ export function KnowledgeDetailPage() {
                         ...usedInRoutines.map((t) => ({
                           id: t.id,
                           title: t.title,
-                          meta: `Routine ${t.scheduledTime} · ${ROLE_LABELS[t.role]}`,
-                          to: `/routines/${t.id}/${todayKey()}`,
+                          meta: `Routine · ${t.tasks.length} tâche(s) · ${t.durationMin} min`,
+                          to: can('routine.manage') ? '/admin/routines' : undefined,
                         })),
-                        ...usedInSequences.map((s) => ({ id: s.id, title: s.name, meta: 'Séquence guidée', to: '/sequences' })),
+                        ...usedInSequences.map((s) => ({ id: s.id, title: s.name, meta: 'Séquence guidée', to: '/app/sequences' })),
                       ]}
                     />
                   )}

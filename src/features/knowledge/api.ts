@@ -1,6 +1,6 @@
 import { useOperation } from '@/hooks/useData';
 import type { NewEntity } from '@/services/data/types';
-import type { Favorite, ID, KnowledgeItem } from '@/types/domain';
+import type { Favorite, ID, KnowledgeItem, KnowledgeStatus } from '@/types/domain';
 
 export function useToggleFavorite() {
   return useOperation(
@@ -14,6 +14,18 @@ export function useToggleFavorite() {
     },
     { invalidates: ['favorites'], success: (added) => (added ? 'Ajouté aux favoris.' : 'Retiré des favoris.') },
   );
+}
+
+export function useSetKnowledgeStatus() {
+  return useOperation((ds, { id, status }: { id: ID; status: KnowledgeStatus }) => ds.repo('knowledgeItems').update(id, { status }), {
+    invalidates: ['knowledgeItems'],
+    success: (k) =>
+      k.status === 'published'
+        ? 'Document publié.'
+        : k.status === 'archived'
+          ? 'Document archivé : il n’est plus consultable.'
+          : 'Document repassé en brouillon.',
+  });
 }
 
 export function useSaveKnowledge() {
