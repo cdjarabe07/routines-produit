@@ -91,3 +91,46 @@
 :global(.nav-light) .nav {
   padding: 0;
 }
+
+/* Sélecteur d'espace */
+.spaces {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: #151c26;
+}
+.space {
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-chrome-text);
+  font-size: var(--text-sm);
+  text-align: left;
+}
+.space:hover {
+  color: var(--color-chrome-text-strong);
+  background: var(--color-chrome-raised);
+}
+.space:focus-visible {
+  box-shadow: inset 0 0 0 2px #6fa3f0;
+}
+.spaceActive {
+  background: var(--color-chrome-raised);
+  color: var(--color-chrome-text-strong);
+  font-weight: var(--weight-semibold);
+}
+:global(.nav-light) .spaces {
+  background: var(--color-surface-sunken);
+}
+:global(.nav-light) .space {
+  color: var(--color-text-muted);
+}
+:global(.nav-light) .space:hover,
+:global(.nav-light) .spaceActive {
+  background: var(--color-surface);
+  color: var(--color-text);
+}

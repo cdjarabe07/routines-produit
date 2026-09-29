@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { AccessDenied, LoadingState } from '@/components/feedback/States';
-import type { Permission } from '@/services/auth/permissions';
+import { homePath, type Permission } from '@/services/auth/permissions';
 import { useAuth } from './providers/AuthProvider';
 
 /** Accès réservé aux utilisateurs connectés ; sinon redirection vers la connexion (retour prévu). */
@@ -14,6 +14,12 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return <Navigate to={`/login${from !== '/' ? `?retour=${encodeURIComponent(from)}` : ''}`} replace />;
   }
   return <>{children}</>;
+}
+
+/** Racine : chaque profil arrive sur son espace (docs/role-model.md §4). */
+export function HomeRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={user ? homePath(user.role) : '/login'} replace />;
 }
 
 /** Ancienne adresse : redirige en conservant les paramètres (liens enregistrés, favoris). */

@@ -1,5 +1,7 @@
 import { Suspense, useState } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
+import { accessibleSpaces, homeSpace, spaceOfPath, type SpaceId } from '@/app/navigation';
+import { useAuth, useCurrentUser } from '@/app/providers/AuthProvider';
 import { useDataSource } from '@/app/providers/DataSourceProvider';
 import { LoadingState } from '@/components/feedback/States';
 import { Drawer } from '@/components/ui/Overlay';
@@ -14,6 +16,7 @@ export function AppShell() {
   const ds = useDataSource();
   const online = useOnlineStatus();
   const { settings } = useSettings();
+  const space = useCurrentSpace();
 
   return (
     <div className={styles.shell}>
@@ -32,13 +35,13 @@ export function AppShell() {
           </span>
         </div>
         <div className={styles.sidebarScroll}>
-          <SideNav />
+          <SideNav space={space} />
         </div>
       </aside>
 
       <Drawer open={navOpen} onClose={() => setNavOpen(false)} title="Menu" size="sm" side="left">
         <div className="nav-light">
-          <SideNav onNavigate={() => setNavOpen(false)} />
+          <SideNav space={space} onNavigate={() => setNavOpen(false)} />
         </div>
       </Drawer>
 
@@ -62,4 +65,21 @@ export function AppShell() {
       </div>
     </div>
   );
+}
+
+/**
+ * Espace affiché dans le menu : celui de l'adresse courante ; pour un écran de détail commun
+ * (action, anomalie, Andon…), le dernier espace visité ; à défaut, l'espace d'accueil du profil.
+ */
+function useCurrentSpace(): SpaceId {
+  const user = useCurrentUser();
+  const { can } = useAuth();
+  const { pathname } = useLocation();
+  const fromPath = spaceOfPath(pathname);
+  const [last, setLast] = useState<SpaceId>(() => fromPath ?? homeSpace(user.role));
+  // Mémorise le dernier espace visité (mise à jour pendant le rendu, sans effet)
+  if (fromPath && fromPath !== last) setLast(fromPath);
+  const wanted = fromPath ?? last;
+  const allowed = accessibleSpaces(can).map((s) => s.space.id);
+  return allowed.includes(wanted) ? wanted : (allowed[0] ?? 'app');
 }

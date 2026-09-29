@@ -4,6 +4,7 @@ import { Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Field';
+import { homePath } from '@/services/auth/permissions';
 import { toUserMessage } from '@/services/errors';
 import styles from './LoginPage.module.css';
 
@@ -18,7 +19,7 @@ export function LoginPage() {
   const target = safeReturn(params.get('retour'));
   const view = params.get('vue') === 'mot-de-passe' ? 'reset' : 'signin';
 
-  if (status === 'signedIn' && user) return <Navigate to={target ?? '/'} replace />;
+  if (status === 'signedIn' && user) return <Navigate to={target ?? homePath(user.role)} replace />;
 
   if (!service.available) {
     return (
@@ -85,8 +86,8 @@ function SignInForm({ target, onForgot }: { target: string | null; onForgot: () 
     if (errors.identifier || errors.password) return;
     setSubmitting(true);
     try {
-      await signIn({ identifier, password });
-      navigate(target ?? '/', { replace: true });
+      const signedIn = await signIn({ identifier, password });
+      navigate(target ?? homePath(signedIn.role), { replace: true });
     } catch (err) {
       setError(toUserMessage(err));
       setPassword('');

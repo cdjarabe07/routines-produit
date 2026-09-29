@@ -1,47 +1,65 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
-import { createHashRouter, type RouteObject } from 'react-router';
+import { createHashRouter, Outlet, type RouteObject } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoginPage } from '@/features/auth/LoginPage';
 import type { Permission } from '@/services/auth/permissions';
-import { LegacyRedirect, RequireAuth, RequirePermission } from './guards';
+import { HomeRedirect, LegacyRedirect, RequireAuth, RequirePermission } from './guards';
 import { NotFoundPage, RouteErrorPage } from './RouteErrorPage';
 
-/* Table des routes. Chaque page est chargée à la demande et protégée par sa permission. */
+/* Table des routes (docs/implementation-plan.md §3).
+   Trois espaces protégés par leur permission (space.*), chaque page par la sienne.
+   Les écrans de détail communs restent hors préfixe : leurs adresses figurent dans
+   les notifications, les QR codes imprimés et les liens enregistrés. */
 
 function page<M extends Record<string, unknown>>(loader: () => Promise<M>, name: keyof M): LazyExoticComponent<ComponentType> {
   return lazy(async () => ({ default: (await loader())[name] as ComponentType }));
 }
 
 const P = {
-  Dashboard: page(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage'),
-  Routines: page(() => import('@/features/routines/pages/RoutinesPage'), 'RoutinesPage'),
+  // Mon travail
+  UserDashboard: page(() => import('@/features/workspace/UserDashboardPage'), 'UserDashboardPage'),
+  MyPlanning: page(() => import('@/features/workspace/MyPlanningPage'), 'MyPlanningPage'),
+  MyRoutines: page(() => import('@/features/workspace/MyRoutinesPage'), 'MyRoutinesPage'),
   RoutineRun: page(() => import('@/features/routines/pages/RoutineRunPage'), 'RoutineRunPage'),
-  RoutineTemplates: page(() => import('@/features/routines/pages/RoutineTemplatesPage'), 'RoutineTemplatesPage'),
-  Actions: page(() => import('@/features/actions/pages/ActionsPage'), 'ActionsPage'),
-  ActionDetail: page(() => import('@/features/actions/pages/ActionDetailPage'), 'ActionDetailPage'),
-  Agenda: page(() => import('@/features/meetings/pages/AgendaPage'), 'AgendaPage'),
-  Meeting: page(() => import('@/features/meetings/pages/MeetingPage'), 'MeetingPage'),
-  Handover: page(() => import('@/features/team/pages/HandoverPage'), 'HandoverPage'),
-  Team: page(() => import('@/features/team/pages/TeamPage'), 'TeamPage'),
-  Andon: page(() => import('@/features/andon/pages/AndonPage'), 'AndonPage'),
-  Production: page(() => import('@/features/production/pages/ProductionPage'), 'ProductionPage'),
-  PlantMap: page(() => import('@/features/plant/PlantMapPage'), 'PlantMapPage'),
+  MyMeetings: page(() => import('@/features/meetings/pages/MyMeetingsPage'), 'MyMeetingsPage'),
   Sequences: page(() => import('@/features/sequences/pages/SequencesPage'), 'SequencesPage'),
   SequenceRun: page(() => import('@/features/sequences/pages/SequenceRunPage'), 'SequenceRunPage'),
+  Actions: page(() => import('@/features/actions/pages/ActionsPage'), 'ActionsPage'),
+  ActionDetail: page(() => import('@/features/actions/pages/ActionDetailPage'), 'ActionDetailPage'),
+  Handover: page(() => import('@/features/team/pages/HandoverPage'), 'HandoverPage'),
+  Knowledge: page(() => import('@/features/knowledge/pages/KnowledgePage'), 'KnowledgePage'),
+  KnowledgeDetail: page(() => import('@/features/knowledge/pages/KnowledgeDetailPage'), 'KnowledgeDetailPage'),
+  ReportAnomaly: page(() => import('@/features/anomalies/pages/ReportAnomalyPage'), 'ReportAnomalyPage'),
+  Andon: page(() => import('@/features/andon/pages/AndonPage'), 'AndonPage'),
+  AndonDetail: page(() => import('@/features/andon/pages/AndonDetailPage'), 'AndonDetailPage'),
+  Meeting: page(() => import('@/features/meetings/pages/MeetingPage'), 'MeetingPage'),
+  // Supervision
+  ManagerDashboard: page(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage'),
+  Team: page(() => import('@/features/team/pages/TeamPage'), 'TeamPage'),
+  RoutineMonitor: page(() => import('@/features/routines/pages/RoutineMonitorPage'), 'RoutineMonitorPage'),
+  Production: page(() => import('@/features/production/pages/ProductionPage'), 'ProductionPage'),
+  PlantMap: page(() => import('@/features/plant/PlantMapPage'), 'PlantMapPage'),
   Anomalies: page(() => import('@/features/anomalies/pages/AnomaliesPage'), 'AnomaliesPage'),
   AnomalyDetail: page(() => import('@/features/anomalies/pages/AnomalyDetailPage'), 'AnomalyDetailPage'),
-  ReportAnomaly: page(() => import('@/features/anomalies/pages/ReportAnomalyPage'), 'ReportAnomalyPage'),
   Gemba: page(() => import('@/features/gemba/pages/GembaListPage'), 'GembaListPage'),
   GembaNew: page(() => import('@/features/gemba/pages/GembaFormPage'), 'GembaFormPage'),
   GembaDetail: page(() => import('@/features/gemba/pages/GembaDetailPage'), 'GembaDetailPage'),
   Quality: page(() => import('@/features/quality/QualityPage'), 'QualityPage'),
   Reporting: page(() => import('@/features/reporting/ReportingPage'), 'ReportingPage'),
   BI: page(() => import('@/features/analytics/BIPage'), 'BIPage'),
-  Knowledge: page(() => import('@/features/knowledge/pages/KnowledgePage'), 'KnowledgePage'),
-  KnowledgeDetail: page(() => import('@/features/knowledge/pages/KnowledgeDetailPage'), 'KnowledgeDetailPage'),
+  // Administration
+  AdminDashboard: page(() => import('@/features/admin/AdminDashboardPage'), 'AdminDashboardPage'),
+  AdminSchedules: page(() => import('@/features/planning/SchedulesPage'), 'SchedulesPage'),
+  AdminMeetings: page(() => import('@/features/meetings/pages/MeetingsAdminPage'), 'MeetingsAdminPage'),
+  AdminAgenda: page(() => import('@/features/meetings/pages/AgendaAdminPage'), 'AgendaAdminPage'),
+  AdminRoutines: page(() => import('@/features/routines/pages/RoutineTemplatesPage'), 'RoutineTemplatesPage'),
+  AdminChecklists: page(() => import('@/features/checklists/ChecklistsPage'), 'ChecklistsPage'),
+  AdminSequences: page(() => import('@/features/sequences/pages/SequencesAdminPage'), 'SequencesAdminPage'),
+  AdminKnowledge: page(() => import('@/features/knowledge/pages/KnowledgeAdminPage'), 'KnowledgeAdminPage'),
   AdminUsers: page(() => import('@/features/admin/UsersPage'), 'UsersPage'),
-  AdminRoles: page(() => import('@/features/admin/RolesPage'), 'RolesPage'),
+  AdminTeams: page(() => import('@/features/admin/TeamsPage'), 'TeamsPage'),
   AdminStations: page(() => import('@/features/admin/WorkstationsPage'), 'WorkstationsPage'),
+  AdminRoles: page(() => import('@/features/admin/RolesPage'), 'RolesPage'),
   AdminSettings: page(() => import('@/features/admin/SettingsPage'), 'SettingsPage'),
 };
 
@@ -52,6 +70,21 @@ function guarded(Component: ComponentType, permission?: Permission, what?: strin
     </RequirePermission>
   );
 }
+
+/** Espace : garde commune à toutes ses pages. */
+function space(path: string, permission: Permission, what: string, children: RouteObject[]): RouteObject {
+  return {
+    path,
+    element: (
+      <RequirePermission permission={permission} what={what}>
+        <Outlet />
+      </RequirePermission>
+    ),
+    children,
+  };
+}
+
+const legacy = (from: string, to: string): RouteObject => ({ path: from, element: <LegacyRedirect to={to} /> });
 
 /** Table des routes, partagée par l'application (routeur hash) et les tests (routeur mémoire). */
 export const appRoutes: RouteObject[] = [
@@ -66,36 +99,82 @@ export const appRoutes: RouteObject[] = [
     ),
     errorElement: <RouteErrorPage />,
     children: [
-      { index: true, element: guarded(P.Dashboard) },
-      { path: 'routines', element: guarded(P.Routines, 'routine.execute', 'vos routines') },
-      { path: 'routines/modeles', element: guarded(P.RoutineTemplates, 'routine.manage', 'la gestion des modèles de routines') },
-      { path: 'routines/:templateId/:date', element: guarded(P.RoutineRun, 'routine.execute', 'cette routine') },
-      { path: 'actions', element: guarded(P.Actions) },
-      { path: 'actions/:id', element: guarded(P.ActionDetail) },
-      { path: 'agenda', element: guarded(P.Agenda) },
-      { path: 'reunions/:id', element: guarded(P.Meeting) },
-      { path: 'passation', element: guarded(P.Handover) },
-      { path: 'equipe', element: guarded(P.Team) },
+      { index: true, element: <HomeRedirect /> },
+
+      space('app', 'space.app', 'votre espace de travail', [
+        { index: true, element: guarded(P.UserDashboard) },
+        { path: 'planning', element: guarded(P.MyPlanning) },
+        { path: 'routines', element: guarded(P.MyRoutines, 'routine.execute', 'vos routines') },
+        { path: 'routines/:scheduleId/:date', element: guarded(P.RoutineRun, 'space.app', 'cette routine') },
+        { path: 'reunions', element: guarded(P.MyMeetings, 'meeting.view', 'vos réunions') },
+        { path: 'actions', element: guarded(P.Actions, 'action.update', 'vos actions') },
+        { path: 'sequences', element: guarded(P.Sequences, 'sequence.run', 'les séquences guidées') },
+        { path: 'passation', element: guarded(P.Handover) },
+        { path: 'connaissances', element: guarded(P.Knowledge) },
+      ]),
+
+      space('manager', 'space.supervision', 'la supervision', [
+        { index: true, element: guarded(P.ManagerDashboard) },
+        { path: 'equipe', element: guarded(P.Team, 'team.updateStatus', 'le suivi de l’équipe') },
+        { path: 'routines', element: guarded(P.RoutineMonitor, 'routine.supervise', 'le suivi des routines') },
+        { path: 'production', element: guarded(P.Production, 'production.view', 'la production') },
+        { path: 'atelier', element: guarded(P.PlantMap, 'production.view', 'le plan de l’atelier') },
+        { path: 'anomalies', element: guarded(P.Anomalies, 'anomaly.manage', 'le traitement des anomalies') },
+        { path: 'actions', element: guarded(P.Actions, 'action.manage', 'le suivi des actions correctives') },
+        { path: 'gemba', element: guarded(P.Gemba, 'gemba.conduct', 'les Gemba Walks') },
+        { path: 'gemba/nouvelle', element: guarded(P.GembaNew, 'gemba.conduct', 'la conduite d’une Gemba Walk') },
+        { path: 'qualite', element: guarded(P.Quality, 'quality.record', 'les contrôles LQC') },
+        { path: 'reporting', element: guarded(P.Reporting, 'reporting.view', 'le reporting') },
+        { path: 'bi', element: guarded(P.BI, 'reporting.view', 'les tableaux BI') },
+      ]),
+
+      space('admin', 'space.admin', 'l’administration', [
+        { index: true, element: <LegacyRedirect to="/admin/dashboard" /> },
+        { path: 'dashboard', element: guarded(P.AdminDashboard, 'settings.manage', 'le tableau de bord d’administration') },
+        { path: 'planification', element: guarded(P.AdminSchedules, 'schedule.manage', 'la planification') },
+        { path: 'reunions', element: guarded(P.AdminMeetings, 'meeting.manage', 'la gestion des réunions') },
+        { path: 'agenda', element: guarded(P.AdminAgenda, 'agenda.manage', 'la gestion de l’agenda') },
+        { path: 'routines', element: guarded(P.AdminRoutines, 'routine.manage', 'la gestion des routines') },
+        { path: 'checklists', element: guarded(P.AdminChecklists, 'checklist.manage', 'la gestion des checklists') },
+        { path: 'sequences', element: guarded(P.AdminSequences, 'sequence.manage', 'la gestion des séquences') },
+        { path: 'connaissances', element: guarded(P.AdminKnowledge, 'knowledge.manage', 'la gestion du centre de connaissances') },
+        { path: 'utilisateurs', element: guarded(P.AdminUsers, 'user.manage', 'la gestion des utilisateurs') },
+        { path: 'equipes', element: guarded(P.AdminTeams, 'team.manage', 'la gestion des équipes') },
+        { path: 'postes', element: guarded(P.AdminStations, 'workstation.manage', 'la gestion des postes') },
+        { path: 'roles', element: guarded(P.AdminRoles, 'settings.manage', 'les rôles et droits') },
+        { path: 'parametres', element: guarded(P.AdminSettings, 'settings.manage', 'les paramètres') },
+      ]),
+
+      // Écrans de détail communs : le contenu s'adapte aux droits
       { path: 'andon', element: guarded(P.Andon) },
-      { path: 'production', element: guarded(P.Production) },
-      { path: 'atelier', element: guarded(P.PlantMap) },
-      { path: 'sequences', element: guarded(P.Sequences, 'sequence.run', 'les séquences guidées') },
-      { path: 'sequences/execution/:runId', element: guarded(P.SequenceRun, 'sequence.run', 'cette séquence') },
-      { path: 'anomalies', element: guarded(P.Anomalies) },
+      { path: 'andon/:id', element: guarded(P.AndonDetail) },
+      { path: 'actions/:id', element: guarded(P.ActionDetail) },
       { path: 'anomalies/:id', element: guarded(P.AnomalyDetail) },
-      { path: 'signaler', element: guarded(P.ReportAnomaly, 'anomaly.create', 'la déclaration d’anomalie') },
-      { path: 'gemba', element: guarded(P.Gemba) },
-      { path: 'gemba/nouvelle', element: guarded(P.GembaNew, 'gemba.conduct', 'la conduite d’une Gemba Walk') },
-      { path: 'gemba/:id', element: guarded(P.GembaDetail) },
-      { path: 'qualite', element: guarded(P.Quality) },
-      { path: 'reporting', element: guarded(P.Reporting, 'reporting.view', 'le reporting') },
-      { path: 'bi', element: guarded(P.BI, 'reporting.view', 'les tableaux BI') },
-      { path: 'connaissances', element: guarded(P.Knowledge) },
+      { path: 'reunions/:id', element: guarded(P.Meeting) },
       { path: 'connaissances/:id', element: guarded(P.KnowledgeDetail) },
-      { path: 'admin/utilisateurs', element: guarded(P.AdminUsers, 'user.manage', 'l’administration') },
-      { path: 'admin/roles', element: guarded(P.AdminRoles, 'settings.manage', 'l’administration') },
-      { path: 'admin/postes', element: guarded(P.AdminStations, 'workstation.manage', 'l’administration') },
-      { path: 'admin/parametres', element: guarded(P.AdminSettings, 'settings.manage', 'l’administration') },
+      { path: 'gemba/:id', element: guarded(P.GembaDetail) },
+      { path: 'sequences/execution/:runId', element: guarded(P.SequenceRun, 'sequence.run', 'cette séquence') },
+      { path: 'signaler', element: guarded(P.ReportAnomaly, 'anomaly.create', 'la déclaration d’anomalie') },
+
+      // Anciennes adresses
+      legacy('routines', '/app/routines'),
+      legacy('routines/modeles', '/admin/routines'),
+      legacy('routines/:templateId/:date', '/app/routines'),
+      legacy('actions', '/app/actions'),
+      legacy('agenda', '/app/planning'),
+      legacy('passation', '/app/passation'),
+      legacy('equipe', '/manager/equipe'),
+      legacy('production', '/manager/production'),
+      legacy('atelier', '/manager/atelier'),
+      legacy('sequences', '/app/sequences'),
+      legacy('anomalies', '/manager/anomalies'),
+      legacy('gemba', '/manager/gemba'),
+      legacy('gemba/nouvelle', '/manager/gemba/nouvelle'),
+      legacy('qualite', '/manager/qualite'),
+      legacy('reporting', '/manager/reporting'),
+      legacy('bi', '/manager/bi'),
+      legacy('connaissances', '/app/connaissances'),
+
       { path: '*', element: <NotFoundPage /> },
     ],
   },
