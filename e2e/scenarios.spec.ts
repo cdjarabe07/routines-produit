@@ -166,3 +166,69 @@ test('administration → planification → exécution → Andon → action corre
 
   expect(errors).toEqual([]);
 });
+
+test('déconnexion depuis la supervision puis connexion opérateur : arrivée directe sur son espace', async ({ page }) => {
+  await page.goto('/#/login');
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await login(page, 'admin');
+  await page.getByRole('button', { name: 'Supervision' }).click();
+  await page.getByRole('link', { name: 'Reporting' }).click();
+  await expect(page).toHaveURL(/#\/manager\/reporting/);
+  await logout(page);
+  await expect(page).toHaveURL(/#\/login$/);
+  await login(page, 'operateur');
+  await expect(page).toHaveURL(/#\/app$/);
+  await expect(page.getByRole('heading', { level: 1, name: /Bonjour Nadia/ })).toBeVisible();
+
+  // Un lien protégé reste respecté s'il est autorisé, sinon l'espace d'accueil prend le relais
+  await logout(page);
+  await page.goto('/#/manager/reporting');
+  await expect(page).toHaveURL(/retour=/);
+  await login(page, 'operateur');
+  await expect(page).toHaveURL(/#\/app$/);
+});
+
+test('reporting interactif : survol, détail d’un jour, d’une catégorie et d’une routine', async ({ page }) => {
+  await page.goto('/#/login');
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+  await login(page, 'manager');
+  await page.goto('/#/manager/reporting');
+
+  // Clavier : flèches puis Entrée
+  const chart = page.getByRole('group', { name: /^Anomalies déclarées par jour/ });
+  await chart.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(chart.getByRole('status')).toContainText('anomalie');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: /^Détail du / })).toBeVisible();
+  await expect(page).toHaveURL(/jour=/);
+  await page.getByRole('button', { name: 'Fermer' }).click();
+
+  // Souris : clic sur un jour du graphique des routines
+  const routines = page.getByRole('group', { name: /^Réalisation des routines par jour/ });
+  // Souris réelle (coordonnées) : la vérification de « stabilité » de Playwright ne s'applique pas bien aux zones SVG
+  await routines.scrollIntoViewIfNeeded();
+  const box = (await routines.boundingBox())!;
+  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+  await expect(routines.getByRole('status')).toBeVisible();
+  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.5);
+  await expect(page.getByRole('region', { name: 'Routines' }).getByRole('link').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Fermer' }).click();
+
+  // Catégorie d'anomalie
+  await page.getByRole('button', { name: /^Qualité/ }).click();
+  await expect(page.getByRole('heading', { name: /Anomalies « Qualité »/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Fermer' }).click();
+
+  // Ligne du tableau par routine
+  await page.getByRole('button', { name: 'Audit terrain' }).click();
+  await expect(page.getByRole('heading', { name: /^Audit terrain — / })).toBeVisible();
+  await page.getByRole('button', { name: 'Fermer' }).click();
+  await expect(page.getByRole('heading', { name: /^Audit terrain — / })).toHaveCount(0);
+});

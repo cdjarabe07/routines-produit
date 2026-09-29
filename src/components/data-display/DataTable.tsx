@@ -34,6 +34,9 @@ interface DataTableProps<T> {
   empty: { title: string; description?: ReactNode; action?: ReactNode };
   toolbar?: ReactNode;
   rowTone?: (row: T) => 'danger' | 'warning' | undefined;
+  /** Sélection de la ligne (exploration) : la colonne titre devient un bouton */
+  onRowSelect?: (row: T) => void;
+  selectedKey?: string | null;
 }
 
 export function DataTable<T>({
@@ -48,6 +51,8 @@ export function DataTable<T>({
   empty,
   toolbar,
   rowTone,
+  onRowSelect,
+  selectedKey,
 }: DataTableProps<T>) {
   const compact = useIsTabletOrSmaller();
   const navigate = useNavigate();
@@ -85,6 +90,18 @@ export function DataTable<T>({
       <Link to={rowLink(row)} className={styles.rowLink} onClick={(e) => e.stopPropagation()}>
         {titleCol.cell(row)}
       </Link>
+    ) : onRowSelect ? (
+      <button
+        type="button"
+        className={styles.rowButton}
+        aria-pressed={selectedKey === rowKey(row)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRowSelect(row);
+        }}
+      >
+        {titleCol.cell(row)}
+      </button>
     ) : (
       titleCol.cell(row)
     );
@@ -132,7 +149,10 @@ export function DataTable<T>({
             const aside = columns.filter((c) => c.mobile === 'aside');
             const meta = columns.filter((c) => c !== titleCol && (c.mobile === 'meta' || c.mobile === undefined));
             return (
-              <li key={rowKey(row)} className={cx(styles.card, rowTone?.(row) && styles[rowTone(row)!])}>
+              <li
+                key={rowKey(row)}
+                className={cx(styles.card, rowTone?.(row) && styles[rowTone(row)!], selectedKey === rowKey(row) && styles.selected)}
+              >
                 <div className={styles.cardHead}>
                   <div className={styles.cardTitle}>{renderTitle(row)}</div>
                   {aside.map((c) => (
@@ -193,8 +213,12 @@ export function DataTable<T>({
               {visible.map((row) => (
                 <tr
                   key={rowKey(row)}
-                  className={cx(rowLink && styles.clickable, rowTone?.(row) && styles[rowTone(row)!])}
-                  onClick={rowLink ? () => navigate(rowLink(row)) : undefined}
+                  className={cx(
+                    (rowLink || onRowSelect) && styles.clickable,
+                    rowTone?.(row) && styles[rowTone(row)!],
+                    selectedKey === rowKey(row) && styles.selected,
+                  )}
+                  onClick={rowLink ? () => navigate(rowLink(row)) : onRowSelect ? () => onRowSelect(row) : undefined}
                 >
                   {columns.map((c) => (
                     <td key={c.id} style={{ textAlign: c.align }}>

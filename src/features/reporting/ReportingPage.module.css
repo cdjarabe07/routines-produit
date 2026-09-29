@@ -28,3 +28,26 @@
   color: var(--color-text-muted);
   font-size: var(--text-sm);
 }
+
+.drillGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+.drillTitle {
+  margin-bottom: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+.drillGrid section {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) 0 0;
+}
+.drillGrid section .drillTitle {
+  padding: 0 var(--space-3);
+}

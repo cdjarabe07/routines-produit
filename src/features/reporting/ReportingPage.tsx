@@ -25,13 +25,17 @@ import {
   coverage,
   dailySeries,
   delta,
+  drilldown,
   previousPeriod,
   resolvePeriod,
   routinesByTemplate,
   toCsv,
+  type Drilldown,
   type PeriodPreset,
   type ReportSource,
 } from './model';
+import { ReportingDrilldown } from './ReportingDrilldown';
+import type { AnomalyCategory } from '@/types/domain';
 import styles from './ReportingPage.module.css';
 
 export function ReportingPage() {
@@ -42,6 +46,15 @@ export function ReportingPage() {
   const preset = (params.get('periode') as PeriodPreset | null) ?? '7d';
   const lineId = params.get('ligne') ?? '';
   const period = resolvePeriod(preset, today, { from: params.get('du'), to: params.get('au') });
+  const selection: Drilldown | null = params.get('jour')
+    ? { kind: 'day', date: params.get('jour')! }
+    : params.get('categorie')
+      ? { kind: 'category', category: params.get('categorie') as AnomalyCategory }
+      : params.get('poste')
+        ? { kind: 'station', workstationId: params.get('poste')! }
+        : params.get('routine')
+          ? { kind: 'routine', routineId: params.get('routine')! }
+          : null;
   const previous = previousPeriod(period);
 
   const planning = usePlanningData();
@@ -67,6 +80,7 @@ export function ReportingPage() {
     [planning.source, anomalies.data, actions.data, alerts.data, checks.data, lookups],
   );
 
+  const selectionKey = JSON.stringify(selection);
   const report = useMemo(() => {
     if (!source) return null;
     const dims = { lineId: lineId || undefined };
@@ -80,8 +94,9 @@ export function ReportingPage() {
       byCategory: anomaliesByCategory(source, period, dims),
       byStation: anomaliesByWorkstation(source, period, dims),
       comparable: coverage(source, previous) > 0,
+      detail: selection ? drilldown(source, period, selection, dims, opts) : null,
     };
-  }, [source, period.from, period.to, previous.from, previous.to, lineId, settings.routineLateToleranceMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [source, period.from, period.to, previous.from, previous.to, lineId, settings.routineLateToleranceMinutes, selectionKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = (next: Record<string, string | undefined>) => {
     const merged = {
@@ -89,6 +104,10 @@ export function ReportingPage() {
       ligne: lineId || undefined,
       du: params.get('du') ?? undefined,
       au: params.get('au') ?? undefined,
+      jour: params.get('jour') ?? undefined,
+      categorie: params.get('categorie') ?? undefined,
+      poste: params.get('poste') ?? undefined,
+      routine: params.get('routine') ?? undefined,
       ...next,
     };
     setParams(Object.fromEntries(Object.entries(merged).filter(([, v]) => v)) as Record<string, string>, { replace: true });
@@ -107,6 +126,16 @@ export function ReportingPage() {
   };
 
   const label = (d: string) => formatShortDate(d);
+  /** Une seule sélection à la fois ; re-cliquer la même la retire. */
+  const select = (key: 'jour' | 'categorie' | 'poste' | 'routine', value: string) =>
+    update({
+      jour: undefined,
+      categorie: undefined,
+      poste: undefined,
+      routine: undefined,
+      [key]: params.get(key) === value ? undefined : value,
+    });
+  const clearSelection = () => update({ jour: undefined, categorie: undefined, poste: undefined, routine: undefined });
 
   return (
     <>
@@ -128,7 +157,13 @@ export function ReportingPage() {
             to={params.get('au')}
             max={today}
             onChange={({ preset: p, from, to }) =>
-              update({ periode: p, du: p === 'custom' ? from : undefined, au: p === 'custom' ? to : undefined })
+              update({
+                periode: p,
+                du: p === 'custom' ? from : undefined,
+                au: p === 'custom' ? to : undefined,
+                jour: undefined,
+                routine: undefined,
+              })
             }
           />
           {lookups && (
@@ -154,6 +189,21 @@ export function ReportingPage() {
             const d = (cur: number | null, key: keyof typeof kpis, higher: boolean, unit?: 'pts') =>
               prev ? delta(cur, prev[key] as number | null, higher, unit) : undefined;
             const compare = <T,>(series: T[]) => (comparable ? series : undefined);
+            const dayIndex = selection?.kind === 'day' ? report.daily.findIndex((x) => x.date === selection.date) : null;
+            const drill = selection && report.detail && (
+              <ReportingDrilldown
+                selection={selection}
+                result={report.detail}
+                lookups={lookups!}
+                routineTitle={
+                  selection.kind === 'routine'
+                    ? report.byRoutine.find((r) => r.routine.id === selection.routineId)?.routine.title
+                    : undefined
+                }
+                periodLabel={period.label}
+                onClose={clearSelection}
+              />
+            );
             return (
               <>
                 {!comparable && (
@@ -162,11 +212,17 @@ export function ReportingPage() {
                   </p>
                 )}
                 <KpiStrip>
-                  <Kpi label="Routines programmées" value={kpis.routinesPlanned} detail={`${kpis.routinesPending} à venir ou à faire`} />
+                  <Kpi
+                    label="Routines programmées"
+                    value={kpis.routinesPlanned}
+                    detail={`${kpis.routinesPending} à venir ou à faire`}
+                    to="/manager/routines"
+                  />
                   <Kpi label="Terminées" value={kpis.routinesDone} tone="success" delta={d(kpis.routinesDone, 'routinesDone', true)} />
                   <Kpi label="En cours" value={kpis.routinesInProgress} />
                   <Kpi
                     label="En retard ou non réalisées"
+                    to="/manager/routines?vue=retard"
                     value={kpis.routinesLate}
                     tone={kpis.routinesLate ? 'danger' : 'neutral'}
                     delta={d(kpis.routinesLate, 'routinesLate', false)}
@@ -195,6 +251,7 @@ export function ReportingPage() {
                   />
                   <Kpi
                     label="Anomalies déclarées"
+                    to="/manager/anomalies"
                     value={kpis.anomalies}
                     detail={`${kpis.criticalAnomalies} critique(s)`}
                     delta={d(kpis.anomalies, 'anomalies', false)}
@@ -220,7 +277,12 @@ export function ReportingPage() {
                   />
                 </KpiStrip>
                 <KpiStrip>
-                  <Kpi label="Andon déclenchés" value={kpis.andonCount} delta={d(kpis.andonCount, 'andonCount', false)} />
+                  <Kpi
+                    label="Andon déclenchés"
+                    to="/andon?vue=historique"
+                    value={kpis.andonCount}
+                    delta={d(kpis.andonCount, 'andonCount', false)}
+                  />
                   <Kpi
                     label="Prise en charge Andon"
                     definition={DEFINITIONS.andonAck}
@@ -244,11 +306,13 @@ export function ReportingPage() {
                   />
                 </KpiStrip>
 
-                <Panel title="Réalisation par routine" flush>
+                <Panel title="Réalisation par routine" description="Cliquez une routine pour voir ses occurrences sur la période." flush>
                   <DataTable
                     caption="Réalisation par routine sur la période"
                     rows={report.byRoutine}
                     rowKey={(r) => r.routine.id}
+                    onRowSelect={(r) => select('routine', r.routine.id)}
+                    selectedKey={selection?.kind === 'routine' ? selection.routineId : null}
                     initialSort={{ id: 'pct', direction: 'asc' }}
                     columns={[
                       { id: 'title', header: 'Routine', mobile: 'title', cell: (r) => r.routine.title, sortValue: (r) => r.routine.title },
@@ -290,6 +354,9 @@ export function ReportingPage() {
                   />
                 </Panel>
 
+                <p className={styles.muted}>
+                  Survolez un graphique pour lire les valeurs ; cliquez un jour, une catégorie ou un poste pour afficher le détail.
+                </p>
                 <Columns ratio="equal">
                   <Panel title="Réalisation des routines par jour">
                     <LineChart
@@ -298,6 +365,8 @@ export function ReportingPage() {
                       compare={compare(report.prevDaily.map((x) => ({ label: label(x.date), value: x.routinePct })))}
                       format={(v) => `${Math.round(v)} %`}
                       max={100}
+                      selectedIndex={dayIndex}
+                      onSelect={(i) => select('jour', report.daily[i]!.date)}
                     />
                   </Panel>
                   <Panel title="Anomalies déclarées par jour">
@@ -305,13 +374,18 @@ export function ReportingPage() {
                       title="Anomalies déclarées par jour"
                       data={report.daily.map((d) => ({ label: label(d.date), value: d.anomalies }))}
                       compare={compare(report.prevDaily.map((x) => ({ label: label(x.date), value: x.anomalies })))}
+                      unitLabel="anomalie(s)"
+                      selectedIndex={dayIndex}
+                      onSelect={(i) => select('jour', report.daily[i]!.date)}
                     />
                   </Panel>
                   <Panel title="Anomalies par catégorie">
                     {report.byCategory.length ? (
                       <RankedBars
                         title="Anomalies par catégorie"
-                        items={report.byCategory.map(([c, n]) => ({ label: ANOMALY_CATEGORY[c], value: n }))}
+                        items={report.byCategory.map(([c, n]) => ({ key: c, label: ANOMALY_CATEGORY[c], value: n }))}
+                        onSelect={(key) => select('categorie', key)}
+                        selected={selection?.kind === 'category' ? selection.category : null}
                       />
                     ) : (
                       <p className={styles.muted}>Aucune anomalie sur la période.</p>
@@ -322,7 +396,9 @@ export function ReportingPage() {
                       <RankedBars
                         title="Anomalies par poste"
                         tone="warning"
-                        items={report.byStation.slice(0, 8).map(([id, n]) => ({ label: lookups!.workstationName(id), value: n }))}
+                        items={report.byStation.slice(0, 8).map(([id, n]) => ({ key: id, label: lookups!.workstationName(id), value: n }))}
+                        onSelect={(key) => select('poste', key)}
+                        selected={selection?.kind === 'station' ? selection.workstationId : null}
                       />
                     ) : (
                       <p className={styles.muted}>Aucune anomalie rattachée à un poste.</p>
@@ -333,6 +409,9 @@ export function ReportingPage() {
                       title="Andon par jour"
                       data={report.daily.map((d) => ({ label: label(d.date), value: d.andon }))}
                       compare={compare(report.prevDaily.map((x) => ({ label: label(x.date), value: x.andon })))}
+                      unitLabel="Andon"
+                      selectedIndex={dayIndex}
+                      onSelect={(i) => select('jour', report.daily[i]!.date)}
                     />
                   </Panel>
                   <Panel title="Conformité LQC par jour">
@@ -343,9 +422,12 @@ export function ReportingPage() {
                       max={100}
                       min={80}
                       reference={{ value: 95, label: 'Objectif 95 %' }}
+                      selectedIndex={dayIndex}
+                      onSelect={(i) => select('jour', report.daily[i]!.date)}
                     />
                   </Panel>
                 </Columns>
+                {drill}
               </>
             );
           }}

@@ -1,7 +1,14 @@
 import type { Action, AndonAlert, Anomaly, AnomalyCategory, DateKey, QualityCheck, Workstation } from '@/types/domain';
 import { closureDays, isOpenAction } from '@/features/actions/model';
 import { andonStats } from '@/features/andon/model';
-import { completedOnTime, countOccurrences, occurrencesBetween, type Occurrence, type OccurrenceSource } from '@/features/planning/model';
+import {
+  completedOnTime,
+  countOccurrences,
+  occurrenceState,
+  occurrencesBetween,
+  type Occurrence,
+  type OccurrenceSource,
+} from '@/features/planning/model';
 import { runSummary } from '@/features/routines/model';
 import { conformity } from '@/features/quality/model';
 import { addDays, dateKeyOf, daysBetween, enumerateDays, formatDate, parseDateKey, toDateKey } from '@/utils/date';
@@ -293,4 +300,66 @@ export function toCsv(rows: DailyRow[]): string {
   ]
     .map((cols) => cols.join(';'))
     .join('\r\n');
+}
+
+/* ---------- Détail (exploration depuis les graphiques et tableaux) ---------- */
+
+export type Drilldown =
+  | { kind: 'day'; date: DateKey }
+  | { kind: 'category'; category: AnomalyCategory }
+  | { kind: 'station'; workstationId: string }
+  | { kind: 'routine'; routineId: string };
+
+export interface DrilldownResult {
+  occurrences: (Occurrence & { state: ReturnType<typeof occurrenceState> })[];
+  anomalies: Anomaly[];
+  alerts: AndonAlert[];
+  actionsClosed: Action[];
+}
+
+/** Enregistrements derrière un point de graphique ou une ligne de tableau, dans la période et le périmètre choisis. */
+export function drilldown(
+  source: ReportSource,
+  p: Period,
+  d: Drilldown,
+  dims: Dimensions = {},
+  opts: KpiOptions = { toleranceMin: 120, now: new Date() },
+): DrilldownResult {
+  const s = scope(source, dims);
+  const today = toDateKey(opts.now);
+  const withState = (list: Occurrence[]) => list.map((o) => ({ ...o, state: occurrenceState(o, today, opts.now, opts.toleranceMin) }));
+  const byCreated = <T extends { createdAt: string }>(a: T, b: T) => b.createdAt.localeCompare(a.createdAt);
+  switch (d.kind) {
+    case 'day':
+      return {
+        occurrences: withState(occurrencesBetween(s, d.date, d.date)),
+        anomalies: s.anomalies.filter((a) => dateKeyOf(a.createdAt) === d.date).sort(byCreated),
+        alerts: s.alerts.filter((a) => dateKeyOf(a.raisedAt) === d.date).sort(byCreated),
+        actionsClosed: s.actions.filter((a) => a.status === 'done' && a.closedAt && dateKeyOf(a.closedAt) === d.date),
+      };
+    case 'category':
+    case 'station':
+      return {
+        occurrences: [],
+        anomalies: s.anomalies
+          .filter(
+            (a) =>
+              inPeriod(dateKeyOf(a.createdAt), p) &&
+              (d.kind === 'category' ? a.category === d.category : a.workstationId === d.workstationId),
+          )
+          .sort(byCreated),
+        alerts:
+          d.kind === 'station'
+            ? s.alerts.filter((a) => a.workstationId === d.workstationId && inPeriod(dateKeyOf(a.raisedAt), p)).sort(byCreated)
+            : [],
+        actionsClosed: [],
+      };
+    case 'routine':
+      return {
+        occurrences: withState(occurrencesBetween(s, p.from, p.to, (sc) => sc.routineId === d.routineId)).reverse(),
+        anomalies: [],
+        alerts: [],
+        actionsClosed: [],
+      };
+  }
 }

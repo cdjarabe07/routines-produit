@@ -176,3 +176,24 @@
     padding: var(--space-2) var(--space-3);
   }
 }
+
+/* Ligne sélectionnable (exploration du reporting) */
+.rowButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.selected td,
+.selected.card {
+  background: var(--color-primary-soft);
+}
+.selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
