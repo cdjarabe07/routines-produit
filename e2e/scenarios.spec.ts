@@ -1,0 +1,168 @@
+import { expect, test, type Page } from '@playwright/test';
+
+/* Scénarios de la demande (§46), dans un vrai navigateur et une seule session :
+   les données saisies par l'administrateur sont retrouvées par l'opératrice, puis par le manager.
+   1. Administrateur : routine + tâches → planification pour Nadia → réunion avec Nadia → vérification.
+   2. Opératrice : tableau de bord → routine et réunion → démarrer → tâches → commentaire → terminer.
+   3. Anomalie : Andon → prise en charge par le manager → action corrective → résolution → clôture → reporting. */
+
+const ROUTINE = 'Contrôle sécurité poste 4';
+const MEETING = 'Point qualité poste 4';
+
+async function login(page: Page, identifier: string) {
+  await page.goto('/#/login');
+  await page.getByLabel(/Identifiant ou email/).fill(identifier);
+  await page.getByLabel(/^Mot de passe/).fill('Routines2026');
+  await page.getByRole('button', { name: 'Se connecter' }).click();
+}
+
+async function logout(page: Page) {
+  await page.getByRole('button', { name: /^Compte :/ }).click();
+  await page.getByRole('menuitem', { name: 'Se déconnecter' }).click();
+  await expect(page.getByRole('heading', { name: 'Connexion' })).toBeVisible();
+}
+
+test('administration → planification → exécution → Andon → action corrective → reporting', async ({ page }) => {
+  test.setTimeout(240_000);
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/#/login');
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  /* ---------- Scénario 1 : administrateur ---------- */
+  await login(page, 'admin');
+  await expect(page).toHaveURL(/#\/admin\/dashboard$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Administration' })).toBeVisible();
+
+  // Routine et tâches
+  await page.goto('/#/admin/routines');
+  await page.getByRole('button', { name: 'Nouvelle routine' }).click();
+  const editor = page.getByRole('dialog', { name: 'Nouvelle routine' });
+  await editor.getByRole('textbox', { name: 'Titre', exact: true }).fill(ROUTINE);
+  await editor.getByLabel(/Durée prévue/).fill('10');
+  await editor.getByLabel('Titre de la tâche').fill('Vérifier le carter de protection');
+  await editor.getByRole('button', { name: 'Ajouter une tâche' }).click();
+  await editor.getByLabel('Titre de la tâche').fill('Vérifier l’arrêt d’urgence');
+  await editor.getByRole('button', { name: 'Enregistrer la routine' }).click();
+  await expect(editor).toBeHidden();
+  const row = page.getByRole('row').filter({ hasText: ROUTINE });
+  await expect(row).toContainText('Non planifiée');
+
+  // Planification pour Nadia
+  await row.getByRole('link', { name: 'Planifier' }).click();
+  const planner = page.getByRole('dialog', { name: 'Programmer une routine' });
+  await planner.getByLabel('Répétition').selectOption('once');
+  await planner.getByLabel('Personne').selectOption({ label: 'Nadia Roussel' });
+  await planner.getByRole('button', { name: 'Programmer' }).click();
+  await expect(planner).toBeHidden();
+  await expect(page.getByRole('row').filter({ hasText: ROUTINE })).toContainText('Nadia Roussel');
+
+  // Réunion avec Nadia
+  await page.goto('/#/admin/reunions');
+  await page.getByRole('button', { name: 'Nouvelle réunion' }).click();
+  const meetingForm = page.getByRole('dialog', { name: 'Nouvelle réunion' });
+  await meetingForm.getByRole('textbox', { name: 'Titre', exact: true }).fill(MEETING);
+  await meetingForm.getByLabel('Heure de début').fill('23:00');
+  await meetingForm.getByLabel('Heure de fin').fill('23:30');
+  await meetingForm.getByRole('checkbox', { name: 'Nadia Roussel' }).check();
+  await meetingForm.getByRole('button', { name: 'Planifier' }).click();
+  await expect(meetingForm).toBeHidden();
+  await expect(page.getByRole('row').filter({ hasText: MEETING })).toBeVisible();
+
+  // Vérification du planning (semaine)
+  await page.goto('/#/admin/planification?vue=semaine');
+  await expect(page.getByRole('link', { name: ROUTINE })).toBeVisible();
+  await logout(page);
+
+  /* ---------- Scénario 2 : opératrice ---------- */
+  await login(page, 'operateur');
+  await expect(page).toHaveURL(/#\/app$/);
+  await expect(page.getByRole('heading', { level: 1, name: /Bonjour Nadia/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: ROUTINE }).first()).toBeVisible();
+  await page.goto('/#/app/reunions');
+  await expect(page.getByRole('link', { name: MEETING })).toBeVisible();
+
+  await page.goto('/#/app');
+  await page
+    .getByRole('button', { name: `Démarrer ${ROUTINE}` })
+    .first()
+    .click();
+  await expect(page.getByRole('heading', { level: 1, name: ROUTINE })).toBeVisible();
+  await page
+    .getByRole('group', { name: 'Résultat : Vérifier le carter de protection' })
+    .getByRole('button', { name: 'Conforme', exact: true })
+    .click();
+  await page
+    .getByRole('group', { name: 'Résultat : Vérifier l’arrêt d’urgence' })
+    .getByRole('button', { name: 'Conforme', exact: true })
+    .click();
+  await page.getByLabel('Ajouter un commentaire').fill('Carter resserré avant contrôle.');
+  await page.getByRole('button', { name: 'Publier' }).click();
+  await expect(page.getByText('Carter resserré avant contrôle.')).toBeVisible();
+  await page.getByRole('button', { name: 'Terminer la routine' }).click();
+  const recap = page.getByRole('dialog', { name: 'Routine terminée' });
+  await expect(recap).toContainText('2/2');
+  await recap.getByRole('button', { name: 'Terminer' }).click();
+  await expect(page).toHaveURL(/#\/app$/);
+  await expect(
+    page
+      .getByRole('region', { name: 'Fait aujourd’hui' })
+      .or(page.locator('section', { hasText: 'Fait aujourd’hui' }))
+      .first(),
+  ).toContainText(ROUTINE);
+
+  /* ---------- Scénario 3 : anomalie ---------- */
+  await page.goto('/#/andon?declencher=1');
+  const raise = page.getByRole('dialog', { name: 'Déclencher un Andon' });
+  await raise.getByRole('button', { name: /^P4/ }).click();
+  await raise.getByRole('button', { name: 'Équipement' }).click();
+  await raise.getByLabel('Description du problème').fill('Carter de protection fissuré');
+  await raise.getByRole('radio', { name: /Critique/ }).click();
+  await raise.getByRole('button', { name: 'Déclencher' }).click();
+  await expect(raise).toBeHidden();
+  await page.goto('/#/app');
+  await expect(page.getByText('Andon actif · Poste 4 — Rubanage')).toBeVisible();
+  await logout(page);
+
+  await login(page, 'manager');
+  await expect(page).toHaveURL(/#\/manager$/);
+  await page.goto('/#/andon');
+  const tile = page.getByRole('listitem').filter({ hasText: 'Carter de protection fissuré' });
+  await tile.getByRole('button', { name: 'Je prends en charge' }).click();
+  await expect(tile).toContainText('Xavier Dupont intervient');
+  await tile.getByRole('link', { name: 'Détail' }).click();
+
+  await expect(page.getByRole('heading', { level: 1, name: /Andon équipement — Poste 4/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Créer une action corrective' }).click();
+  const actionForm = page.getByRole('dialog', { name: 'Action corrective' });
+  await actionForm.getByLabel(/Responsable/).selectOption({ label: 'Yann Duclos' });
+  await actionForm.getByRole('button', { name: 'Créer l’action' }).click();
+  await expect(actionForm).toBeHidden();
+  await page.getByRole('button', { name: 'Démarrer la résolution' }).click();
+  await expect(page.getByText('En résolution').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Résoudre' }).click();
+  const resolve = page.getByRole('dialog', { name: /Résoudre l’Andon/ });
+  await resolve.getByLabel(/Cause identifiée/).fill('Fixation desserrée par les vibrations');
+  await resolve.getByLabel(/Action réalisée/).fill('Carter remplacé, fixations freinées');
+  await resolve.getByRole('button', { name: 'Marquer résolu' }).click();
+  await expect(page.getByRole('heading', { name: 'Résolution' })).toBeVisible();
+
+  // Clôture de l'action corrective
+  await page.getByRole('link', { name: /Éviter la récidive/ }).click();
+  await page.getByRole('button', { name: 'Marquer terminée' }).click();
+  const close = page.getByRole('dialog', { name: 'Terminer l’action' });
+  await close.getByLabel(/Résolution/).fill('Contrôle du serrage ajouté à la routine du poste 4');
+  await close.getByRole('button', { name: 'Terminer' }).click();
+  await expect(page.getByRole('heading', { name: 'Résolution' })).toBeVisible();
+
+  // Reporting : l'Andon, l'action et la routine de Nadia sont comptés
+  await page.goto('/#/manager/reporting');
+  const byRoutine = page.getByRole('row').filter({ hasText: ROUTINE });
+  await expect(byRoutine).toContainText('1');
+  await expect(page.getByText('Andon déclenchés', { exact: true })).toBeVisible();
+
+  expect(errors).toEqual([]);
+});

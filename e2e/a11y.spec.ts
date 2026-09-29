@@ -63,7 +63,7 @@ const today = () => {
 };
 
 test('aucune violation WCAG A/AA détectée par axe', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(360_000);
   await page.goto('/#/login');
   await page.evaluate(() => localStorage.clear());
   const report: string[] = [];

@@ -127,7 +127,7 @@ test('parcours Andon : déclencher, prendre en charge, résoudre', async ({ page
   await expect(dialog).toBeHidden();
 
   const tile = page.getByRole('listitem').filter({ hasText: 'Ruban épuisé' });
-  await expect(tile).toContainText('En attente');
+  await expect(tile).toContainText('Nouveau');
   await tile.getByRole('button', { name: 'Je prends en charge' }).click();
   await expect(tile).toContainText('Karim Benali intervient');
   await tile.getByRole('button', { name: 'Résoudre' }).click();
