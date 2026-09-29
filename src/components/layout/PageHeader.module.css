@@ -38,6 +38,7 @@
 
 @media (max-width: 1100px) {
   .columns, .columnsEqual { grid-template-columns: minmax(0, 1fr); }
+  .sideFirst > :last-child { order: -1; }
 }
 
 @media (max-width: 720px) {

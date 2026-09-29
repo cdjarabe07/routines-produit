@@ -4,6 +4,21 @@ import { PRIORITY } from '@/features/shared/labels';
 
 export const isOpenAction = (a: Action) => a.status === 'todo' || a.status === 'in_progress';
 
+/** Modifier le statut d'une action : responsable, suppléant, créateur, ou droit « action.manage ». */
+export const canUpdateAction = (a: Action, userId: ID, canManage: boolean) =>
+  canManage || a.assigneeId === userId || a.backupId === userId || a.createdBy === userId;
+
+/** Lien vers l'origine d'une action (null si saisie manuelle). */
+export function sourceLink(a: Action): string | null {
+  if (!a.source.id) return null;
+  switch (a.source.type) {
+    case 'anomaly': return `/anomalies/${a.source.id}`;
+    case 'gemba': return `/gemba/${a.source.id}`;
+    case 'meeting': return `/reunions/${a.source.id}`;
+    default: return null;
+  }
+}
+
 /** En retard = ouverte et échéance strictement passée (calculé, jamais stocké). */
 export const isOverdue = (a: Action, today: DateKey) => isOpenAction(a) && a.dueDate < today;
 

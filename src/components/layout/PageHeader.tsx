@@ -49,6 +49,10 @@ export function Stack({ children, gap = 5 }: { children: ReactNode; gap?: 3 | 4 
 }
 
 /** Deux colonnes sur grand écran (principal + latéral), une seule sur tablette/mobile. */
-export function Columns({ children, ratio = 'main-side' }: { children: ReactNode; ratio?: 'main-side' | 'equal' }) {
-  return <div className={ratio === 'equal' ? styles.columnsEqual : styles.columns}>{children}</div>;
+export function Columns({ children, ratio = 'main-side', sideFirstOnMobile }: { children: ReactNode; ratio?: 'main-side' | 'equal'; sideFirstOnMobile?: boolean }) {
+  return (
+    <div className={`${ratio === 'equal' ? styles.columnsEqual : styles.columns} ${sideFirstOnMobile ? styles.sideFirst : ''}`}>
+      {children}
+    </div>
+  );
 }
