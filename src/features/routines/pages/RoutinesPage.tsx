@@ -18,7 +18,7 @@ import { ROLE_LABELS } from '@/services/auth/permissions';
 import type { RoutineRun, RoutineTemplate } from '@/types/domain';
 import { formatTime, todayKey } from '@/utils/date';
 import { formatPercent, ratio } from '@/utils/format';
-import { DateNavigator } from '../components/DateNavigator';
+import { DateNavigator } from '@/components/ui/DateNavigator';
 import { ROUTINE_STATE, findRun, routineState, runProgress, templatesForRole, type RoutineState } from '../model';
 
 interface Row {
