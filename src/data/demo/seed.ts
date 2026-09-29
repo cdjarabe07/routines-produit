@@ -31,7 +31,6 @@ import {
   DEMO_ANOMALY_SAMPLES,
   DEMO_AUDIT_SECTIONS,
   DEMO_KNOWLEDGE,
-  DEMO_LINKS,
   DEMO_ROUTINES,
   DEMO_SEQUENCE_STEPS,
   DEMO_USERS,
@@ -50,6 +49,10 @@ function mulberry32(seed: number) {
 }
 
 const HISTORY_DAYS = 30;
+
+/** prénom.nom@atelier.local, sans accents */
+export const emailOf = (name: string) =>
+  `${name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '.')}@atelier.local`;
 
 export function buildDemoData(now: Date = new Date()): Dataset {
   const rnd = mulberry32(20260929);
@@ -85,7 +88,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
       id: u.id,
       name: u.name,
       role: u.role,
-      email: `${u.id.slice(2)}@demo.local`,
+      email: emailOf(u.name),
       lineId: lineId(u.line),
       zoneLabel: u.zone,
       shift: u.shift,
@@ -110,7 +113,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     ),
   ];
 
-  /* ---------- Connaissances (exemples) ---------- */
+  /* ---------- Connaissances (contenus initiaux, à valider) ---------- */
   const knowledgeItems: KnowledgeItem[] = [
     ...DEMO_KNOWLEDGE.map((k) =>
       stamp(
@@ -123,30 +126,11 @@ export function buildDemoData(now: Date = new Date()): Dataset {
           summary: k.summary,
           keyPoints: k.points,
           version: '1.0',
-          owner: 'Exemple — prototype',
+          owner: 'Service Méthodes',
           status: 'published' as const,
-          isExample: true,
+          toReview: true,
         },
         addDays(today, -60) + 'T08:00:00.000Z',
-      ),
-    ),
-    ...DEMO_LINKS.map((l) =>
-      stamp(
-        {
-          id: l.id,
-          code: l.code,
-          title: l.title,
-          category: l.category,
-          kind: 'link' as const,
-          summary: 'Lien externe d’exemple (adresse fictive).',
-          keyPoints: [],
-          url: l.url,
-          version: '1.0',
-          owner: 'Exemple — prototype',
-          status: 'published' as const,
-          isExample: true,
-        },
-        addDays(today, -40) + 'T08:00:00.000Z',
       ),
     ),
   ];
@@ -491,7 +475,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
       id: 'sq-changeover',
       name: 'Changement de série — poste de sertissage',
       active: true,
-      description: 'Exemple de séquence opératoire. Contenu à valider par les méthodes.',
+      description: 'Séquence opératoire du changement de série sur presse de sertissage.',
       steps: [
         {
           id: 'sq-co-0',
@@ -789,9 +773,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     ),
   ];
 
-  const settings = [
-    stamp({ id: 'app', plantName: 'Atelier de câblage — démonstration', andonEscalationMinutes: 10, routineLateToleranceMinutes: 120 }),
-  ];
+  const settings = [stamp({ id: 'app', plantName: 'Atelier de câblage', andonEscalationMinutes: 10, routineLateToleranceMinutes: 120 })];
 
   return {
     users,

@@ -109,11 +109,6 @@
   color: var(--color-text-muted);
   margin-top: 2px;
 }
-.menuDemo {
-  font-size: var(--text-xs);
-  color: var(--color-demo);
-  margin-top: var(--space-1);
-}
 
 .helpList {
   display: flex;

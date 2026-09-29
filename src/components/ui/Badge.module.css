@@ -31,10 +31,6 @@
   background: var(--color-danger-soft);
   color: var(--color-danger);
 }
-.demo {
-  background: var(--color-demo-soft);
-  color: var(--color-demo);
-}
 
 .strong.neutral {
   background: var(--color-neutral);
@@ -54,10 +50,6 @@
 }
 .strong.danger {
   background: var(--color-danger);
-  color: #fff;
-}
-.strong.demo {
-  background: var(--color-demo);
   color: #fff;
 }
 
@@ -88,9 +80,6 @@
 }
 .dot-danger {
   background: var(--color-danger-strong);
-}
-.dot-demo {
-  background: var(--color-demo);
 }
 .pulse {
   box-shadow: 0 0 0 0 rgba(214, 47, 34, 0.6);

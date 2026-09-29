@@ -80,17 +80,6 @@
   min-width: 0;
 }
 
-.demo {
-  padding: 6px var(--space-4);
-  background: var(--color-demo-soft);
-  border-bottom: 1px solid #dccbef;
-  color: var(--color-demo);
-  font-size: var(--text-xs);
-}
-.demo strong {
-  letter-spacing: 0.04em;
-}
-
 .offline {
   padding: var(--space-2) var(--space-4);
   background: var(--color-warning-soft);
@@ -126,9 +115,6 @@
   .content {
     padding: var(--space-4) var(--space-4) var(--space-8);
   }
-  .demo {
-    padding: 4px var(--space-3);
-  }
 }
 
 @media print {
@@ -136,7 +122,6 @@
     display: block;
   }
   .sidebar,
-  .demo,
   .offline,
   .skip {
     display: none;

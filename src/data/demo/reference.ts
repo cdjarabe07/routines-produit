@@ -1,6 +1,6 @@
-/* Contenus de référence repris du prototype (legacy/LL-App-LL.html).
-   Ce sont des EXEMPLES destinés au mode démonstration : noms fictifs,
-   standards génériques. À remplacer par les données réelles de l'atelier. */
+/* Jeu initial de l'environnement simulé (docs/role-model.md, docs/current-state.md §6).
+   Contenus d'illustration repris du prototype (legacy/LL-App-LL.html) : personnes fictives,
+   standards génériques marqués « à valider ». À remplacer par les données réelles de l'atelier. */
 
 import type { AnomalyCategory, KnowledgeCategory, Role } from '@/types/domain';
 
@@ -23,7 +23,7 @@ export const DEMO_USERS: {
   { id: 'u-nadia', name: 'Nadia Roussel', role: 'operator', line: 'A', zone: 'Ligne A — Rubanage', shift: 'morning' },
   { id: 'u-ibrahim', name: 'Ibrahim Keita', role: 'operator', line: 'B', zone: 'Ligne B — Coupe', shift: 'morning' },
   { id: 'u-dupont', name: 'Xavier Dupont', role: 'manager', zone: 'Atelier', shift: 'morning' },
-  { id: 'u-admin', name: 'Administrateur démo', role: 'admin', zone: 'Support', shift: 'morning' },
+  { id: 'u-admin', name: 'Claire Fontaine', role: 'admin', zone: 'Support applicatif', shift: 'morning' },
 ];
 
 export const DEMO_WORKSTATIONS = [
@@ -195,23 +195,6 @@ export const DEMO_KNOWLEDGE: {
       'Réapprovisionnement déclenché sous le seuil',
       'Alerter le Line Leader en cas de risque de rupture',
     ],
-  },
-];
-
-export const DEMO_LINKS = [
-  {
-    id: 'kb-link-01',
-    code: 'LIEN-01',
-    category: 'performance' as KnowledgeCategory,
-    title: 'Tableau de performance atelier (exemple)',
-    url: 'https://example.com/performance',
-  },
-  {
-    id: 'kb-link-02',
-    code: 'LIEN-02',
-    category: 'standard' as KnowledgeCategory,
-    title: 'Standard de rubanage ligne B (exemple)',
-    url: 'https://example.com/rubanage',
   },
 ];
 

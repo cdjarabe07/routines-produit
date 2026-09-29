@@ -44,16 +44,11 @@ export function AppShell() {
 
       <div className={styles.column}>
         <TopBar onOpenNav={() => setNavOpen(true)} />
-        {ds.kind === 'demo' && (
-          <div className={styles.demo} role="note">
-            <strong>MODE DÉMO</strong> — données fictives enregistrées dans ce navigateur, aucune authentification réelle.
-          </div>
-        )}
         {!online && (
           <div className={styles.offline} role="status">
             Hors ligne.{' '}
             {ds.kind === 'demo'
-              ? 'Le mode démo continue de fonctionner sur cet appareil.'
+              ? 'Vos saisies restent enregistrées sur cet appareil.'
               : 'Les modifications ne peuvent pas être enregistrées tant que la connexion n’est pas rétablie.'}
           </div>
         )}

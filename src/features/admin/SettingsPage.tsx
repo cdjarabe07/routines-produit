@@ -33,18 +33,20 @@ export function SettingsPage() {
                 <SettingsForm key={query.settings.updatedAt ?? 'default'} settings={query.settings} />
               </Panel>
               {ds.kind === 'demo' && (
-                <Panel title="Données de démonstration" accent="warning">
+                <Panel title="Environnement" accent="warning">
                   <p style={{ marginBottom: 'var(--space-3)', color: 'var(--color-text-muted)' }}>
-                    Recharge le jeu de données fictif d’origine, daté par rapport à aujourd’hui. Toutes les saisies faites dans ce
-                    navigateur sont effacées.
+                    Les données sont enregistrées dans ce navigateur. Le jeu initial (organisation, routines, planification et historique de
+                    30 jours) est généré au premier lancement et daté par rapport à aujourd’hui. La réinitialisation le recharge et efface
+                    toutes les saisies faites sur ce poste.
                   </p>
                   <Button
                     variant="danger"
                     onClick={async () => {
                       if (
                         await confirm({
-                          title: 'Réinitialiser les données de démonstration ?',
-                          message: 'Toutes les saisies de ce navigateur seront effacées. Cette action est irréversible.',
+                          title: 'Réinitialiser l’environnement ?',
+                          message:
+                            'Toutes les saisies de ce navigateur seront effacées et le jeu initial rechargé. Cette action est irréversible.',
                           confirmLabel: 'Réinitialiser',
                           tone: 'danger',
                         })
@@ -52,7 +54,7 @@ export function SettingsPage() {
                         await reset();
                     }}
                   >
-                    Réinitialiser les données
+                    Réinitialiser l’environnement
                   </Button>
                 </Panel>
               )}
@@ -63,13 +65,17 @@ export function SettingsPage() {
                   {
                     label: 'Source de données',
                     value:
-                      ds.kind === 'demo' ? <Badge tone="demo">DÉMO — navigateur</Badge> : <Badge tone="info">API — {env.apiBaseUrl}</Badge>,
+                      ds.kind === 'demo' ? (
+                        <Badge tone="warning">Stockage local du navigateur</Badge>
+                      ) : (
+                        <Badge tone="info">API — {env.apiBaseUrl}</Badge>
+                      ),
                   },
                   {
                     label: 'Authentification',
                     value:
                       env.authMode === 'demo' ? (
-                        <Badge tone="demo">DÉMO — aucune sécurité</Badge>
+                        <Badge tone="warning">Comptes locaux — non sécurisé</Badge>
                       ) : (
                         <Badge tone="info">{env.authMode.toUpperCase()}</Badge>
                       ),

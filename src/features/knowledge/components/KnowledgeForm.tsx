@@ -31,7 +31,7 @@ export function KnowledgeForm({ item, onDone }: { item?: KnowledgeItem; onDone: 
       keyPoints: item?.keyPoints.join('\n') ?? '',
       url: item?.url ?? '',
       version: item?.version ?? '1.0',
-      owner: item?.owner && !item.isExample ? item.owner : '',
+      owner: item?.owner ?? '',
       status: item?.status ?? 'published',
     },
     rules: {
@@ -60,7 +60,7 @@ export function KnowledgeForm({ item, onDone }: { item?: KnowledgeItem; onDone: 
           version: v.version.trim(),
           owner: v.owner.trim(),
           status: v.status,
-          isExample: false,
+          toReview: false,
         },
       });
       onDone(saved);
@@ -71,18 +71,18 @@ export function KnowledgeForm({ item, onDone }: { item?: KnowledgeItem; onDone: 
 
   return (
     <form onSubmit={form.handleSubmit} noValidate>
-      {item?.isExample && (
+      {item?.toReview && (
         <p
           style={{
             marginBottom: 'var(--space-4)',
             padding: 'var(--space-2) var(--space-3)',
-            background: 'var(--color-demo-soft)',
-            color: 'var(--color-demo)',
+            background: 'var(--color-warning-soft)',
+            borderLeft: '4px solid var(--color-warning)',
             borderRadius: 'var(--radius-md)',
             fontSize: 'var(--text-sm)',
           }}
         >
-          Ce document est un exemple issu du prototype. En l’enregistrant avec votre contenu, il deviendra un document réel.
+          Contenu initial à valider. Vérifiez-le avec son propriétaire : l’enregistrer le marque comme validé.
         </p>
       )}
       <FormGrid>

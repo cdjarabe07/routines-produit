@@ -56,7 +56,7 @@ export function KnowledgeDetailPage() {
                   <Badge>{KNOWLEDGE_CATEGORY[item.category]}</Badge>
                   <Badge tone="info">Version {item.version}</Badge>
                   {item.status === 'draft' && <Badge>Brouillon</Badge>}
-                  {item.isExample && <Badge tone="demo">Exemple à remplacer</Badge>}
+                  {item.toReview && can('knowledge.manage') && <Badge tone="warning">À valider</Badge>}
                 </>
               }
               actions={

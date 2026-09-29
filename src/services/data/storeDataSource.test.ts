@@ -95,7 +95,7 @@ describe('jeu de démonstration', () => {
   });
 
   it('marque les contenus de référence comme exemples', () => {
-    expect(data.knowledgeItems.every((k) => k.isExample)).toBe(true);
+    expect(data.knowledgeItems.every((k) => k.toReview)).toBe(true);
   });
 
   it('ne produit aucun horodatage dans le futur', () => {

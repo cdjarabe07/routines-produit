@@ -42,20 +42,20 @@ export function useSaveSettings() {
   );
 }
 
-/** Réinitialisation complète des données de démonstration (mode DÉMO uniquement). */
+/** Réinitialisation de l'environnement local (source de données « navigateur » uniquement). */
 export function useResetDemoData() {
   const ds = useDataSource();
   const client = useQueryClient();
   const toast = useToast();
   return async () => {
     if (!ds.resetDemoData) {
-      toast.error('Réinitialisation impossible : l’application n’est pas en mode démonstration.');
+      toast.error('Réinitialisation impossible : les données sont servies par l’API.');
       return;
     }
     try {
       await ds.resetDemoData();
       await client.invalidateQueries();
-      toast.success('Données de démonstration rechargées.');
+      toast.success('Environnement réinitialisé.');
     } catch (error) {
       toast.error(toUserMessage(error));
     }

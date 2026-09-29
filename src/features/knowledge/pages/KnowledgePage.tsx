@@ -46,7 +46,7 @@ export function KnowledgePage() {
   }, [items.data, query, filter, myFavorites, can]);
 
   const categories = Array.from(new Set((items.data ?? []).map((k) => k.category)));
-  const examples = (items.data ?? []).filter((k) => k.isExample).length;
+  const toReview = can('knowledge.manage') ? (items.data ?? []).filter((k) => k.toReview).length : 0;
 
   return (
     <>
@@ -64,10 +64,9 @@ export function KnowledgePage() {
       <QueryBoundary queries={[items, favorites]}>
         {() => (
           <Stack gap={4}>
-            {examples > 0 && (
+            {toReview > 0 && (
               <p className={styles.notice} role="note">
-                {examples} document(s) sont des <strong>exemples repris du prototype</strong>. Ils doivent être remplacés par les standards
-                validés de l’atelier.
+                {toReview} document(s) <strong>à valider</strong> par leur propriétaire avant diffusion définitive.
               </p>
             )}
             <label className={styles.search}>
@@ -122,7 +121,7 @@ export function KnowledgePage() {
                           </p>
                         </div>
                         <div className={styles.aside}>
-                          {k.isExample && <Badge tone="demo">Exemple</Badge>}
+                          {k.toReview && can('knowledge.manage') && <Badge tone="warning">À valider</Badge>}
                           {k.status === 'draft' && <Badge>Brouillon</Badge>}
                           <IconButton
                             label={fav ? `Retirer ${k.code} des favoris` : `Ajouter ${k.code} aux favoris`}

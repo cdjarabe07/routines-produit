@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { Bell, CircleHelp, LogOut, Menu as MenuIcon, Siren, TriangleAlert, UserRound } from 'lucide-react';
+import { Bell, CircleHelp, LogOut, Menu as MenuIcon, Siren, TriangleAlert } from 'lucide-react';
 import { helpFor } from '@/app/help';
 import { Can, useAuth } from '@/app/providers/AuthProvider';
 import { Button, IconButton } from '@/components/ui/Button';
@@ -16,7 +16,7 @@ import { cx } from '@/utils/cx';
 import styles from './TopBar.module.css';
 
 export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
-  const { user, signOut, service } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const now = useNow(30_000);
@@ -80,15 +80,9 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
                 {ROLE_LABELS[user.role]}
                 {user.zoneLabel ? ` · ${user.zoneLabel}` : ''}
               </div>
-              {service.mode === 'demo' && <div className={styles.menuDemo}>Session de démonstration — aucune authentification</div>}
             </div>
           }
-          items={[
-            ...(service.mode === 'demo'
-              ? [{ label: 'Changer de profil', icon: <UserRound size={16} aria-hidden />, onSelect: () => void signOut() }]
-              : []),
-            { label: 'Se déconnecter', icon: <LogOut size={16} aria-hidden />, onSelect: () => void signOut() },
-          ]}
+          items={[{ label: 'Se déconnecter', icon: <LogOut size={16} aria-hidden />, onSelect: () => void signOut() }]}
           trigger={(props) => (
             <button type="button" className={styles.user} {...props} aria-label={`Compte : ${user.name}`}>
               <span className={styles.avatar} aria-hidden>
@@ -115,7 +109,6 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
         title="Notifications"
-        description="Notifications internes. L’envoi d’emails n’est pas configuré."
         size="sm"
         footer={
           notifications.unread > 0 ? (

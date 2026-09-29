@@ -42,8 +42,6 @@
   --color-info-soft: #e7eefa;
   --color-neutral: #5f6b7a; /* neutre, planifié, annulé */
   --color-neutral-soft: #edf0f3;
-  --color-demo: #6b3fa0; /* uniquement pour signaler le mode démo */
-  --color-demo-soft: #f1eaf8;
 
   /* Typographie */
   --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;

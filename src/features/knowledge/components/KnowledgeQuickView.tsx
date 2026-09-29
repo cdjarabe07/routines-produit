@@ -26,7 +26,6 @@ export function KnowledgeQuickView({ knowledgeId, onClose }: { knowledgeId: stri
                 <Badge>{KNOWLEDGE_CATEGORY[item.category]}</Badge>
                 <span>Version {item.version}</span>
                 <span>Mis à jour le {formatDate(item.updatedAt)}</span>
-                {item.isExample && <Badge tone="demo">Exemple à remplacer</Badge>}
               </div>
               <p>{item.summary}</p>
               {item.keyPoints.length > 0 && (

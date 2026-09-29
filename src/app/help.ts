@@ -102,9 +102,8 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
 const FALLBACK: HelpTopic = {
   title: 'Aide',
   points: [
-    'Le menu de gauche regroupe les écrans par usage : Ma journée, Opérations, Qualité, Analyse, Ressources.',
+    'Le sélecteur en haut du menu permet de passer d’un espace à l’autre : Mon travail, Supervision, Administration, selon vos droits.',
     'Les pastilles du menu indiquent ce qui attend une action.',
-    'Le bandeau violet rappelle que l’application fonctionne en mode démonstration avec des données fictives.',
   ],
 };
 
