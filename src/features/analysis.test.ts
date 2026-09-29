@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { buildDemoData } from '@/data/demo/seed';
 import { PERMISSION_GROUPS, homePath, roleCan } from '@/services/auth/permissions';
-import { buildDailyReport, buildPriorities, lineStatuses, type CockpitData } from './dashboard/model';
+import { can as authorize } from '@/services/auth/policies';
+import { buildDailyReport, buildPriorities, dayIndicators, lineStatuses, type CockpitData } from './dashboard/model';
+import { occurrencesBetween } from './planning/model';
 import { computeKpis, coverage, delta, previousPeriod, resolvePeriod, toCsv } from './reporting/model';
 
 const NOW = new Date(2026, 8, 29, 10, 0);
 const data = buildDemoData(NOW);
 const lookupName = (id?: string) => data.workstations.find((w) => w.id === id)?.name ?? '—';
+const occurrenceSource = { schedules: data.schedules, routines: data.routineTemplates, runs: data.routineRuns };
 
 function cockpit(userId: string): CockpitData {
   const user = data.users.find((u) => u.id === userId)!;
@@ -14,14 +17,13 @@ function cockpit(userId: string): CockpitData {
     user,
     now: NOW,
     today: '2026-09-29',
-    can: (p) => roleCan(user.role, p),
+    can: (p, resource) => authorize(user, p, resource),
     lines: data.lines,
     workstations: data.workstations,
     alerts: data.andonAlerts,
     actions: data.actions,
     anomalies: data.anomalies,
-    templates: data.routineTemplates,
-    runs: data.routineRuns,
+    occurrences: occurrencesBetween(occurrenceSource, '2026-09-29', '2026-09-29'),
     meetings: data.meetings,
     stocks: data.materialStocks,
     orders: data.productionOrders,
@@ -76,6 +78,18 @@ describe('cockpit', () => {
     expect(statuses.find((s) => s.line.id === 'line-a')?.state).toBe('stopped');
   });
 
+  it('les routines du jour sont calculées depuis la planification', () => {
+    const ind = dayIndicators(cockpit('u-dupont'));
+    expect(ind.routines.planned).toBeGreaterThan(5);
+    // Laissées à faire par le jeu initial : le contrôle début de poste de l'équipe A n'est pas démarré
+    expect(ind.routines.done).toBeLessThan(ind.routines.planned);
+    expect(buildPriorities(cockpit('u-dupont')).some((p) => p.id === 'team-late' || p.id.startsWith('andon-'))).toBe(true);
+  });
+
+  it('les routines personnelles apparaissent dans les priorités du Line Leader', () => {
+    expect(buildPriorities(cockpit('u-karim')).some((p) => p.id.startsWith('routine-sc-ll-audit'))).toBe(true);
+  });
+
   it('le rapport du jour cite l’atelier et les indicateurs', () => {
     const text = buildDailyReport(cockpit('u-karim'), 'Atelier test');
     expect(text).toContain('RAPPORT DU JOUR — Atelier test');
@@ -101,8 +115,7 @@ describe('reporting', () => {
 
   it('calcule des indicateurs cohérents sur le jeu de démonstration', () => {
     const src = {
-      templates: data.routineTemplates,
-      runs: data.routineRuns,
+      ...occurrenceSource,
       anomalies: data.anomalies,
       actions: data.actions,
       alerts: data.andonAlerts,
@@ -110,12 +123,16 @@ describe('reporting', () => {
       workstations: data.workstations,
     };
     const period = resolvePeriod('30d', '2026-09-29');
-    const k = computeKpis(src, period);
-    expect(k.routinePct).toBeGreaterThan(50);
+    const k = computeKpis(src, period, {}, { toleranceMin: 120, now: NOW });
+    expect(k.routinesPlanned).toBeGreaterThan(200);
+    expect(k.routinesDone + k.routinesInProgress + k.routinesLate + k.routinesPending).toBe(k.routinesPlanned);
+    expect(k.routinePct).toBeGreaterThan(70);
+    expect(k.avgRoutineMin).not.toBeNull();
     expect(k.anomalies).toBeGreaterThan(10);
     expect(k.qualityPct).toBeGreaterThan(90);
-    const lineA = computeKpis(src, period, { lineId: 'line-a' });
+    const lineA = computeKpis(src, period, { lineId: 'line-a' }, { toleranceMin: 120, now: NOW });
     expect(lineA.anomalies).toBeLessThan(k.anomalies);
+    expect(lineA.routinesPlanned).toBeLessThan(k.routinesPlanned);
     expect(coverage(src, previousPeriod(period))).toBe(0); // pas d'historique avant 30 jours
   });
 
@@ -126,7 +143,18 @@ describe('reporting', () => {
   });
 
   it('export CSV au format Excel français', () => {
-    const csv = toCsv([{ date: '2026-09-29', routinePct: 87.5, anomalies: 2, andon: 1, actionsClosed: 3, qualityPct: null }]);
-    expect(csv.split('\r\n')[1]).toBe('2026-09-29;87,5;2;1;3;');
+    const csv = toCsv([
+      {
+        date: '2026-09-29',
+        routinesPlanned: 8,
+        routinesDone: 7,
+        routinePct: 87.5,
+        anomalies: 2,
+        andon: 1,
+        actionsClosed: 3,
+        qualityPct: null,
+      },
+    ]);
+    expect(csv.split('\r\n')[1]).toBe('2026-09-29;8;7;87,5;2;1;3;');
   });
 });

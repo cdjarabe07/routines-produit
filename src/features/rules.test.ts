@@ -2,15 +2,26 @@
    Chaque bloc correspond à un features/<module>/model.ts. */
 
 import { describe, expect, it } from 'vitest';
-import type { Action, AndonAlert, Leave, PresenceRecord, RoutineRun, RoutineTemplate, User } from '@/types/domain';
+import type { Action, AndonAlert, Checklist, Leave, PresenceRecord, RoutineRun, RoutineTemplate, Schedule, User } from '@/types/domain';
 import { can } from '@/services/auth/policies';
 import { defaultDueDate, filterActions, isOverdue, sortActions } from './actions/model';
 import { andonStats, isEscalated, worstOpenAlert } from './andon/model';
 import { validationErrors } from './gemba/model';
 import { needsReorder, stockState } from './production/model';
 import { conformity, isConform } from './quality/model';
-import { canEditRun, dayCompletion, routineState, runProgress } from './routines/model';
-import { abortRun, nextStep, pauseRun, previousStep, resumeRun, startRun, stepElapsedMs, totalElapsedMs } from './sequences/model';
+import { checkKey, evaluateCheck, runSummary, taskChecks, taskProgress } from './routines/model';
+import { completedOnTime, countOccurrences, isAssignedTo, occurrenceState, occurrencesBetween, occursOn } from './planning/model';
+import {
+  abortRun,
+  nextStep,
+  pauseRun,
+  previousStep,
+  resumeRun,
+  runSteps,
+  startRun,
+  stepElapsedMs,
+  totalElapsedMs,
+} from './sequences/model';
 import { memberStatus } from './team/model';
 
 const base = { createdAt: '2026-09-01T08:00:00.000Z', updatedAt: '2026-09-01T08:00:00.000Z' };
@@ -73,59 +84,155 @@ describe('actions', () => {
   });
 });
 
+const checklist: Checklist = {
+  ...base,
+  id: 'cl',
+  name: 'EPI',
+  active: true,
+  items: [{ id: 'gants', label: 'Gants', type: 'conformity', required: true }],
+};
+const checklists = new Map([[checklist.id, checklist]]);
 const template: RoutineTemplate = {
   ...base,
   id: 't',
-  title: 'Routine',
-  role: 'line_leader',
-  scheduledTime: '08:00',
+  title: 'Contrôle début de poste',
+  durationMin: 20,
+  defaultTime: '08:00',
   active: true,
-  sections: [
+  tasks: [
+    { id: 'simple', title: 'Vérifier le poste', priority: 'high', required: true, checks: [] },
     {
-      id: 's',
-      title: 'S',
-      items: [
-        { id: 'i1', label: 'A' },
-        { id: 'i2', label: 'B' },
-      ],
+      id: 'outils',
+      title: 'Vérifier les outils',
+      priority: 'high',
+      required: true,
+      checklistId: 'cl',
+      checks: [{ id: 'h', label: 'Hauteur', type: 'number', required: true, min: 1.42, max: 1.52, unit: 'mm' }],
+    },
+    {
+      id: 'docs',
+      title: 'Documents',
+      priority: 'medium',
+      required: false,
+      checks: [{ id: 'ref', label: 'Indice', type: 'text', required: false }],
     },
   ],
 };
-const run = (results: RoutineRun['results']): RoutineRun => ({
+const schedule = (p: Partial<Schedule> = {}): Schedule => ({
+  ...base,
+  id: 'sc',
+  routineId: 't',
+  startDate: '2026-09-21',
+  time: '08:00',
+  recurrence: 'weekdays',
+  weekdays: [],
+  assigneeId: 'u1',
+  status: 'active',
+  skippedDates: [],
+  createdBy: 'admin',
+  ...p,
+});
+const run = (results: RoutineRun['results'], extra: Partial<RoutineRun> = {}): RoutineRun => ({
   ...base,
   id: 'r',
+  scheduleId: 'sc',
   templateId: 't',
   date: '2026-09-29',
   assigneeId: 'u1',
+  startedAt: '2026-09-29T06:05:00.000Z',
   results,
+  ...extra,
 });
 const at = (h: number, m = 0) => new Date(2026, 8, 29, h, m);
 
-describe('routines', () => {
+describe('planification', () => {
+  it('produit les occurrences selon la répétition (29/09/2026 est un mardi)', () => {
+    expect(occursOn(schedule(), '2026-09-29')).toBe(true);
+    expect(occursOn(schedule(), '2026-10-03')).toBe(false); // samedi
+    expect(occursOn(schedule({ recurrence: 'daily' }), '2026-10-03')).toBe(true);
+    expect(occursOn(schedule({ recurrence: 'weekly', weekdays: [1, 3] }), '2026-09-30')).toBe(true); // mercredi
+    expect(occursOn(schedule({ recurrence: 'weekly', weekdays: [1, 3] }), '2026-09-29')).toBe(false);
+    expect(occursOn(schedule({ recurrence: 'once', startDate: '2026-09-29' }), '2026-09-30')).toBe(false);
+    expect(occursOn(schedule({ endDate: '2026-09-28' }), '2026-09-29')).toBe(false);
+    expect(occursOn(schedule({ status: 'cancelled' }), '2026-09-29')).toBe(false);
+  });
+
+  it('exclut les occurrences annulées et rattache l’exécution', () => {
+    const src = { schedules: [schedule({ skippedDates: ['2026-09-30'] })], routines: [template], runs: [run({})] };
+    const list = occurrencesBetween(src, '2026-09-29', '2026-10-01');
+    expect(list.map((o) => o.date)).toEqual(['2026-09-29', '2026-10-01']);
+    expect(list[0]!.run?.id).toBe('r');
+  });
+
+  it('affectation directe ou via l’équipe', () => {
+    expect(isAssignedTo(schedule(), { id: 'u1' })).toBe(true);
+    expect(isAssignedTo(schedule({ assigneeId: undefined, teamId: 'ta' }), { id: 'u2', teamId: 'ta' })).toBe(true);
+    expect(isAssignedTo(schedule({ assigneeId: undefined, teamId: 'ta' }), { id: 'u2', teamId: 'tb' })).toBe(false);
+  });
+
+  it('à venir → à faire → en retard → en cours → terminée ; non réalisée les jours passés', () => {
+    const o = (r?: RoutineRun, date = '2026-09-29') => ({ date, time: '08:00', run: r });
+    expect(occurrenceState(o(), '2026-09-29', at(7, 59), 120)).toBe('upcoming');
+    expect(occurrenceState(o(), '2026-09-29', at(9, 0), 120)).toBe('due');
+    expect(occurrenceState(o(), '2026-09-29', at(10, 1), 120)).toBe('late');
+    expect(occurrenceState(o(run({})), '2026-09-29', at(10, 1), 120)).toBe('in_progress');
+    expect(occurrenceState(o(run({}, { completedAt: '2026-09-29T06:30:00.000Z' })), '2026-09-29', at(23), 120)).toBe('done');
+    expect(occurrenceState(o(undefined, '2026-09-28'), '2026-09-29', at(7), 120)).toBe('missed');
+  });
+
+  it('compte les occurrences par état', () => {
+    const src = {
+      schedules: [schedule({ recurrence: 'daily' })],
+      routines: [template],
+      runs: [run({}, { completedAt: '2026-09-29T06:30:00.000Z' })],
+    };
+    const counts = countOccurrences(occurrencesBetween(src, '2026-09-27', '2026-09-30'), '2026-09-29', at(12), 120);
+    expect(counts).toMatchObject({ planned: 4, done: 1, missed: 2, upcoming: 1 });
+  });
+});
+
+describe('exécution des routines', () => {
   const ok = { status: 'ok' as const, at: base.createdAt, by: 'u1' };
 
-  it('calcule l’avancement par statut', () => {
-    expect(runProgress(template, run({ i1: ok, i2: { ...ok, status: 'ko' } }))).toEqual({ total: 2, treated: 2, ok: 1, ko: 1, na: 0 });
-    expect(runProgress(template)).toMatchObject({ total: 2, treated: 0 });
+  it('évalue les contrôles typés', () => {
+    const num = { id: 'n', label: 'N', type: 'number' as const, required: true, min: 1.42, max: 1.52 };
+    expect(evaluateCheck(num, 1.47)).toBe('ok');
+    expect(evaluateCheck(num, 1.6)).toBe('ko');
+    expect(evaluateCheck({ ...num, type: 'yes_no' }, false)).toBe('ko');
+    expect(evaluateCheck({ ...num, type: 'text' }, 'Indice C')).toBe('ok');
   });
 
-  it('prévue → à faire → en retard selon l’heure et la tolérance', () => {
-    expect(routineState(template, undefined, '2026-09-29', '2026-09-29', at(7, 59), 120)).toBe('upcoming');
-    expect(routineState(template, undefined, '2026-09-29', '2026-09-29', at(9, 0), 120)).toBe('due');
-    expect(routineState(template, undefined, '2026-09-29', '2026-09-29', at(10, 1), 120)).toBe('late');
-    expect(routineState(template, run({ i1: ok, i2: ok }), '2026-09-29', '2026-09-29', at(23), 120)).toBe('done');
-    expect(routineState(template, run({ i1: ok }), '2026-09-28', '2026-09-29', at(7), 120)).toBe('late');
+  it('une tâche avec checklist jointe inclut ses contrôles ; faite quand les obligatoires sont renseignés', () => {
+    const tools = template.tasks[1]!;
+    const checks = taskChecks(tools, checklists);
+    expect(checks.map((c) => c.id)).toEqual(['gants', 'h']);
+    expect(taskProgress(tools, checks, run({ [checkKey('outils', 'gants')]: ok })).state).toBe('partial');
+    expect(
+      taskProgress(tools, checks, run({ [checkKey('outils', 'gants')]: ok, [checkKey('outils', 'h')]: { ...ok, value: 1.5 } })).state,
+    ).toBe('done');
   });
 
-  it('agrège la réalisation d’une journée', () => {
-    expect(dayCompletion([template], [run({ i1: ok })], '2026-09-29')).toEqual({ total: 2, treated: 1, completedRoutines: 0, routines: 1 });
+  it('la routine se termine quand toutes les tâches obligatoires sont faites (les facultatives peuvent manquer)', () => {
+    const partial = run({ simple: ok });
+    expect(runSummary(template, checklists, partial)).toMatchObject({
+      tasks: 3,
+      tasksDone: 1,
+      required: 2,
+      requiredDone: 1,
+      canComplete: false,
+    });
+    const complete = run(
+      { simple: ok, [checkKey('outils', 'gants')]: ok, [checkKey('outils', 'h')]: { ...ok, status: 'ko', value: 1.6 } },
+      { completedAt: '2026-09-29T06:23:00.000Z' },
+    );
+    expect(runSummary(template, checklists, complete)).toMatchObject({ requiredDone: 2, canComplete: true, ko: 1, durationMin: 18 });
   });
 
-  it('saisie réservée au jour courant et au rôle (sauf gestionnaire)', () => {
-    expect(canEditRun(template, 'line_leader', false, '2026-09-29', '2026-09-29')).toBe(true);
-    expect(canEditRun(template, 'hancho', false, '2026-09-29', '2026-09-29')).toBe(false);
-    expect(canEditRun(template, 'manager', true, '2026-09-29', '2026-09-29')).toBe(true);
-    expect(canEditRun(template, 'line_leader', false, '2026-09-28', '2026-09-29')).toBe(false);
+  it('terminée à l’heure : dans l’heure prévue + durée + tolérance, le jour même', () => {
+    const occ = { date: '2026-09-29', time: '08:00', routine: template };
+    expect(completedOnTime({ ...occ, run: run({}, { completedAt: new Date(2026, 8, 29, 10, 20).toISOString() }) }, 120)).toBe(true);
+    expect(completedOnTime({ ...occ, run: run({}, { completedAt: new Date(2026, 8, 29, 10, 21).toISOString() }) }, 120)).toBe(false);
+    expect(completedOnTime({ ...occ, run: run({}, { completedAt: new Date(2026, 8, 30, 8, 0).toISOString() }) }, 120)).toBe(false);
   });
 });
 
@@ -136,8 +243,9 @@ describe('séquences guidées', () => {
     name: 'S',
     active: true,
     steps: [
-      { id: 'a', title: 'A', durationMin: 2 },
-      { id: 'b', title: 'B', durationMin: 3 },
+      { id: 'a', title: 'A', durationMin: 2, active: true },
+      { id: 'off', title: 'Désactivée', durationMin: 9, active: false },
+      { id: 'b', title: 'B', durationMin: 3, active: true },
     ],
   };
   const t = (sec: number) => new Date(Date.UTC(2026, 8, 29, 8, 0, sec));
@@ -171,6 +279,12 @@ describe('séquences guidées', () => {
     expect(stepElapsedMs(r, 0, t(20))).toBe(15_000);
   });
 
+  it('les étapes désactivées sont ignorées à l’exécution', () => {
+    const r = startRun(tpl, 'u1', t(0));
+    expect(r.steps.map((x) => x.stepId)).toEqual(['a', 'b']);
+    expect(runSteps(tpl, r).map((x) => x.title)).toEqual(['A', 'B']);
+  });
+
   it('abandon : état final, plus de transition possible', () => {
     const r = abortRun(startRun(tpl, 'u1', t(0)), t(5));
     expect(r.status).toBe('aborted');
@@ -183,7 +297,7 @@ const alert = (p: Partial<AndonAlert>): AndonAlert => ({
   id: p.id ?? 'x',
   workstationId: 'w1',
   type: 'quality',
-  urgency: 'normal',
+  urgency: 'medium',
   detail: 'd',
   status: 'active',
   raisedBy: 'u',

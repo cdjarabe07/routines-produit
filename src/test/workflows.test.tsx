@@ -61,32 +61,69 @@ describe('connexion et droits', () => {
   });
 });
 
-describe('routines', () => {
-  it('valider un point met à jour l’avancement ; un point non conforme propose une anomalie', async () => {
-    const { user, ds } = renderApp('/routines/rt-ll-audit/2026-09-29', { userId: 'u-karim' });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Audit terrain' }, TIMEOUT)).toBeInTheDocument();
-
-    const first = screen.getByRole('group', { name: 'Résultat : EPI conformes sur la ligne' });
-    await user.click(within(first).getByRole('button', { name: 'Conforme' }));
-    await waitFor(() => expect(screen.getByText('1/28 points')).toBeInTheDocument());
-
-    const second = screen.getByRole('group', { name: 'Résultat : Zones de circulation dégagées' });
-    await user.click(within(second).getByRole('button', { name: 'Non conforme' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Déclarer une anomalie ?' }, TIMEOUT);
-    await user.click(within(dialog).getByRole('button', { name: 'Enregistrer l’anomalie' }));
-
-    await waitFor(async () => {
-      const anomalies = await ds.repo('anomalies').list();
-      expect(anomalies.some((a) => a.origin.type === 'routine' && a.description.includes('Zones de circulation'))).toBe(true);
-    }, TIMEOUT);
-    expect(await screen.findByRole('link', { name: /Anomalie liée/ }, TIMEOUT)).toBeInTheDocument();
+describe('espaces et gardes', () => {
+  it('chaque profil arrive sur son espace', async () => {
+    const { router } = renderApp('/', { userId: 'u-nadia' });
+    expect(await screen.findByRole('heading', { level: 1, name: /Bonjour Nadia/ }, TIMEOUT)).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/app');
   });
 
-  it('une journée passée est en consultation seule', async () => {
-    renderApp('/routines/rt-ll-open/2026-09-28', { userId: 'u-karim' });
-    expect(await screen.findByText('Journée passée : consultation uniquement.', {}, TIMEOUT)).toBeInTheDocument();
-    const group = screen.getAllByRole('group')[0]!;
-    expect(within(group).getByRole('button', { name: 'Conforme' })).toBeDisabled();
+  it('un opérateur n’accède ni à l’administration ni à la supervision', async () => {
+    renderApp('/admin/planification', { userId: 'u-nadia' });
+    expect(await screen.findByText('Accès non autorisé', {}, TIMEOUT)).toBeInTheDocument();
+    const nav = screen.getAllByRole('navigation', { name: 'Navigation principale' })[0]!;
+    expect(within(nav).queryByRole('button', { name: 'Administration' })).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('button', { name: 'Supervision' })).not.toBeInTheDocument();
+  });
+
+  it('le manager planifie mais ne gère pas les utilisateurs', async () => {
+    renderApp('/admin/utilisateurs', { userId: 'u-dupont' });
+    expect(await screen.findByText('Accès non autorisé', {}, TIMEOUT)).toBeInTheDocument();
+    const nav = screen.getAllByRole('navigation', { name: 'Navigation principale' })[0]!;
+    expect(within(nav).getByRole('link', { name: 'Planification' })).toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: 'Utilisateurs' })).not.toBeInTheDocument();
+  });
+});
+
+describe('routines', () => {
+  it('démarrer, exécuter les tâches obligatoires, terminer : la durée réelle est enregistrée', async () => {
+    const { user, ds } = renderApp('/app/routines/sc-op-5s-nadia/2026-09-29', { userId: 'u-nadia' });
+    await user.click(await screen.findByRole('button', { name: 'Démarrer' }, TIMEOUT));
+    const finish = await screen.findByRole('button', { name: 'Terminer la routine' }, TIMEOUT);
+    expect(finish).toBeDisabled();
+
+    for (const label of ['Outillage inutile retiré', 'Chaque outil à son emplacement', 'Plan de travail nettoyé']) {
+      await user.click(
+        within(screen.getByRole('group', { name: `Résultat : ${label}` })).getByRole('button', { name: 'Conforme', exact: true }),
+      );
+    }
+    await user.click(
+      within(screen.getByRole('group', { name: 'Réponse : Aucune chute de câble au sol' })).getByRole('button', { name: 'Oui' }),
+    );
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Terminer la routine' })).toBeEnabled(), TIMEOUT);
+
+    await user.click(screen.getByRole('button', { name: 'Terminer la routine' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Routine terminée' });
+    expect(within(dialog).getByText('Tâches complétées')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Terminer' }));
+
+    await waitFor(async () => {
+      const run = (await ds.repo('routineRuns').list({ where: { scheduleId: 'sc-op-5s-nadia', date: '2026-09-29' } }))[0];
+      expect(run?.completedAt).toBeDefined();
+      expect(run?.completedBy).toBe('u-nadia');
+    }, TIMEOUT);
+  });
+
+  it('une routine d’une autre personne est en consultation seule pour la supervision', async () => {
+    renderApp('/app/routines/sc-ha-crimp/2026-09-28', { userId: 'u-dupont' });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Contrôle presses de sertissage' }, TIMEOUT)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Démarrer|Terminer la routine/ })).not.toBeInTheDocument();
+    for (const b of screen.queryAllByRole('button', { name: 'Conforme', exact: true })) expect(b).toBeDisabled();
+  });
+
+  it('une routine non affectée est refusée à un opérateur', async () => {
+    renderApp('/app/routines/sc-ll-audit/2026-09-29', { userId: 'u-nadia' });
+    expect(await screen.findByText('Accès non autorisé', {}, TIMEOUT)).toBeInTheDocument();
   });
 });
 
@@ -141,9 +178,12 @@ describe('actions', () => {
     const link = await screen.findByRole('link', { name: 'Former Nadia au nouveau rubanage' }, TIMEOUT);
     await user.click(link);
     await user.click(await screen.findByRole('button', { name: 'Marquer terminée' }, TIMEOUT));
+    const closeDialog = await screen.findByRole('dialog', { name: 'Terminer l’action' });
+    await user.type(within(closeDialog).getByLabelText(/Résolution/), 'Formation réalisée au poste');
+    await user.click(within(closeDialog).getByRole('button', { name: 'Terminer' }));
     await waitFor(async () => {
       const created = (await ds.repo('actions').list()).find((a) => a.title === 'Former Nadia au nouveau rubanage');
-      expect(created).toMatchObject({ status: 'done', assigneeId: 'u-karim' });
+      expect(created).toMatchObject({ status: 'done', assigneeId: 'u-karim', resolutionNote: 'Formation réalisée au poste' });
       expect(created?.closedAt).toBeDefined();
     }, TIMEOUT);
   });
