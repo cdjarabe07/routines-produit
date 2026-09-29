@@ -9,18 +9,17 @@ import type {
   Meeting,
   ProductionOrder,
   QualityCheck,
-  RoutineRun,
-  RoutineTemplate,
   User,
   Workstation,
 } from '@/types/domain';
 import type { Permission } from '@/services/auth/permissions';
+import type { PolicyResource } from '@/services/auth/policies';
 import { isOverdue, isDueToday, isOpenAction } from '@/features/actions/model';
 import { ANDON_TYPE, isEscalated, isOpenAlert } from '@/features/andon/model';
 import { isOpenAnomaly } from '@/features/anomalies/model';
+import { countOccurrences, isAssignedTo, occurrenceState, type Occurrence } from '@/features/planning/model';
 import { needsReorder } from '@/features/production/model';
 import { checksOn, conformity } from '@/features/quality/model';
-import { dayCompletion, findRun, routineState, runProgress, templatesForRole } from '@/features/routines/model';
 import { dateKeyOf, formatLongDate, formatMinutes, formatTime, minutesBetween, minutesOfDay, timeToMinutes } from '@/utils/date';
 import { formatPercent, ratio } from '@/utils/format';
 
@@ -28,14 +27,14 @@ export interface CockpitData {
   user: User;
   now: Date;
   today: DateKey;
-  can: (p: Permission) => boolean;
+  can: (p: Permission, resource?: PolicyResource) => boolean;
   lines: Line[];
   workstations: Workstation[];
   alerts: AndonAlert[];
   actions: Action[];
   anomalies: Anomaly[];
-  templates: RoutineTemplate[];
-  runs: RoutineRun[];
+  /** Occurrences planifiées du jour (toutes personnes) */
+  occurrences: Occurrence[];
   meetings: Meeting[];
   stocks: MaterialStock[];
   orders: ProductionOrder[];
@@ -55,9 +54,9 @@ export interface Priority {
 }
 
 /**
- * « À traiter maintenant » — ordre de priorité (docs/functional-spec.md §5.1) :
- * Andon actifs > actions en retard > routines dont l'heure est passée > réunion à tenir
- * > stocks sous le minimum > passation manquante après 12 h.
+ * « À traiter maintenant » — ordre de priorité :
+ * Andon actifs > actions en retard > mes routines dont l'heure est passée > routines en retard de l'équipe
+ * > réunion à tenir > stocks sous le minimum > passation manquante après 12 h.
  */
 export function buildPriorities(d: CockpitData): Priority[] {
   const out: Priority[] = [];
@@ -73,7 +72,7 @@ export function buildPriorities(d: CockpitData): Priority[] {
       level: a.status === 'active' ? 'critical' : 'high',
       title: `Andon ${ANDON_TYPE[a.type].label.toLowerCase()} — ${d.workstationName(a.workstationId)}`,
       meta: `${a.detail} · ${a.status === 'active' ? (escalated ? 'escaladé, en attente' : 'en attente') : 'pris en charge'} depuis ${formatMinutes(minutesBetween(a.raisedAt, d.now))}`,
-      to: '/andon',
+      to: `/andon/${a.id}`,
     });
   }
 
@@ -95,37 +94,57 @@ export function buildPriorities(d: CockpitData): Priority[] {
       level: 'high',
       title: `${overdue.length - 5} autre(s) action(s) en retard`,
       meta: 'Voir toutes les actions en retard',
-      to: '/actions?vue=overdue',
+      to: d.can('action.manage') ? '/manager/actions?vue=overdue' : '/app/actions?vue=overdue',
     });
 
   if (d.can('routine.execute')) {
-    for (const t of templatesForRole(d.templates, d.user.role)) {
-      const run = findRun(d.runs, t.id, d.today);
-      const state = routineState(t, run, d.today, d.today, d.now, d.toleranceMinutes);
-      if (state === 'late' || state === 'due') {
-        const p = runProgress(t, run);
+    for (const o of d.occurrences.filter((x) => isAssignedTo(x.schedule, d.user))) {
+      const state = occurrenceState(o, d.today, d.now, d.toleranceMinutes);
+      if (state === 'late' || state === 'due' || state === 'in_progress') {
         out.push({
-          id: `routine-${t.id}`,
+          id: `routine-${o.key}`,
           level: state === 'late' ? 'high' : 'normal',
-          title: `Routine ${t.scheduledTime} — ${t.title}`,
-          meta: `${p.total - p.treated} point(s) à traiter${state === 'late' ? ' · en retard' : ''}`,
-          to: `/routines/${t.id}/${d.today}`,
+          title: `Ma routine ${o.time} — ${o.routine.title}`,
+          meta: state === 'in_progress' ? 'En cours' : state === 'late' ? 'En retard' : 'À faire maintenant',
+          to: `/app/routines/${o.schedule.id}/${o.date}`,
         });
       }
     }
   }
 
-  if (d.can('meeting.manage')) {
-    const meeting = d.meetings.find((m) => m.date === d.today && m.status !== 'done');
-    if (meeting && minutesOfDay(d.now) >= timeToMinutes(meeting.startTime)) {
+  if (d.can('routine.supervise')) {
+    const others = d.occurrences.filter(
+      (o) => !isAssignedTo(o.schedule, d.user) && occurrenceState(o, d.today, d.now, d.toleranceMinutes) === 'late',
+    );
+    if (others.length)
       out.push({
-        id: `meeting-${meeting.id}`,
-        level: 'normal',
-        title: `${meeting.title} (${meeting.startTime})`,
-        meta: 'Réunion du jour pas encore clôturée',
-        to: `/reunions/${meeting.id}`,
+        id: 'team-late',
+        level: 'high',
+        title: `${others.length} routine(s) en retard dans l’atelier`,
+        meta: others
+          .slice(0, 3)
+          .map((o) => `${o.time} ${o.routine.title}`)
+          .join(' · '),
+        to: '/manager/routines?vue=retard',
       });
-    }
+  }
+
+  const meeting = d.meetings.find(
+    (m) =>
+      m.date === d.today &&
+      m.status !== 'done' &&
+      m.status !== 'cancelled' &&
+      d.can('meeting.run', { type: 'meeting', meeting: m }) &&
+      m.organizerId === d.user.id,
+  );
+  if (meeting && minutesOfDay(d.now) >= timeToMinutes(meeting.startTime)) {
+    out.push({
+      id: `meeting-${meeting.id}`,
+      level: 'normal',
+      title: `${meeting.title} (${meeting.startTime})`,
+      meta: 'Réunion dont vous êtes responsable, pas encore clôturée',
+      to: `/reunions/${meeting.id}`,
+    });
   }
 
   if (d.can('production.update')) {
@@ -136,7 +155,7 @@ export function buildPriorities(d: CockpitData): Priority[] {
         level: 'normal',
         title: `${low.length} stock(s) matière sous le minimum`,
         meta: low.map((s) => s.material).join(' · '),
-        to: '/production?vue=stocks',
+        to: '/manager/production?vue=stocks',
       });
   }
 
@@ -150,7 +169,7 @@ export function buildPriorities(d: CockpitData): Priority[] {
         level: 'normal',
         title: 'Rédiger la passation de poste',
         meta: 'Aucune passation publiée par vous aujourd’hui',
-        to: '/passation',
+        to: '/app/passation',
       });
   }
 
@@ -183,19 +202,63 @@ export function lineStatuses(d: Pick<CockpitData, 'lines' | 'workstations' | 'al
   });
 }
 
-export function dayIndicators(d: Pick<CockpitData, 'templates' | 'runs' | 'actions' | 'anomalies' | 'checks' | 'today'>) {
-  const completion = dayCompletion(d.templates, d.runs, d.today);
+export function dayIndicators(
+  d: Pick<CockpitData, 'occurrences' | 'actions' | 'anomalies' | 'checks' | 'alerts' | 'today' | 'now' | 'toleranceMinutes'>,
+) {
+  const counts = countOccurrences(d.occurrences, d.today, d.now, d.toleranceMinutes);
   const openActions = d.actions.filter(isOpenAction);
+  const dueSoFar = counts.planned - counts.upcoming;
   return {
-    routinePct: ratio(completion.treated, completion.total),
-    routineDetail: `${completion.treated}/${completion.total} points · ${completion.completedRoutines}/${completion.routines} routines`,
+    routines: counts,
+    /** Terminées / échues à cet instant (les routines à venir ne comptent pas) */
+    routinePct: ratio(counts.done, dueSoFar),
+    routineDetail: `${counts.done} terminée(s) sur ${dueSoFar} échue(s) · ${counts.planned} programmée(s)`,
     overdueActions: openActions.filter((a) => isOverdue(a, d.today)).length,
     dueToday: openActions.filter((a) => isDueToday(a, d.today)).length,
+    openActions: openActions.length,
     openAnomalies: d.anomalies.filter(isOpenAnomaly).length,
     criticalAnomalies: d.anomalies.filter((a) => isOpenAnomaly(a) && a.severity === 'critical').length,
+    openAndon: d.alerts.filter(isOpenAlert).length,
+    waitingAndon: d.alerts.filter((a) => a.status === 'active').length,
     qualityPct: conformity(checksOn(d.checks, d.today)),
     qualityCount: checksOn(d.checks, d.today).length,
   };
+}
+
+export interface PersonRoutines {
+  userId: string;
+  planned: number;
+  done: number;
+  inProgress: number;
+  late: number;
+  upcoming: number;
+}
+
+/** Routines du jour par personne (exécutant, ou personne affectée ; les occurrences d'équipe non démarrées vont à l'équipe). */
+export function routinesByPerson(
+  occurrences: Occurrence[],
+  today: DateKey,
+  now: Date,
+  toleranceMin: number,
+): { people: PersonRoutines[]; teamPending: Map<string, number> } {
+  const map = new Map<string, PersonRoutines>();
+  const teamPending = new Map<string, number>();
+  for (const o of occurrences) {
+    const owner = o.run?.assigneeId ?? o.schedule.assigneeId;
+    const state = occurrenceState(o, today, now, toleranceMin);
+    if (!owner) {
+      if (o.schedule.teamId) teamPending.set(o.schedule.teamId, (teamPending.get(o.schedule.teamId) ?? 0) + 1);
+      continue;
+    }
+    const p = map.get(owner) ?? { userId: owner, planned: 0, done: 0, inProgress: 0, late: 0, upcoming: 0 };
+    p.planned += 1;
+    if (state === 'done') p.done += 1;
+    else if (state === 'in_progress') p.inProgress += 1;
+    else if (state === 'late' || state === 'missed') p.late += 1;
+    else if (state === 'upcoming') p.upcoming += 1;
+    map.set(owner, p);
+  }
+  return { people: Array.from(map.values()), teamPending };
 }
 
 /** Rapport du jour en texte brut, à coller dans un email ou une messagerie. */
@@ -217,7 +280,7 @@ export function buildDailyReport(d: CockpitData, plantName: string): string {
     ),
     '',
     'INDICATEURS',
-    `• Routines : ${formatPercent(ind.routinePct)} des points traités (${ind.routineDetail})`,
+    `• Routines : ${formatPercent(ind.routinePct)} réalisées (${ind.routineDetail}) — en cours ${ind.routines.inProgress}, en retard ${ind.routines.late}`,
     `• Conformité LQC : ${formatPercent(ind.qualityPct, 1)} (${ind.qualityCount} mesure(s))`,
     `• Andon déclenchés aujourd’hui : ${alertsToday.length}`,
     `• Anomalies déclarées aujourd’hui : ${anomaliesToday.length} — ouvertes au total : ${ind.openAnomalies} (dont ${ind.criticalAnomalies} critique(s))`,

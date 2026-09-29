@@ -24,7 +24,7 @@ export function LineStatusStrip({ statuses, criticalAnomalies }: { statuses: Lin
           </span>
         </Link>
       ))}
-      <Link to="/anomalies" role="listitem" className={cx(styles.cell, criticalAnomalies ? styles.stopped : styles.running)}>
+      <Link to="/manager/anomalies" role="listitem" className={cx(styles.cell, criticalAnomalies ? styles.stopped : styles.running)}>
         <span className={styles.name}>Anomalies critiques</span>
         <span className={styles.state}>
           {criticalAnomalies ? `${criticalAnomalies} ouverte${criticalAnomalies > 1 ? 's' : ''}` : 'Aucune'}
