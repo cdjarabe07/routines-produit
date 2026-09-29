@@ -55,7 +55,11 @@ export function routineState(template: RoutineTemplate, run: RoutineRun | undefi
   return minutes - scheduled > toleranceMin ? 'late' : 'due';
 }
 
-export const templatesForRole = (templates: RoutineTemplate[], role: Role) =>
+/** Qui peut saisir une routine : son rôle cible, ou un gestionnaire des routines. Jour courant uniquement. */
+export const canEditRun = (template: RoutineTemplate, role: Role, canManage: boolean, date: DateKey, today: DateKey) =>
+  date === today && (template.role === role || canManage);
+
+export const templatesForRole =(templates: RoutineTemplate[], role: Role) =>
   templates.filter((t) => t.active && t.role === role).sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
 
 export const findRun = (runs: RoutineRun[], templateId: string, date: DateKey) =>

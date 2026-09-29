@@ -1,0 +1,5 @@
+.field { display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start; }
+.label { font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.preview { display: flex; align-items: flex-end; gap: var(--space-2); }
+.preview img { max-width: 200px; max-height: 150px; border-radius: var(--radius-md); border: 1px solid var(--color-border); object-fit: cover; }
+.error { font-size: var(--text-xs); color: var(--color-danger); }
