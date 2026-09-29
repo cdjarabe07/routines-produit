@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildDemoData } from '@/data/demo/seed';
-import { ALL_PERMISSIONS, roleCan } from '@/services/auth/permissions';
+import { PERMISSION_GROUPS, homePath, roleCan } from '@/services/auth/permissions';
 import { buildDailyReport, buildPriorities, lineStatuses, type CockpitData } from './dashboard/model';
 import { computeKpis, coverage, delta, previousPeriod, resolvePeriod, toCsv } from './reporting/model';
 
@@ -38,11 +38,23 @@ describe('permissions', () => {
     expect(roleCan('operator', 'anomaly.create')).toBe(true);
     expect(roleCan('operator', 'andon.raise')).toBe(true);
     expect(roleCan('operator', 'reporting.view')).toBe(false);
-    expect(roleCan('operator', 'admin.access')).toBe(false);
+    expect(roleCan('operator', 'space.admin')).toBe(false);
+    expect(roleCan('operator', 'space.supervision')).toBe(false);
+    expect(roleCan('operator', 'routine.execute')).toBe(true);
   });
-  it('l’administrateur a toutes les permissions ; seul lui accède à l’administration', () => {
-    for (const p of ALL_PERMISSIONS) expect(roleCan('admin', p)).toBe(true);
-    expect(roleCan('manager', 'admin.access')).toBe(false);
+  it('l’administrateur a toutes les permissions ; le manager planifie mais ne configure pas', () => {
+    for (const p of PERMISSION_GROUPS.flatMap((g) => g.permissions)) expect(roleCan('admin', p)).toBe(true);
+    expect(roleCan('manager', 'schedule.manage')).toBe(true);
+    expect(roleCan('manager', 'meeting.manage')).toBe(true);
+    for (const p of ['routine.manage', 'user.manage', 'settings.manage', 'knowledge.manage'] as const)
+      expect(roleCan('manager', p)).toBe(false);
+  });
+  it('chaque rôle a un profil et un écran d’accueil', () => {
+    expect(homePath('admin')).toBe('/admin/dashboard');
+    expect(homePath('manager')).toBe('/manager');
+    expect(homePath('line_leader')).toBe('/manager');
+    expect(homePath('operator')).toBe('/app');
+    expect(homePath('quality')).toBe('/app');
   });
 });
 

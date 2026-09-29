@@ -18,7 +18,7 @@ import { formatDate, formatDateTime, todayKey } from '@/utils/date';
 import { useUpdateAction } from '../api';
 import { ActionForm } from '../components/ActionForm';
 import { ActionStatusBadge, DueDate, PriorityBadge } from '../components/ActionBadges';
-import { canUpdateAction, closureDays, isOpenAction, sourceLink } from '../model';
+import { closureDays, isOpenAction, sourceLink } from '../model';
 
 export function ActionDetailPage() {
   const { id } = useParams();
@@ -49,7 +49,7 @@ function ActionDetail({ action, lookups }: { action: Action; lookups: Lookups })
   const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const today = todayKey();
-  const allowed = canUpdateAction(action, user.id, can('action.manage'));
+  const allowed = can('action.update', { type: 'action', action });
   const link = sourceLink(action);
   const days = closureDays(action);
 

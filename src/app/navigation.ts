@@ -83,10 +83,10 @@ export const NAVIGATION: NavGroup[] = [
   {
     label: 'Administration',
     items: [
-      { path: '/admin/utilisateurs', label: 'Utilisateurs', icon: UserCog, permission: 'admin.access' },
-      { path: '/admin/roles', label: 'Rôles & droits', icon: ShieldCheck, permission: 'admin.access' },
-      { path: '/admin/postes', label: 'Postes & QR codes', icon: QrCode, permission: 'admin.access' },
-      { path: '/admin/parametres', label: 'Paramètres', icon: Settings, permission: 'admin.access' },
+      { path: '/admin/utilisateurs', label: 'Utilisateurs', icon: UserCog, permission: 'user.manage' },
+      { path: '/admin/roles', label: 'Rôles & droits', icon: ShieldCheck, permission: 'settings.manage' },
+      { path: '/admin/postes', label: 'Postes & QR codes', icon: QrCode, permission: 'workstation.manage' },
+      { path: '/admin/parametres', label: 'Paramètres', icon: Settings, permission: 'settings.manage' },
     ],
   },
 ];

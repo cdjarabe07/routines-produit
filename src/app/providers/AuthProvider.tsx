@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AuthService, Session } from '@/services/auth/authService';
-import { roleCan, type Permission } from '@/services/auth/permissions';
+import type { Permission } from '@/services/auth/permissions';
+import { can as authorize, type PolicyResource } from '@/services/auth/policies';
 import type { ID, User } from '@/types/domain';
 import { useDataSource } from './DataSourceProvider';
 
@@ -10,7 +11,8 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   status: 'unavailable' | 'signedOut' | 'loading' | 'signedIn';
-  can: (permission: Permission) => boolean;
+  /** Droit du rôle, et règle de la ressource si elle est fournie (services/auth/policies.ts). */
+  can: (permission: Permission, resource?: PolicyResource) => boolean;
   signIn: (userId: ID) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -57,7 +59,7 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
       session,
       user,
       status,
-      can: (permission) => (user ? roleCan(user.role, permission) : false),
+      can: (permission, resource) => authorize(user, permission, resource),
       signIn,
       signOut,
     };

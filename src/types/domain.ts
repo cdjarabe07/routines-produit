@@ -31,7 +31,12 @@ export interface User extends BaseEntity {
   lineId?: ID;
   zoneLabel?: string;
   shift?: Shift;
+  /** Équipe de rattachement (le quart et la ligne sont alors repris de l'équipe) */
+  teamId?: ID;
+  /** Poste habituel */
+  workstationId?: ID;
   active: boolean;
+  lastSignInAt?: ISODateTime;
 }
 
 export interface Line extends BaseEntity {
@@ -345,6 +350,8 @@ export interface Meeting extends BaseEntity {
   durationMin: number;
   organizerId: ID;
   participantIds: ID[];
+  /** Équipes invitées : tous leurs membres sont participants */
+  teamIds?: ID[];
   agenda: AgendaPoint[];
   minutes: string;
   status: MeetingStatus;

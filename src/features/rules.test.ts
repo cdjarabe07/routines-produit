@@ -2,8 +2,9 @@
    Chaque bloc correspond à un features/<module>/model.ts. */
 
 import { describe, expect, it } from 'vitest';
-import type { Action, AndonAlert, Leave, PresenceRecord, RoutineRun, RoutineTemplate } from '@/types/domain';
-import { canUpdateAction, defaultDueDate, filterActions, isOverdue, sortActions } from './actions/model';
+import type { Action, AndonAlert, Leave, PresenceRecord, RoutineRun, RoutineTemplate, User } from '@/types/domain';
+import { can } from '@/services/auth/policies';
+import { defaultDueDate, filterActions, isOverdue, sortActions } from './actions/model';
 import { andonStats, isEscalated, worstOpenAlert } from './andon/model';
 import { validationErrors } from './gemba/model';
 import { needsReorder, stockState } from './production/model';
@@ -63,9 +64,12 @@ describe('actions', () => {
 
   it('seuls responsable, suppléant, créateur ou encadrement modifient le statut', () => {
     const a = action({ assigneeId: 'u1', backupId: 'u2', createdBy: 'u3' });
-    expect(canUpdateAction(a, 'u2', false)).toBe(true);
-    expect(canUpdateAction(a, 'u4', false)).toBe(false);
-    expect(canUpdateAction(a, 'u4', true)).toBe(true);
+    const person = (id: string, role: User['role']): User => ({ ...base, id, name: id, email: `${id}@x`, role, active: true });
+    const res = { type: 'action' as const, action: a };
+    expect(can(person('u2', 'operator'), 'action.update', res)).toBe(true);
+    expect(can(person('u4', 'operator'), 'action.update', res)).toBe(false);
+    expect(can(person('u4', 'line_leader'), 'action.update', res)).toBe(true);
+    expect(can({ ...person('u2', 'operator'), active: false }, 'action.update', res)).toBe(false);
   });
 });
 

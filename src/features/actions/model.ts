@@ -4,10 +4,6 @@ import { PRIORITY } from '@/features/shared/labels';
 
 export const isOpenAction = (a: Action) => a.status === 'todo' || a.status === 'in_progress';
 
-/** Modifier le statut d'une action : responsable, suppléant, créateur, ou droit « action.manage ». */
-export const canUpdateAction = (a: Action, userId: ID, canManage: boolean) =>
-  canManage || a.assigneeId === userId || a.backupId === userId || a.createdBy === userId;
-
 /** Lien vers l'origine d'une action (null si saisie manuelle). */
 export function sourceLink(a: Action): string | null {
   if (!a.source.id) return null;
