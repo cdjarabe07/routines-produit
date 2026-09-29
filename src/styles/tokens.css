@@ -1,0 +1,96 @@
+/* ============================================================
+   Design tokens — source unique des couleurs, espacements et typos.
+   Règle : la couleur porte un sens métier (voir docs/design-system.md).
+   ============================================================ */
+:root {
+  /* Surfaces */
+  --color-background: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8f9fa;
+  --color-surface-sunken: #eceef1;
+  --color-border: #d8dce2;
+  --color-border-strong: #b9c0ca;
+
+  /* Texte */
+  --color-text: #151c26;
+  --color-text-muted: #56606e;
+  --color-text-subtle: #7a8492;
+  --color-text-inverse: #ffffff;
+
+  /* Chrome applicatif (barre latérale, en-tête) */
+  --color-chrome: #1d2632;
+  --color-chrome-raised: #273241;
+  --color-chrome-text: #c9d1dc;
+  --color-chrome-text-strong: #ffffff;
+  --color-chrome-muted: #8793a3;
+
+  /* Action principale */
+  --color-primary: #1c5bb8;
+  --color-primary-hover: #164a96;
+  --color-primary-soft: #e7eefa;
+
+  /* Statuts — sens métier */
+  --color-success: #1d7a3a;          /* conforme, OK, terminé */
+  --color-success-soft: #e5f3e9;
+  --color-warning: #a55f00;          /* attention, à surveiller, en retard léger */
+  --color-warning-strong: #d98300;
+  --color-warning-soft: #fdf1dd;
+  --color-danger: #b8261b;           /* critique, arrêt, non conforme */
+  --color-danger-strong: #d62f22;
+  --color-danger-soft: #fbe7e5;
+  --color-info: #1c5bb8;             /* information, en cours */
+  --color-info-soft: #e7eefa;
+  --color-neutral: #5f6b7a;          /* neutre, planifié, annulé */
+  --color-neutral-soft: #edf0f3;
+  --color-demo: #6b3fa0;             /* uniquement pour signaler le mode démo */
+  --color-demo-soft: #f1eaf8;
+
+  /* Typographie */
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --text-xs: 0.75rem;     /* 12 px — métadonnées */
+  --text-sm: 0.8125rem;   /* 13 px — tableaux, libellés */
+  --text-md: 0.875rem;    /* 14 px — corps */
+  --text-lg: 1rem;        /* 16 px — titres de section */
+  --text-xl: 1.25rem;     /* 20 px — titre de page */
+  --text-kpi: 1.75rem;    /* 28 px — valeurs clés */
+  --text-display: 2.75rem;/* 44 px — minuteurs, affichage à distance */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+
+  /* Espacements (base 4 px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Formes */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+  --shadow-overlay: 0 12px 32px rgba(15, 23, 35, 0.22);
+
+  /* Tailles */
+  --touch-target: 40px;
+  --sidebar-width: 240px;
+  --topbar-height: 52px;
+  --content-max: 1440px;
+
+  /* Focus */
+  --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
+
+  /* Couches */
+  --z-sticky: 10;
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  --transition-fast: 120ms ease;
+}
