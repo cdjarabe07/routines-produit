@@ -82,7 +82,13 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
               </div>
             </div>
           }
-          items={[{ label: 'Se déconnecter', icon: <LogOut size={16} aria-hidden />, onSelect: () => void signOut() }]}
+          items={[
+            {
+              label: 'Se déconnecter',
+              icon: <LogOut size={16} aria-hidden />,
+              onSelect: () => void signOut().then(() => navigate('/login', { replace: true })),
+            },
+          ]}
           trigger={(props) => (
             <button type="button" className={styles.user} {...props} aria-label={`Compte : ${user.name}`}>
               <span className={styles.avatar} aria-hidden>

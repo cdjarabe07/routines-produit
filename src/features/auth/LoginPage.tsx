@@ -4,7 +4,9 @@ import { Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Field';
-import { homePath } from '@/services/auth/permissions';
+import { SPACES, spaceOfPath } from '@/app/navigation';
+import { homePath, roleCan } from '@/services/auth/permissions';
+import type { User } from '@/types/domain';
 import { toUserMessage } from '@/services/errors';
 import styles from './LoginPage.module.css';
 
@@ -13,13 +15,23 @@ function safeReturn(value: string | null) {
   return value && value.startsWith('/') && !value.startsWith('//') ? value : null;
 }
 
+/**
+ * Destination après connexion : la page demandée (lien de notification, QR code) si le profil
+ * connecté a accès à son espace ; sinon son propre espace d'accueil.
+ */
+function destination(target: string | null, user: User): string {
+  if (!target) return homePath(user.role);
+  const space = SPACES.find((s) => s.id === spaceOfPath(target.split('?')[0]!));
+  return space && !roleCan(user.role, space.permission) ? homePath(user.role) : target;
+}
+
 export function LoginPage() {
   const { status, service, user } = useAuth();
   const [params, setParams] = useSearchParams();
   const target = safeReturn(params.get('retour'));
   const view = params.get('vue') === 'mot-de-passe' ? 'reset' : 'signin';
 
-  if (status === 'signedIn' && user) return <Navigate to={target ?? homePath(user.role)} replace />;
+  if (status === 'signedIn' && user) return <Navigate to={destination(target, user)} replace />;
 
   if (!service.available) {
     return (
@@ -87,7 +99,7 @@ function SignInForm({ target, onForgot }: { target: string | null; onForgot: () 
     setSubmitting(true);
     try {
       const signedIn = await signIn({ identifier, password });
-      navigate(target ?? homePath(signedIn.role), { replace: true });
+      navigate(destination(target, signedIn), { replace: true });
     } catch (err) {
       setError(toUserMessage(err));
       setPassword('');
