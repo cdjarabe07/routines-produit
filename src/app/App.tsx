@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router';
 import { env } from '@/app/config/env';
 import { AuthProvider } from '@/app/providers/AuthProvider';
 import { DataSourceProvider } from '@/app/providers/DataSourceProvider';
+import { ConfirmProvider } from '@/components/ui/ConfirmDialog';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ConfigErrorScreen } from '@/components/feedback/ConfigErrorScreen';
 import { createDemoAuthService, createUnconfiguredAuthService } from '@/services/auth/authService';
@@ -32,9 +33,11 @@ export function App() {
     <QueryClientProvider client={services.queryClient}>
       <DataSourceProvider value={services.dataSource}>
         <ToastProvider>
-          <AuthProvider service={services.auth}>
-            <RouterProvider router={services.router} />
-          </AuthProvider>
+          <ConfirmProvider>
+            <AuthProvider service={services.auth}>
+              <RouterProvider router={services.router} />
+            </AuthProvider>
+          </ConfirmProvider>
         </ToastProvider>
       </DataSourceProvider>
     </QueryClientProvider>

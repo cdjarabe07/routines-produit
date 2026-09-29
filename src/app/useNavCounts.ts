@@ -1,0 +1,51 @@
+import { useMemo } from 'react';
+import { useAuth } from '@/app/providers/AuthProvider';
+import { isDueToday, isOverdue } from '@/features/actions/model';
+import { isOpenAlert } from '@/features/andon/model';
+import { findRun, routineState, templatesForRole } from '@/features/routines/model';
+import { useSettings } from '@/features/shared/api';
+import { useCollection } from '@/hooks/useData';
+import { useNow } from '@/hooks/useNow';
+import { todayKey } from '@/utils/date';
+import type { NavCountKey } from './navigation';
+
+/** Compteurs du menu : ce qui attend une action de l'utilisateur connecté. */
+export function useNavCounts(): Partial<Record<NavCountKey, { value: number; urgent: boolean }>> {
+  const { user } = useAuth();
+  const now = useNow(60_000);
+  const { settings } = useSettings();
+  const actions = useCollection('actions');
+  const alerts = useCollection('andonAlerts');
+  const anomalies = useCollection('anomalies');
+  const templates = useCollection('routineTemplates');
+  const runs = useCollection('routineRuns');
+  const handovers = useCollection('handovers');
+
+  return useMemo(() => {
+    if (!user) return {};
+    const today = todayKey();
+    const mine = (actions.data ?? []).filter((a) => a.assigneeId === user.id);
+    const overdue = mine.filter((a) => isOverdue(a, today)).length;
+    const dueToday = mine.filter((a) => isDueToday(a, today)).length;
+
+    const routineStates = templatesForRole(templates.data ?? [], user.role).map((t) =>
+      routineState(t, findRun(runs.data ?? [], t.id, today), today, today, now, settings.routineLateToleranceMinutes),
+    );
+    const openAlerts = (alerts.data ?? []).filter(isOpenAlert);
+    const since = now.getTime() - 24 * 3_600_000;
+    const pendingHandovers = (handovers.data ?? []).filter(
+      (h) => !h.acknowledgedAt && user.shift && h.toShift === user.shift && new Date(h.createdAt).getTime() > since,
+    ).length;
+
+    return {
+      routines: {
+        value: routineStates.filter((s) => s === 'due' || s === 'late').length,
+        urgent: routineStates.includes('late'),
+      },
+      actions: { value: overdue + dueToday, urgent: overdue > 0 },
+      andon: { value: openAlerts.length, urgent: openAlerts.some((a) => a.status === 'active') },
+      anomalies: { value: (anomalies.data ?? []).filter((a) => a.status === 'open').length, urgent: false },
+      handover: { value: pendingHandovers, urgent: false },
+    };
+  }, [user, actions.data, alerts.data, anomalies.data, templates.data, runs.data, handovers.data, now, settings.routineLateToleranceMinutes]);
+}

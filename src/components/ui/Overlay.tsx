@@ -18,10 +18,12 @@ interface OverlayProps {
   /** Empêche la fermeture par Échap / clic extérieur (ex. pendant un enregistrement) */
   dismissible?: boolean;
   role?: 'dialog' | 'alertdialog';
+  /** Côté d'ouverture du tiroir */
+  side?: 'left' | 'right';
 }
 
 /* Base commune Modal / Drawer : piège du focus, Échap, restauration du focus, blocage du défilement. */
-function Overlay({ open, onClose, title, description, children, footer, kind, size = 'md', dismissible = true, role = 'dialog' }: OverlayProps) {
+function Overlay({ open, onClose, title, description, children, footer, kind, size = 'md', dismissible = true, role = 'dialog', side = 'right' }: OverlayProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descId = useId();
@@ -69,7 +71,7 @@ function Overlay({ open, onClose, title, description, children, footer, kind, si
   if (!open) return null;
 
   return createPortal(
-    <div className={cx(styles.backdrop, styles[`${kind}Backdrop`])} onMouseDown={(e) => { if (e.target === e.currentTarget && dismissible) onClose(); }}>
+    <div className={cx(styles.backdrop, styles[`${kind}Backdrop`], kind === 'drawer' && side === 'left' && styles.left)} onMouseDown={(e) => { if (e.target === e.currentTarget && dismissible) onClose(); }}>
       <div
         ref={panelRef}
         role={role}
