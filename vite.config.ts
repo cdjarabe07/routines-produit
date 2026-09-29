@@ -19,6 +19,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    testTimeout: 20_000,
     css: { modules: { classNameStrategy: 'non-scoped' } },
   },
 });

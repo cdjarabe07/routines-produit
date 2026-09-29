@@ -1,5 +1,5 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
-import { createHashRouter } from 'react-router';
+import { createHashRouter, type RouteObject } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoginPage } from '@/features/auth/LoginPage';
 import type { Permission } from '@/services/auth/permissions';
@@ -53,8 +53,8 @@ function guarded(Component: ComponentType, permission?: Permission, what?: strin
   );
 }
 
-export function createAppRouter() {
-  return createHashRouter([
+/** Table des routes, partagée par l'application (routeur hash) et les tests (routeur mémoire). */
+export const appRoutes: RouteObject[] = [
     { path: '/connexion', element: <LoginPage /> },
     {
       path: '/',
@@ -98,5 +98,8 @@ export function createAppRouter() {
         { path: '*', element: <NotFoundPage /> },
       ],
     },
-  ]);
+];
+
+export function createAppRouter() {
+  return createHashRouter(appRoutes);
 }
