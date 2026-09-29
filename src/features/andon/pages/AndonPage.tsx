@@ -11,7 +11,7 @@ import { useCollection } from '@/hooks/useData';
 import { useNow } from '@/hooks/useNow';
 import type { AndonAlert } from '@/types/domain';
 import { formatTime } from '@/utils/date';
-import { useAcknowledgeAndon } from '../api';
+import { useAcknowledgeAndon, useStartResolution } from '../api';
 import { AndonBoard } from '../components/AndonBoard';
 import { AndonHistory } from '../components/AndonHistory';
 import { RaiseAndonDialog } from '../components/RaiseAndonDialog';
@@ -30,6 +30,7 @@ export function AndonPage() {
   const alerts = useCollection('andonAlerts');
   const { queries, lookups } = useLookups();
   const acknowledge = useAcknowledgeAndon();
+  const startResolution = useStartResolution();
   const [resolving, setResolving] = useState<AndonAlert | null>(null);
   const [preselect, setPreselect] = useState<string | undefined>(params.get('poste') ?? undefined);
   const [display, setDisplay] = useState(false);
@@ -43,7 +44,7 @@ export function AndonPage() {
     <>
       <PageHeader
         title="Andon"
-        description="Arrêter, appeler, attendre : chaque alerte est chronométrée jusqu’à sa résolution."
+        description="Signaler un problème au poste et suivre sa prise en charge : chaque alerte est chronométrée jusqu’à sa résolution."
         actions={
           <>
             <Button icon={<Maximize2 size={16} aria-hidden />} onClick={() => setDisplay(true)}>
@@ -70,6 +71,7 @@ export function AndonPage() {
               userName={lookups!.userName}
               canRespond={can('andon.respond')}
               onAcknowledge={(a) => acknowledge.mutate({ alert: a, user })}
+              onStartResolution={(a) => startResolution.mutate({ alert: a, user })}
               onResolve={setResolving}
               onRaise={can('andon.raise') ? openRaise : undefined}
               display={display}

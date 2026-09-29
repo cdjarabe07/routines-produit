@@ -116,6 +116,16 @@
   margin-top: auto;
   padding-top: var(--space-2);
 }
+.detailLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  color: inherit;
+  font-size: var(--text-sm);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .active .onAlarm {
   background: #fff;
   color: var(--color-danger);

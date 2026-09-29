@@ -50,6 +50,7 @@ export function useUpdateAction() {
 const STATUS_MESSAGE: Record<ActionStatus, string> = {
   todo: 'Action enregistrée.',
   in_progress: 'Action en cours.',
+  blocked: 'Action signalée bloquée.',
   done: 'Action terminée.',
   cancelled: 'Action annulée.',
 };
@@ -63,6 +64,7 @@ export function useAddComment() {
       {
         targetType,
         targetId,
+        anchorId,
         text,
         author,
         notifyUserIds,
@@ -71,6 +73,7 @@ export function useAddComment() {
       }: {
         targetType: CommentTarget;
         targetId: ID;
+        anchorId?: ID;
         text: string;
         author: User;
         notifyUserIds: (ID | undefined)[];
@@ -78,7 +81,7 @@ export function useAddComment() {
         link: string;
       },
     ): Promise<Comment> => {
-      const comment = await ds.repo('comments').create({ targetType, targetId, authorId: author.id, text: text.trim() });
+      const comment = await ds.repo('comments').create({ targetType, targetId, anchorId, authorId: author.id, text: text.trim() });
       await notify(
         ds,
         notifyUserIds,

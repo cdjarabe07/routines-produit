@@ -59,6 +59,24 @@ export function useAcknowledgeAndon() {
   );
 }
 
+/** Démarrer la résolution : le problème est en cours de traitement sur place. */
+export function useStartResolution() {
+  return useOperation(
+    async (ds, { alert, user }: { alert: AndonAlert; user: User }) => {
+      const fresh = await ds.repo('andonAlerts').get(alert.id);
+      if (fresh.status === 'resolved') throw new ValidationError('Cet Andon est déjà résolu.');
+      const now = new Date().toISOString();
+      return ds.repo('andonAlerts').update(alert.id, {
+        status: 'in_progress',
+        acknowledgedBy: fresh.acknowledgedBy ?? user.id,
+        acknowledgedAt: fresh.acknowledgedAt ?? now,
+        resolutionStartedAt: now,
+      });
+    },
+    { invalidates: ['andonAlerts'], success: 'Résolution en cours.' },
+  );
+}
+
 export interface ResolveInput {
   alert: AndonAlert;
   user: User;
@@ -75,6 +93,7 @@ export function useResolveAndon() {
         status: 'resolved',
         acknowledgedBy: alert.acknowledgedBy ?? user.id,
         acknowledgedAt: alert.acknowledgedAt ?? now,
+        resolutionStartedAt: alert.resolutionStartedAt ?? now,
         resolvedBy: user.id,
         resolvedAt: now,
         rootCause: rootCause.trim(),

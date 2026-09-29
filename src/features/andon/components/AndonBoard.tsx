@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import type { AndonAlert, Line, Workstation } from '@/types/domain';
@@ -15,6 +16,7 @@ interface Props {
   userName: (id?: string) => string;
   canRespond: boolean;
   onAcknowledge?: (alert: AndonAlert) => void;
+  onStartResolution?: (alert: AndonAlert) => void;
   onResolve?: (alert: AndonAlert) => void;
   onRaise?: (workstationId: string) => void;
   /** Affichage atelier : fond sombre, gros caractères, sans boutons */
@@ -31,6 +33,7 @@ export function AndonBoard({
   userName,
   canRespond,
   onAcknowledge,
+  onStartResolution,
   onResolve,
   onRaise,
   display,
@@ -55,7 +58,7 @@ export function AndonBoard({
               {stations.map((ws) => {
                 const alert = worstOpenAlert(alerts, ws.id);
                 const escalated = alert ? isEscalated(alert, now, escalationMinutes) : false;
-                const state = !alert ? 'ok' : alert.status === 'acknowledged' ? 'ack' : 'active';
+                const state = !alert ? 'ok' : alert.status === 'active' ? 'active' : 'ack';
                 const openCount = alerts.filter((a) => a.workstationId === ws.id && a.status !== 'resolved').length;
                 return (
                   <li
@@ -89,16 +92,26 @@ export function AndonBoard({
                           {alert.acknowledgedBy && ` · ${userName(alert.acknowledgedBy)} intervient`}
                           {openCount > 1 && ` · ${openCount} alertes sur ce poste`}
                         </p>
-                        {!display && canRespond && (
+                        {!display && (
                           <div className={styles.buttons}>
-                            {alert.status === 'active' && (
+                            <Link to={`/andon/${alert.id}`} className={styles.detailLink}>
+                              Détail
+                            </Link>
+                            {canRespond && alert.status === 'active' && (
                               <Button size="sm" className={styles.onAlarm} onClick={() => onAcknowledge?.(alert)}>
                                 Je prends en charge
                               </Button>
                             )}
-                            <Button size="sm" variant="success" onClick={() => onResolve?.(alert)}>
-                              Résoudre
-                            </Button>
+                            {canRespond && alert.status === 'acknowledged' && (
+                              <Button size="sm" onClick={() => onStartResolution?.(alert)}>
+                                Démarrer la résolution
+                              </Button>
+                            )}
+                            {canRespond && (
+                              <Button size="sm" variant="success" onClick={() => onResolve?.(alert)}>
+                                Résoudre
+                              </Button>
+                            )}
                           </div>
                         )}
                       </>

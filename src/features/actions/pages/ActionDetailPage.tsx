@@ -7,7 +7,8 @@ import { EmptyState, QueryBoundary } from '@/components/feedback/States';
 import { Columns, PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
-import { Drawer } from '@/components/ui/Overlay';
+import { Drawer, Modal } from '@/components/ui/Overlay';
+import { FormActions, TextAreaField } from '@/components/ui/Field';
 import { Panel } from '@/components/ui/Panel';
 import { CommentThread } from '@/features/shared/components/CommentThread';
 import { ACTION_SOURCE } from '@/features/shared/labels';
@@ -48,6 +49,7 @@ function ActionDetail({ action, lookups }: { action: Action; lookups: Lookups })
   const update = useUpdateAction();
   const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
+  const [closing, setClosing] = useState<'done' | 'blocked' | null>(null);
   const today = todayKey();
   const allowed = can('action.update', { type: 'action', action });
   const link = sourceLink(action);
@@ -58,7 +60,9 @@ function ActionDetail({ action, lookups }: { action: Action; lookups: Lookups })
   return (
     <>
       <PageHeader
-        back={{ to: '/actions', label: 'Actions' }}
+        back={
+          can('action.manage') ? { to: '/manager/actions', label: 'Actions correctives' } : { to: '/app/actions', label: 'Mes actions' }
+        }
         title={action.title}
         meta={
           <>
@@ -74,8 +78,21 @@ function ActionDetail({ action, lookups }: { action: Action; lookups: Lookups })
                   Démarrer
                 </Button>
               )}
+              {action.status === 'blocked' && (
+                <Button
+                  onClick={() => update.mutate({ action, patch: { status: 'in_progress', blockedReason: undefined }, actor: user })}
+                  loading={update.isPending}
+                >
+                  Débloquer
+                </Button>
+              )}
+              {(action.status === 'todo' || action.status === 'in_progress') && (
+                <Button variant="ghost" onClick={() => setClosing('blocked')}>
+                  Signaler un blocage
+                </Button>
+              )}
               {isOpenAction(action) && (
-                <Button variant="success" onClick={() => setStatus('done')} loading={update.isPending}>
+                <Button variant="success" onClick={() => setClosing('done')} loading={update.isPending}>
                   Marquer terminée
                 </Button>
               )}
@@ -113,9 +130,19 @@ function ActionDetail({ action, lookups }: { action: Action; lookups: Lookups })
       />
       <Columns sideFirstOnMobile>
         <Stack>
+          {action.status === 'blocked' && (
+            <Panel title="Action bloquée" accent="danger">
+              <p style={{ whiteSpace: 'pre-wrap' }}>{action.blockedReason ?? 'Aucune précision.'}</p>
+            </Panel>
+          )}
           {action.description && (
-            <Panel title="Détails">
+            <Panel title="Problème et détails">
               <p style={{ whiteSpace: 'pre-wrap' }}>{action.description}</p>
+            </Panel>
+          )}
+          {action.resolutionNote && (
+            <Panel title="Résolution" accent="success">
+              <p style={{ whiteSpace: 'pre-wrap' }}>{action.resolutionNote}</p>
             </Panel>
           )}
           <Panel title="Commentaires">
@@ -158,9 +185,85 @@ function ActionDetail({ action, lookups }: { action: Action; lookups: Lookups })
         </Panel>
       </Columns>
 
+      <Modal
+        open={closing !== null}
+        onClose={() => setClosing(null)}
+        title={closing === 'done' ? 'Terminer l’action' : 'Signaler un blocage'}
+        description={
+          closing === 'done'
+            ? 'Décrivez ce qui a été fait : la note reste attachée à l’action.'
+            : 'Indiquez ce qui empêche d’avancer : le responsable et l’encadrement le verront.'
+        }
+        size="sm"
+      >
+        {closing && (
+          <CloseForm
+            kind={closing}
+            onCancel={() => setClosing(null)}
+            onSubmit={async (text) => {
+              await update.mutateAsync({
+                action,
+                patch:
+                  closing === 'done'
+                    ? { status: 'done', resolutionNote: text, blockedReason: undefined }
+                    : { status: 'blocked', blockedReason: text },
+                actor: user,
+              });
+              setClosing(null);
+            }}
+          />
+        )}
+      </Modal>
+
       <Drawer open={editing} onClose={() => setEditing(false)} title="Modifier l’action" size="md">
         {editing && <ActionForm users={lookups.users} action={action} onDone={() => setEditing(false)} />}
       </Drawer>
     </>
+  );
+}
+
+function CloseForm({
+  kind,
+  onCancel,
+  onSubmit,
+}: {
+  kind: 'done' | 'blocked';
+  onCancel: () => void;
+  onSubmit: (text: string) => Promise<void>;
+}) {
+  const [text, setText] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!text.trim()) {
+          setError(kind === 'done' ? 'Décrivez la résolution' : 'Indiquez la cause du blocage');
+          return;
+        }
+        setBusy(true);
+        try {
+          await onSubmit(text.trim());
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <TextAreaField
+        label={kind === 'done' ? 'Résolution' : 'Cause du blocage'}
+        required
+        rows={3}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        error={error ?? undefined}
+      />
+      <FormActions>
+        <Button onClick={onCancel}>Annuler</Button>
+        <Button type="submit" variant={kind === 'done' ? 'success' : 'primary'} loading={busy}>
+          {kind === 'done' ? 'Terminer' : 'Signaler le blocage'}
+        </Button>
+      </FormActions>
+    </form>
   );
 }

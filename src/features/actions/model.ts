@@ -2,7 +2,8 @@ import type { Action, DateKey, ID, Priority, Severity } from '@/types/domain';
 import { addDays } from '@/utils/date';
 import { PRIORITY } from '@/features/shared/labels';
 
-export const isOpenAction = (a: Action) => a.status === 'todo' || a.status === 'in_progress';
+/** Ouverte : à faire, en cours ou bloquée. */
+export const isOpenAction = (a: Action) => a.status === 'todo' || a.status === 'in_progress' || a.status === 'blocked';
 
 /** Lien vers l'origine d'une action (null si saisie manuelle). */
 export function sourceLink(a: Action): string | null {
@@ -14,6 +15,8 @@ export function sourceLink(a: Action): string | null {
       return `/gemba/${a.source.id}`;
     case 'meeting':
       return `/reunions/${a.source.id}`;
+    case 'andon':
+      return `/andon/${a.source.id}`;
     default:
       return null;
   }
@@ -24,12 +27,16 @@ export const isOverdue = (a: Action, today: DateKey) => isOpenAction(a) && a.due
 
 export const isDueToday = (a: Action, today: DateKey) => isOpenAction(a) && a.dueDate === today;
 
-export type ActionView = 'mine' | 'all' | 'overdue' | 'closed';
+export type ActionView = 'mine' | 'mineClosed' | 'all' | 'overdue' | 'blocked' | 'closed';
 
 export function filterActions(actions: Action[], view: ActionView, userId: ID, today: DateKey): Action[] {
   switch (view) {
     case 'mine':
       return actions.filter((a) => isOpenAction(a) && (a.assigneeId === userId || a.backupId === userId));
+    case 'mineClosed':
+      return actions.filter((a) => !isOpenAction(a) && (a.assigneeId === userId || a.backupId === userId));
+    case 'blocked':
+      return actions.filter((a) => a.status === 'blocked');
     case 'overdue':
       return actions.filter((a) => isOverdue(a, today));
     case 'closed':

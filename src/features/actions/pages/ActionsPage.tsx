@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import { Plus } from 'lucide-react';
 import { Can, useCurrentUser } from '@/app/providers/AuthProvider';
 import { DataTable, type Column } from '@/components/data-display/DataTable';
@@ -20,17 +20,27 @@ import { ActionForm } from '../components/ActionForm';
 import { ActionStatusBadge, DueDate, PriorityBadge } from '../components/ActionBadges';
 import { filterActions, isOverdue, sortActions, type ActionView } from '../model';
 
-const VIEWS: { value: ActionView; label: string }[] = [
-  { value: 'mine', label: 'Mes actions' },
-  { value: 'all', label: 'Toutes les actions ouvertes' },
+/* Supervision : toutes les actions de l'atelier. Mon travail : uniquement celles qui me sont confiées. */
+const SUPERVISION_VIEWS: { value: ActionView; label: string }[] = [
+  { value: 'all', label: 'Ouvertes' },
   { value: 'overdue', label: 'En retard' },
+  { value: 'blocked', label: 'Bloquées' },
+  { value: 'mine', label: 'Mes actions' },
   { value: 'closed', label: 'Terminées / annulées' },
+];
+const PERSONAL_VIEWS: { value: ActionView; label: string }[] = [
+  { value: 'mine', label: 'À traiter' },
+  { value: 'mineClosed', label: 'Terminées' },
 ];
 
 export function ActionsPage() {
   const user = useCurrentUser();
   const [params, setParams] = useSearchParams();
-  const view = (params.get('vue') as ActionView | null) ?? 'mine';
+  const supervision = useLocation().pathname.startsWith('/manager');
+  const VIEWS = supervision ? SUPERVISION_VIEWS : PERSONAL_VIEWS;
+  const defaultView: ActionView = supervision ? 'all' : 'mine';
+  const requested = params.get('vue') as ActionView | null;
+  const view = requested && VIEWS.some((v) => v.value === requested) ? requested : defaultView;
   const [priority, setPriority] = useState<Priority | ''>('');
   const [creating, setCreating] = useState(false);
   const actions = useCollection('actions');
@@ -43,11 +53,11 @@ export function ActionsPage() {
       ActionView,
       number
     >;
-  }, [actions.data, user.id, today]);
+  }, [actions.data, user.id, today, VIEWS]);
 
   const rows = useMemo(() => {
     const filtered = filterActions(actions.data ?? [], view, user.id, today).filter((a) => !priority || a.priority === priority);
-    return view === 'closed'
+    return view === 'closed' || view === 'mineClosed'
       ? filtered.sort((a, b) => (b.closedAt ?? b.updatedAt).localeCompare(a.closedAt ?? a.updatedAt))
       : sortActions(filtered, today);
   }, [actions.data, view, user.id, today, priority]);
@@ -88,8 +98,12 @@ export function ActionsPage() {
   return (
     <>
       <PageHeader
-        title="Actions"
-        description="Registre unique des actions de l’atelier : décidées en réunion, issues d’anomalies, de Gemba Walk ou saisies directement."
+        title={supervision ? 'Actions correctives' : 'Mes actions'}
+        description={
+          supervision
+            ? 'Registre unique des actions de l’atelier : issues d’anomalies, d’Andon, de réunions, de Gemba Walk ou saisies directement.'
+            : 'Les actions dont vous êtes responsable ou suppléant.'
+        }
         actions={
           <Can permission="action.create">
             <Button variant="primary" icon={<Plus size={16} aria-hidden />} onClick={() => setCreating(true)}>
@@ -105,7 +119,7 @@ export function ActionsPage() {
               <Tabs
                 label="Vue des actions"
                 value={view}
-                onChange={(v) => setParams(v === 'mine' ? {} : { vue: v }, { replace: true })}
+                onChange={(v) => setParams(v === defaultView ? {} : { vue: v }, { replace: true })}
                 items={VIEWS.map((v) => ({ ...v, count: counts[v.value] }))}
               />
             </div>
@@ -115,7 +129,7 @@ export function ActionsPage() {
               columns={columns}
               rowKey={(a) => a.id}
               rowLink={(a) => `/actions/${a.id}`}
-              rowTone={(a) => (isOverdue(a, today) ? 'danger' : undefined)}
+              rowTone={(a) => (isOverdue(a, today) || a.status === 'blocked' ? 'danger' : undefined)}
               search={{
                 placeholder: 'Rechercher une action, un responsable…',
                 text: (a) => `${a.title} ${a.description ?? ''} ${lookups?.userName(a.assigneeId)}`,

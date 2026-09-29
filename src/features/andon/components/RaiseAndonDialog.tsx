@@ -1,13 +1,19 @@
 import { useState } from 'react';
 import { useCurrentUser } from '@/app/providers/AuthProvider';
 import { Button } from '@/components/ui/Button';
-import { Checkbox, TextField } from '@/components/ui/Field';
+import { TextAreaField } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Overlay';
-import type { AndonType, Line, Workstation } from '@/types/domain';
+import type { AndonType, AndonUrgency, Line, Workstation } from '@/types/domain';
 import { cx } from '@/utils/cx';
 import { useRaiseAndon } from '../api';
-import { ANDON_PRESETS, ANDON_TYPE } from '../model';
+import { ANDON_PRESETS, ANDON_TYPE, ANDON_URGENCY } from '../model';
 import styles from './AndonDialogs.module.css';
+
+const URGENCY_HINT: Record<AndonUrgency, string> = {
+  low: 'Sans impact immédiat',
+  medium: 'Poste ralenti',
+  critical: 'Arrêt de ligne, risque client',
+};
 
 interface Props {
   open: boolean;
@@ -17,21 +23,21 @@ interface Props {
   initialWorkstationId?: string;
 }
 
-/** Déclenchement en trois choix rapides : poste, type, motif. */
+/** Déclenchement en quelques gestes : poste, type, description, urgence. */
 export function RaiseAndonDialog({ open, onClose, workstations, lines, initialWorkstationId }: Props) {
   const user = useCurrentUser();
   const raise = useRaiseAndon();
   const [workstationId, setWorkstationId] = useState(initialWorkstationId ?? '');
   const [type, setType] = useState<AndonType | ''>('');
   const [detail, setDetail] = useState('');
-  const [critical, setCritical] = useState(false);
+  const [urgency, setUrgency] = useState<AndonUrgency>('medium');
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
     setWorkstationId(initialWorkstationId ?? '');
     setType('');
     setDetail('');
-    setCritical(false);
+    setUrgency('medium');
     setError(null);
   };
   const close = () => {
@@ -50,7 +56,7 @@ export function RaiseAndonDialog({ open, onClose, workstations, lines, initialWo
     }
     try {
       await raise.mutateAsync({
-        input: { workstationId, type, detail, urgency: critical || type === 'safety' ? 'critical' : 'normal' },
+        input: { workstationId, type, detail, urgency: type === 'safety' ? 'critical' : urgency },
         user,
       });
       close();
@@ -118,6 +124,7 @@ export function RaiseAndonDialog({ open, onClose, workstations, lines, initialWo
                 onClick={() => {
                   setType(t);
                   setDetail('');
+                  setUrgency(ANDON_TYPE[t].defaultUrgency);
                 }}
               >
                 <strong>{ANDON_TYPE[t].label}</strong>
@@ -128,7 +135,7 @@ export function RaiseAndonDialog({ open, onClose, workstations, lines, initialWo
 
         {type && (
           <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>3. Motif</legend>
+            <legend className={styles.legend}>3. Description</legend>
             <div className={styles.presets}>
               {ANDON_PRESETS[type].map((p) => (
                 <button
@@ -142,21 +149,38 @@ export function RaiseAndonDialog({ open, onClose, workstations, lines, initialWo
                 </button>
               ))}
             </div>
-            <TextField
-              label="Précision"
+            <TextAreaField
+              label="Description du problème"
+              rows={2}
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
               placeholder="Choisissez un motif ou décrivez le problème"
             />
-            {type !== 'safety' && (
-              <Checkbox
-                label="Urgence critique"
-                description="Arrêt de ligne, risque pour la sécurité ou le client."
-                checked={critical}
-                onChange={(e) => setCritical(e.target.checked)}
-              />
+          </fieldset>
+        )}
+
+        {type && (
+          <fieldset className={styles.fieldset}>
+            <legend className={styles.legend}>4. Urgence</legend>
+            {type === 'safety' ? (
+              <p className={styles.note}>Un Andon sécurité est toujours traité comme critique.</p>
+            ) : (
+              <div className={styles.choices} role="radiogroup" aria-label="Urgence">
+                {(['low', 'medium', 'critical'] as AndonUrgency[]).map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    role="radio"
+                    aria-checked={urgency === u}
+                    className={cx(styles.choice, urgency === u && styles.selected)}
+                    onClick={() => setUrgency(u)}
+                  >
+                    <strong>{ANDON_URGENCY[u].label}</strong>
+                    <span>{URGENCY_HINT[u]}</span>
+                  </button>
+                ))}
+              </div>
             )}
-            {type === 'safety' && <p className={styles.note}>Un Andon sécurité est toujours traité comme critique.</p>}
           </fieldset>
         )}
 

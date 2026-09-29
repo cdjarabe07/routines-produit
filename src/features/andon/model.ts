@@ -1,18 +1,26 @@
 import type { Tone } from '@/components/ui/Badge';
-import type { AndonAlert, AndonStatus, AndonType, ID } from '@/types/domain';
+import type { AndonAlert, AndonStatus, AndonType, AndonUrgency, ID } from '@/types/domain';
 import { minutesBetween } from '@/utils/date';
 
-export const ANDON_TYPE: Record<AndonType, { label: string; defaultUrgency: 'normal' | 'critical' }> = {
-  quality: { label: 'Qualité', defaultUrgency: 'normal' },
-  equipment: { label: 'Équipement', defaultUrgency: 'normal' },
-  material: { label: 'Matière', defaultUrgency: 'normal' },
+export const ANDON_TYPE: Record<AndonType, { label: string; defaultUrgency: AndonUrgency }> = {
+  quality: { label: 'Qualité', defaultUrgency: 'medium' },
+  equipment: { label: 'Équipement', defaultUrgency: 'medium' },
+  material: { label: 'Matière', defaultUrgency: 'medium' },
   safety: { label: 'Sécurité', defaultUrgency: 'critical' },
 };
 
+/** Cycle : Nouveau → Pris en charge → En résolution → Résolu */
 export const ANDON_STATUS: Record<AndonStatus, { label: string; tone: Tone }> = {
-  active: { label: 'En attente', tone: 'danger' },
+  active: { label: 'Nouveau', tone: 'danger' },
   acknowledged: { label: 'Pris en charge', tone: 'warning' },
+  in_progress: { label: 'En résolution', tone: 'info' },
   resolved: { label: 'Résolu', tone: 'success' },
+};
+
+export const ANDON_URGENCY: Record<AndonUrgency, { label: string; tone: Tone; rank: number }> = {
+  critical: { label: 'Critique', tone: 'danger', rank: 0 },
+  medium: { label: 'Moyenne', tone: 'warning', rank: 1 },
+  low: { label: 'Faible', tone: 'neutral', rank: 2 },
 };
 
 export const ANDON_PRESETS: Record<AndonType, string[]> = {
@@ -37,7 +45,7 @@ export function worstOpenAlert(alerts: AndonAlert[], workstationId: ID): AndonAl
   return alerts
     .filter((a) => a.workstationId === workstationId && isOpenAlert(a))
     .sort((a, b) => {
-      const u = (a.urgency === 'critical' ? 0 : 1) - (b.urgency === 'critical' ? 0 : 1);
+      const u = ANDON_URGENCY[a.urgency].rank - ANDON_URGENCY[b.urgency].rank;
       if (u !== 0) return u;
       const s = (a.status === 'active' ? 0 : 1) - (b.status === 'active' ? 0 : 1);
       if (s !== 0) return s;
