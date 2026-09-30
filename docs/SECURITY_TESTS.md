@@ -18,6 +18,8 @@
 
 Sans ces éléments, `npm run test:security` n'exécute rien : la suite apparaît comme **ignorée** (« skipped »), jamais comme réussie.
 
+- `PW_TIMEZONE` (e2e Supabase) : fuseau du navigateur de test, **à aligner sur celui de l'atelier** (`settings.timezone`, ex. `Africa/Dakar`). Le serveur impose sa date du jour ; un navigateur dans un autre fuseau, après minuit chez lui mais pas à l'atelier, voit sa routine refusée (voir §5).
+
 ### Garde-fous
 
 - Le premier test vérifie que `settings.environment = 'demo'`. Les tests n'utilisent **aucune donnée de production**.
@@ -86,6 +88,24 @@ Sans ces éléments, `npm run test:security` n'exécute rien : la suite apparaî
 | « Mot de passe oublié » répété | Au plus 3 notifications par identifiant et par heure                                                       |
 | CORS                           | Aucun en-tête `Access-Control-Allow-Origin` pour une origine étrangère ; origine de l'application acceptée |
 
+### ERP — intégration (Mock SAP), `tests/security/erp.security.test.ts`
+
+| Test                                             | Attendu                                                                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Opérateur, manager, visiteur non connecté        | Aucune ligne des 5 tables d'intégration                                                                         |
+| Administrateur                                   | Lecture ; écriture directe refusée (tables, réglage, outbox)                                                    |
+| Opérateur, manager → fonction `erp-integration`  | 403 pour toutes les actions                                                                                     |
+| `integration_claim_outbox` appelée par un client | Refusée                                                                                                         |
+| Mode annoncé par le serveur                      | `mock`, scénarios listés                                                                                        |
+| Synchronisations répétées                        | 0 création, 0 mise à jour, nombre d'enregistrements inchangé, tout marqué `simulated`                           |
+| Jeu modifié puis retour                          | Mises à jour, nouveaux ordres présents une seule fois                                                           |
+| SAP indisponible                                 | Échec journalisé, aucune donnée modifiée                                                                        |
+| Erreur partielle                                 | 3 rejets journalisés, statut `partial`                                                                          |
+| Journalisation                                   | Historique complet et `ERP_SYNC` dans le journal d'audit                                                        |
+| Outbox                                           | Refus si envoi désactivé ; échec → nouvel essai programmé → relance → envoi ; un envoi réussi ne se relance pas |
+
+Tests unitaires associés (moteur, Mock, outbox, séparation navigateur/serveur) : `tests/erp/erp.test.ts`, 24 tests, lancés par `npm test`.
+
 ## 3. Tests navigateur contre le serveur (`e2e/security.spec.ts`)
 
 - Une session `ra:session` forgée dans `sessionStorage` (l'attaque P0-1 de l'audit) renvoie à la connexion.
@@ -94,7 +114,7 @@ Sans ces éléments, `npm run test:security` n'exécute rien : la suite apparaî
 - Un opérateur qui force l'URL d'administration voit « Accès non autorisé », sans données d'administration.
 - Changement de compte sans rafraîchissement.
 
-## 4. Dernière exécution (29/09/2026, après la migration 0011)
+## 4. Dernière exécution (30/09/2026, après la migration 0012)
 
 | Suite                                               | Résultat                                                                        |
 | --------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -106,6 +126,8 @@ Sans ces éléments, `npm run test:security` n'exécute rien : la suite apparaî
 | Recherche dans `dist/` (build Supabase)             | Ni `Routines2026`, ni clé secrète, ni JWT                                       |
 
 ## 5. Hors du champ de ces tests
+
+- **Poste dans un autre fuseau que l'atelier** (constaté le 30/09/2026, antérieur à l'intégration ERP) : le navigateur calcule « aujourd'hui » dans son fuseau, le serveur dans celui de l'atelier. Entre minuit local et minuit atelier, une routine du « jour » affichée peut être refusée au démarrage. Sans effet pour des postes réglés sur le fuseau de l'atelier ; correction possible : dériver la date du jour du client depuis `settings.timezone`.
 
 - Expiration réelle des jetons (1 h) et détection de réutilisation d'un jeton de rafraîchissement : comportement de Supabase Auth, non rejoué ici.
 - Résistance à la charge et au déni de service (limites de la plateforme).

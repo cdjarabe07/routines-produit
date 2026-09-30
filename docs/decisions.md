@@ -131,3 +131,14 @@ Audit de sécurité (docs/SECURITY_AUDIT.md) : sécurité réelle nulle tant que
 - Le mode démo local (stockage navigateur) est conservé pour le développement et les tests hors ligne ; il reste sans sécurité.
 - Projet actuel `routines-app-demo` : **démonstration uniquement**, aucune donnée réelle. La production exigera un projet distinct, sans comptes de démonstration (`settings.environment = 'production'`, figé).
 - Limites assumées : jeton de session lisible par le JavaScript de la page (SPA sans BFF), mot de passe oublié traité par l'administrateur faute de SMTP d'entreprise. Voir docs/SECURITY_ARCHITECTURE.md §11.
+
+## D-032 — Intégration ERP : adaptateur et Mock SAP
+
+L'environnement SAP de l'entreprise est inconnu (version, hébergement, interfaces). Plutôt que de deviner, l'application parle à un contrat `ErpAdapter`, rempli aujourd'hui par un **Mock SAP** clairement signalé comme simulation (docs/ERP_INTEGRATION.md).
+
+- Données ERP copiées dans une table générique (`erpRecords`) et liens génériques (`externalReferences`) : aucune colonne `sap_xxx`, aucune modification des tables métier existantes.
+- Idempotence par identifiant externe et empreinte de contenu ; outbox avec nouvelles tentatives pour les envois vers l'ERP.
+- Tout se passe côté serveur (fonction `erp-integration`), réglage `SAP_INTEGRATION_MODE` dans les secrets serveur (défaut `mock`) ; le navigateur ne communique jamais avec l'ERP.
+- Envoi sortant désactivé par défaut ; aucune donnée de l'application n'alimente encore automatiquement la file.
+- Deux fonctions prévues (`erp-sync`, `erp-outbox`) ont été regroupées en une seule (`erp-integration`), mêmes protections, pour déployer le code partagé une seule fois.
+- Brancher les données ERP sur les écrans Production : phase ultérieure, après connaissance du vrai SAP.

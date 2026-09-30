@@ -107,13 +107,17 @@ UI (pages) → hooks métier (features/*/api.ts) → DataSource → Repository �
 
 ## Backend Supabase
 
-1. Appliquer `supabase/migrations/0001` à `0011` sur un projet Supabase (région UE), dans l’ordre.
-2. Déployer les fonctions `supabase/functions/admin-users` et `demo-seed` (vérification du JWT activée). La clé de service n’est lue que par ces fonctions, dans les secrets de Supabase.
+1. Appliquer `supabase/migrations/0001` à `0012` sur un projet Supabase (région UE), dans l’ordre.
+2. Déployer les fonctions `supabase/functions/admin-users`, `demo-seed` et `erp-integration` (vérification du JWT activée). La clé de service n’est lue que par ces fonctions, dans les secrets de Supabase.
 3. Tableau de bord Supabase : désactiver l’inscription publique (déjà refusée par la base), longueur minimale des mots de passe 12, protection contre les mots de passe divulgués, MFA pour les administrateurs.
 4. Build avec `VITE_DATA_MODE=supabase`, `VITE_AUTH_MODE=supabase`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` ; mettre à jour `connect-src` dans `vercel.json` si le projet change.
 5. Démonstration : premier chargement du jeu par `demo-seed` avec le jeton d’amorçage (hors dépôt), puis _Administration → Paramètres → Réinitialiser l’environnement_. **Production** : projet distinct, `settings.environment = 'production'`, aucun compte de démonstration, comptes créés par l’administrateur (_Utilisateurs → Nouvel utilisateur_).
 
 Aucun composant d’écran n’est à modifier.
+
+## Intégration ERP (préparation SAP)
+
+L’application est prête à recevoir un connecteur SAP, **sans être connectée à aucun SAP** : un **Mock SAP** (simulation, signalée comme telle) permet de tester la synchronisation, l’idempotence, les erreurs et l’outbox depuis _Administration → Intégration ERP_. Tout se passe côté serveur (fonction `erp-integration`, réglage serveur `SAP_INTEGRATION_MODE`, défaut `mock`). Détails, et informations à obtenir pour le vrai SAP : [`docs/ERP_INTEGRATION.md`](docs/ERP_INTEGRATION.md).
 
 ## Documentation
 
