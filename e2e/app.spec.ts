@@ -56,6 +56,8 @@ const ROUTES = [
   '/admin/postes',
   '/admin/roles',
   '/admin/parametres',
+  '/admin/journal',
+  '/admin/integration',
 ];
 
 const today = () => {
@@ -77,6 +79,8 @@ for (const role of [
   { id: 'u-nadia', name: 'opérateur' },
 ]) {
   test(`toutes les routes s'affichent sans erreur — ${role.name}`, async ({ page }) => {
+    // 51 routes, chacune rechargée : bien au-delà du délai par défaut
+    test.setTimeout(240_000);
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
@@ -97,6 +101,7 @@ for (const viewport of [
 ]) {
   test(`aucun débordement horizontal — ${viewport.name}`, async ({ page }) => {
     test.skip(BACKEND === 'supabase', 'Mise en page indépendante du serveur : vérifiée en mode démo');
+    test.setTimeout(240_000);
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await signIn(page, 'u-admin');
     const overflowing: string[] = [];

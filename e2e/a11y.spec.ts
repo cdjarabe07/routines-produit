@@ -56,6 +56,8 @@ const ROUTES = [
   '/admin/postes',
   '/admin/roles',
   '/admin/parametres',
+  '/admin/journal',
+  '/admin/integration',
 ];
 
 const today = () => {
@@ -65,7 +67,7 @@ const today = () => {
 
 test('aucune violation WCAG A/AA détectée par axe', async ({ page }) => {
   test.skip(BACKEND === 'supabase', 'Interface indépendante du serveur : vérifiée en mode démo');
-  test.setTimeout(360_000);
+  test.setTimeout(600_000);
   await page.goto('/#/login');
   await page.evaluate(() => localStorage.clear());
   const report: string[] = [];
