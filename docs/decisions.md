@@ -142,3 +142,14 @@ L'environnement SAP de l'entreprise est inconnu (version, hébergement, interfac
 - Envoi sortant désactivé par défaut ; aucune donnée de l'application n'alimente encore automatiquement la file.
 - Deux fonctions prévues (`erp-sync`, `erp-outbox`) ont été regroupées en une seule (`erp-integration`), mêmes protections, pour déployer le code partagé une seule fois.
 - Brancher les données ERP sur les écrans Production : phase ultérieure, après connaissance du vrai SAP.
+
+## D-033 — Date opérationnelle dans le fuseau de l'atelier
+
+« Aujourd'hui », l'heure du jour et le jour d'un horodatage sont calculés dans le fuseau horaire de l'**atelier**, jamais dans celui du poste : un poste réglé sur un autre fuseau voyait sinon, entre minuit chez lui et minuit à l'atelier, des routines du mauvais jour, refusées au démarrage par le serveur.
+
+- Source unique : `settings.timezone` en base (actuellement `Africa/Dakar`), déjà utilisée par le serveur (`app.today()`). Pour un autre atelier : modifier cette valeur (base de données) ; aucun fuseau n'est écrit dans le code.
+- Navigateur : `src/utils/date.ts` (`setPlantTimeZone`, calculs via `Intl.DateTimeFormat` et le fuseau de l'atelier), appliqué avant l'affichage des écrans par `src/app/PlantTimeZone.tsx`.
+- Arithmétique des dates « AAAA-MM-JJ » : calendaire pure (UTC interne), indépendante de tout fuseau.
+- Affichage : les dates s'affichent telles quelles ; les heures (clôture d'une routine, Andon…) à l'heure de l'atelier, cohérentes avec les horaires planifiés.
+- Mode démo local (sans réglage) : repli sur le fuseau du navigateur.
+- La réinitialisation de la démo n'envoie plus le fuseau du navigateur.

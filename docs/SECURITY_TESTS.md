@@ -18,7 +18,7 @@
 
 Sans ces éléments, `npm run test:security` n'exécute rien : la suite apparaît comme **ignorée** (« skipped »), jamais comme réussie.
 
-- `PW_TIMEZONE` (e2e Supabase) : fuseau du navigateur de test, **à aligner sur celui de l'atelier** (`settings.timezone`, ex. `Africa/Dakar`). Le serveur impose sa date du jour ; un navigateur dans un autre fuseau, après minuit chez lui mais pas à l'atelier, voit sa routine refusée (voir §5).
+- `PW_TIMEZONE` (facultatif) : fuseau simulé du navigateur de test. La date opérationnelle étant celle de l'atelier (D-033), les tests doivent réussir quel que soit ce fuseau ; ils ont été exécutés en `Asia/Shanghai` et en `America/New_York` pour un atelier en `Africa/Dakar`.
 
 ### Garde-fous
 
@@ -127,7 +127,7 @@ Tests unitaires associés (moteur, Mock, outbox, séparation navigateur/serveur)
 
 ## 5. Hors du champ de ces tests
 
-- **Poste dans un autre fuseau que l'atelier** (constaté le 30/09/2026, antérieur à l'intégration ERP) : le navigateur calcule « aujourd'hui » dans son fuseau, le serveur dans celui de l'atelier. Entre minuit local et minuit atelier, une routine du « jour » affichée peut être refusée au démarrage. Sans effet pour des postes réglés sur le fuseau de l'atelier ; correction possible : dériver la date du jour du client depuis `settings.timezone`.
+- **Poste dans un autre fuseau que l'atelier** : corrigé le 30/09/2026 (D-033). Tests : `src/utils/date.test.ts` (fuseau du poste simulé, passage de minuit, changement de fuseau en cours d'exécution, heure d'été) et e2e Supabase avec un navigateur en `Asia/Shanghai` et en `America/New_York`.
 
 - Expiration réelle des jetons (1 h) et détection de réutilisation d'un jeton de rafraîchissement : comportement de Supabase Auth, non rejoué ici.
 - Résistance à la charge et au déni de service (limites de la plateforme).

@@ -81,6 +81,8 @@ Copier `.env.example` en `.env.local` et ajuster :
 | `VITE_BI_ALLOWED_ORIGIN`        | origine https                  | —             | Contrôle de l’origine du rapport                                                                               |
 | `VITE_LOG_LEVEL`                | `debug` … `error`              | `warn` (prod) | Seuil de journalisation                                                                                        |
 
+**Fuseau horaire de l’atelier** : `settings.timezone` en base (actuellement `Africa/Dakar`). « Aujourd’hui », les heures des routines et le jour des événements sont calculés dans ce fuseau, quel que soit celui du poste (décision D-033). Pour un autre atelier, modifier cette seule valeur.
+
 Une configuration invalide affiche un écran d’erreur explicite au démarrage au lieu de lancer une application à moitié fonctionnelle. **Toute variable `VITE_*` est publique** (intégrée au code du navigateur) : aucun secret n’y a sa place.
 
 ## Architecture en bref
