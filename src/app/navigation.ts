@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  Network,
   ScrollText,
   ArrowLeftRight,
   BarChart3,
@@ -176,6 +177,7 @@ export const SPACES: Space[] = [
           { path: '/admin/roles', label: 'Rôles et droits', icon: ShieldCheck, permission: 'settings.manage' },
           { path: '/admin/parametres', label: 'Paramètres', icon: Settings, permission: 'settings.manage' },
           { path: '/admin/journal', label: 'Journal d’audit', icon: ScrollText, permission: 'settings.manage' },
+          { path: '/admin/integration', label: 'Intégration ERP', icon: Network, permission: 'settings.manage' },
         ],
       },
     ],

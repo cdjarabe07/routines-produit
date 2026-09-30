@@ -45,6 +45,11 @@ const EVENT_LABELS: Record<string, string> = {
   ANOMALY_UPDATED: 'Anomalie mise à jour',
   CORRECTIVE_ACTION_CREATED: 'Action corrective créée',
   CORRECTIVE_ACTION_UPDATED: 'Action corrective mise à jour',
+  ERP_SYNC: 'Synchronisation ERP',
+  ERP_SETTINGS_CHANGED: 'Réglage de l’intégration ERP modifié',
+  ERP_OUTBOX_PROCESSED: 'Envois vers l’ERP traités',
+  ERP_OUTBOX_RETRY: 'Envoi vers l’ERP relancé',
+  ERP_OUTBOX_TEST_ENQUEUED: 'Envoi de test ERP créé',
 };
 
 /** Journal d'audit : écrit uniquement par le serveur, consultable par l'administration, jamais modifiable. */

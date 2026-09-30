@@ -62,6 +62,7 @@ const P = {
   AdminRoles: page(() => import('@/features/admin/RolesPage'), 'RolesPage'),
   AdminSettings: page(() => import('@/features/admin/SettingsPage'), 'SettingsPage'),
   AdminAudit: page(() => import('@/features/admin/AuditLogPage'), 'AuditLogPage'),
+  AdminIntegration: page(() => import('@/features/admin/IntegrationPage'), 'IntegrationPage'),
 };
 
 function guarded(Component: ComponentType, permission?: Permission, what?: string) {
@@ -145,6 +146,7 @@ export const appRoutes: RouteObject[] = [
         { path: 'roles', element: guarded(P.AdminRoles, 'settings.manage', 'les rôles et droits') },
         { path: 'parametres', element: guarded(P.AdminSettings, 'settings.manage', 'les paramètres') },
         { path: 'journal', element: guarded(P.AdminAudit, 'settings.manage', 'le journal d’audit') },
+        { path: 'integration', element: guarded(P.AdminIntegration, 'settings.manage', 'l’intégration ERP') },
       ]),
 
       // Écrans de détail communs : le contenu s'adapte aux droits

@@ -6,6 +6,13 @@ import type {
   AccountAdmin,
   AuditEntry,
   CollectionMap,
+  ErpObjectType,
+  ErpRecord,
+  IntegrationApi,
+  IntegrationOutboxItem,
+  IntegrationSettings,
+  IntegrationStatus,
+  IntegrationSyncRun,
   CollectionName,
   DataSource,
   Dataset,
@@ -149,5 +156,81 @@ export function createSupabaseDataSource(client: SupabaseClient, options: Supaba
     return (data ?? []).map((r) => fromRow<AuditEntry>(r));
   }
 
-  return { kind: 'supabase', repo, serverSideEffects: true, accounts, resetDemoData, recordRunResult, auditLog };
+  async function read<T>(query: PromiseLike<{ data: unknown; error: PgError | null }>, context: string): Promise<T[]> {
+    const { data, error } = await query;
+    if (error) throw toAppError(error, context);
+    return ((data as Record<string, unknown>[] | null) ?? []).map((r) => fromRow<T>(r));
+  }
+
+  const ERP_TYPES: ErpObjectType[] = [
+    'workCenter',
+    'material',
+    'productionOrder',
+    'stock',
+    'stockMovement',
+    'qualityNotification',
+    'maintenanceNotification',
+  ];
+
+  // Intégration ERP : lecture des journaux (RLS : administration) ; toute opération passe par la fonction serveur
+  const integration: IntegrationApi = {
+    status: () => invoke<IntegrationStatus>('erp-integration', { action: 'status' }),
+    async settings() {
+      const [row] = await read<IntegrationSettings>(client.from('integrationSettings').select('*').eq('id', 'erp'), 'integrationSettings');
+      if (!row) throw new NotFoundError('Le réglage d’intégration');
+      return row;
+    },
+    runs: (limit) =>
+      read<IntegrationSyncRun>(
+        client.from('integrationSyncRuns').select('*').order('startedAt', { ascending: false }).limit(limit),
+        'integrationSyncRuns',
+      ),
+    outbox: (limit) =>
+      read<IntegrationOutboxItem>(
+        client.from('integrationOutbox').select('*').order('createdAt', { ascending: false }).limit(limit),
+        'integrationOutbox',
+      ),
+    async recordCounts() {
+      const entries = await Promise.all(
+        ERP_TYPES.map(async (type) => {
+          const { count, error } = await client.from('erpRecords').select('id', { count: 'exact', head: true }).eq('objectType', type);
+          if (error) throw toAppError(error, 'erpRecords');
+          return [type, count ?? 0] as const;
+        }),
+      );
+      return Object.fromEntries(entries) as Record<ErpObjectType, number>;
+    },
+    records: (objectType, limit) =>
+      read<ErpRecord>(
+        client
+          .from('erpRecords')
+          .select('id, system, objectType, externalId, payload, simulated, sourceUpdatedAt, updatedAt')
+          .eq('objectType', objectType)
+          .order('externalId')
+          .limit(limit),
+        'erpRecords',
+      ),
+    async sync(options) {
+      const { run } = await invoke<{ run: IntegrationSyncRun }>('erp-integration', { action: 'sync', ...options });
+      return fromRow<IntegrationSyncRun>(run as unknown as Record<string, unknown>);
+    },
+    async processOutbox(options) {
+      const { report } = await invoke<{ report: { processed: number; sent: number; retried: number; dead: number } }>('erp-integration', {
+        action: 'outbox-process',
+        ...options,
+      });
+      return report;
+    },
+    async retryOutbox(id) {
+      await invoke('erp-integration', { action: 'outbox-retry', id });
+    },
+    async enqueueTest(kind) {
+      await invoke('erp-integration', { action: 'outbox-test', kind });
+    },
+    async configure(settings) {
+      await invoke('erp-integration', { action: 'configure', ...settings });
+    },
+  };
+
+  return { kind: 'supabase', repo, serverSideEffects: true, accounts, resetDemoData, recordRunResult, auditLog, integration };
 }
