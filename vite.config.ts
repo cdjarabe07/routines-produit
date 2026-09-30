@@ -18,7 +18,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'tests/erp/**/*.test.ts'],
     testTimeout: 20_000,
     css: { modules: { classNameStrategy: 'non-scoped' } },
   },
