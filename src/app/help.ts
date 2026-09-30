@@ -7,18 +7,6 @@ export interface HelpTopic {
 
 const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
   {
-    match: /^\/admin\/integration/,
-    topic: {
-      title: 'Intégration ERP',
-      points: [
-        'Tant que le bandeau « Mock SAP — simulation » est affiché, aucune donnée ne vient du SAP de l’entreprise : tout est simulé.',
-        '« Synchroniser » lit l’ERP puis enregistre : création si nouveau, mise à jour si modifié, rien si inchangé. Une synchronisation répétée ne crée jamais de doublon.',
-        'Les scénarios simulés reproduisent les incidents à prévoir : ERP indisponible, délai dépassé, réponse invalide, doublons, erreurs partielles.',
-        'Les envois vers l’ERP passent par une file : si l’ERP ne répond pas, un nouvel essai est programmé ; « Relancer » remet un envoi abandonné dans la file.',
-      ],
-    },
-  },
-  {
     match: /^\/$/,
     topic: {
       title: 'Accueil',
