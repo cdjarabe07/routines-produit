@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDataSource } from '@/app/providers/DataSourceProvider';
 import { useToast } from '@/components/ui/Toast';
-import type { CollectionMap, CollectionName, DataSource } from '@/services/data/types';
+import type { CollectionMap, CollectionName, DataSource, ListFilter } from '@/services/data/types';
 import { toUserMessage } from '@/services/errors';
 import { createLogger } from '@/services/logger';
 
@@ -12,11 +12,12 @@ const log = createLogger('data');
 
 const collectionKey = (name: CollectionName) => ['collection', name] as const;
 
-export function useCollection<K extends CollectionName>(name: K) {
+/** Collection entière, ou filtrée (égalité, période) : chaque filtre a son cache, rafraîchi avec la collection. */
+export function useCollection<K extends CollectionName>(name: K, filter?: ListFilter<CollectionMap[K]>) {
   const ds = useDataSource();
   return useQuery({
-    queryKey: collectionKey(name),
-    queryFn: () => ds.repo(name).list() as Promise<CollectionMap[K][]>,
+    queryKey: filter ? [...collectionKey(name), filter] : collectionKey(name),
+    queryFn: () => ds.repo(name).list(filter) as Promise<CollectionMap[K][]>,
   });
 }
 

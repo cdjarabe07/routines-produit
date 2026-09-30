@@ -9,6 +9,7 @@ function fakeServer(rows: Record<string, unknown>[], maxRows: number) {
   const client = {
     from: () => {
       const eqs: [string, unknown][] = [];
+      const bounds: ((r: Record<string, unknown>) => boolean)[] = [];
       let withCount = false;
       let orderBy: string | null = null;
       const builder = {
@@ -20,13 +21,21 @@ function fakeServer(rows: Record<string, unknown>[], maxRows: number) {
           eqs.push([k, v]);
           return builder;
         },
+        gte: (k: string, v: string) => {
+          bounds.push((r) => String(r[k]) >= v);
+          return builder;
+        },
+        lt: (k: string, v: string) => {
+          bounds.push((r) => String(r[k]) < v);
+          return builder;
+        },
         order: (k: string) => {
           orderBy = k;
           return builder;
         },
         range: async (from: number, to: number) => {
           stats.requests++;
-          let data = rows.filter((r) => eqs.every(([k, v]) => r[k] === v));
+          let data = rows.filter((r) => eqs.every(([k, v]) => r[k] === v) && bounds.every((b) => b(r)));
           const count = data.length;
           if (orderBy) data = [...data].sort((a, b) => String(a[orderBy!]).localeCompare(String(b[orderBy!])));
           data = data.slice(from, Math.min(to + 1, from + maxRows));
@@ -39,7 +48,7 @@ function fakeServer(rows: Record<string, unknown>[], maxRows: number) {
   return { client: client as unknown as SupabaseClient, stats };
 }
 
-const make = (n: number, extra: (i: number) => Record<string, unknown> = () => ({})) =>
+const make = (n: number, extra: (i: number) => Record<string, unknown> = () => ({})): Record<string, unknown>[] =>
   Array.from({ length: n }, (_, i) => ({ id: `qc-${String(i).padStart(5, '0')}`, value: i, ...extra(i) }));
 
 describe('Lecture complète malgré la limite de lignes du serveur', () => {
@@ -77,5 +86,22 @@ describe('Lecture complète malgré la limite de lignes du serveur', () => {
     const empty = fakeServer([], 1_000);
     expect(await createSupabaseDataSource(empty.client).repo('qualityChecks').list()).toEqual([]);
     expect(empty.stats.requests).toBe(1);
+  });
+
+  it('filtre de période (borne basse incluse, haute exclue), paginé au-delà de 1 000', async () => {
+    const day = (i: number) => `2026-${String(1 + Math.floor(i / 28)).padStart(2, '0')}-${String(1 + (i % 28)).padStart(2, '0')}`;
+    const { client } = fakeServer(
+      make(7_000, (i) => ({ date: day(i % 336) })),
+      1_000,
+    );
+    const rows = await createSupabaseDataSource(client)
+      .repo('routineRuns')
+      .list({ range: { field: 'date', gte: '2026-03-01', lt: '2026-05-01' } });
+    const expected = make(7_000, (i) => ({ date: day(i % 336) })).filter(
+      (r) => String(r.date) >= '2026-03-01' && String(r.date) < '2026-05-01',
+    );
+    expect(rows).toHaveLength(expected.length);
+    expect(expected.length).toBeGreaterThan(1_000);
+    expect(rows.every((r) => r.date >= '2026-03-01' && r.date < '2026-05-01')).toBe(true);
   });
 });

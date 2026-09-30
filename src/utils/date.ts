@@ -102,6 +102,11 @@ export function atTime(key: DateKey, time: TimeOfDay): ISODateTime {
   return new Date(guess).toISOString();
 }
 
+/** Bornes horaires de journées de l'atelier : début de `from` (inclus) → début du lendemain de `to` (exclu). */
+export function dayRange(from: DateKey, to: DateKey): { gte: ISODateTime; lt: ISODateTime } {
+  return { gte: atTime(from, '00:00'), lt: atTime(addDays(to, 1), '00:00') };
+}
+
 export function minutesBetween(fromIso: ISODateTime, to: Date | ISODateTime = new Date()): number {
   const end = typeof to === 'string' ? new Date(to) : to;
   return Math.max(0, Math.floor((end.getTime() - new Date(fromIso).getTime()) / 60_000));

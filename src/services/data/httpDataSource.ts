@@ -44,6 +44,11 @@ export function createHttpDataSource(baseUrl: string, getToken: () => string | n
       list(filter?: ListFilter<T>) {
         const params = new URLSearchParams();
         for (const [k, v] of Object.entries(filter?.where ?? {})) params.set(k, String(v));
+        if (filter?.range) {
+          params.set('range', filter.range.field);
+          if (filter.range.gte !== undefined) params.set('gte', filter.range.gte);
+          if (filter.range.lt !== undefined) params.set('lt', filter.range.lt);
+        }
         const qs = params.toString();
         return request<T[]>('GET', qs ? `${base}?${qs}` : base);
       },

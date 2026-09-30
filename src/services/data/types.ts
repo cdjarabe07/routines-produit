@@ -103,6 +103,8 @@ export type EntityPatch<T extends BaseEntity> = Partial<Omit<T, 'id' | 'createdA
 export interface ListFilter<T> {
   /** Égalité stricte sur des champs de premier niveau. Transmis en query string au backend. */
   where?: Partial<T>;
+  /** Plage sur un champ date (AAAA-MM-JJ) ou horodatage ISO : `gte` inclus, `lt` exclu (comparaison de chaînes). */
+  range?: { field: keyof T & string; gte?: string; lt?: string };
 }
 
 export interface Repository<T extends BaseEntity> {

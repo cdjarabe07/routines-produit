@@ -28,9 +28,17 @@ const PREFIX = 'ra:v2:';
 const META_KEY = `${PREFIX}meta`;
 const log = createLogger('data:store');
 
-function matches<T>(item: T, where?: Partial<T>) {
-  if (!where) return true;
-  return (Object.keys(where) as (keyof T)[]).every((k) => item[k] === where[k]);
+function matches<T>(item: T, filter?: ListFilter<T>) {
+  const where = filter?.where;
+  if (where && !(Object.keys(where) as (keyof T)[]).every((k) => item[k] === where[k])) return false;
+  const range = filter?.range;
+  if (range) {
+    const v = item[range.field] as unknown;
+    if (typeof v !== 'string') return false;
+    if (range.gte !== undefined && v < range.gte) return false;
+    if (range.lt !== undefined && v >= range.lt) return false;
+  }
+  return true;
 }
 
 export function createStoreDataSource(store: KeyValueStore, buildSeed: () => Dataset): DataSource {
@@ -77,7 +85,7 @@ export function createStoreDataSource(store: KeyValueStore, buildSeed: () => Dat
     type T = CollectionMap[K];
     return {
       async list(filter?: ListFilter<T>) {
-        return clone(read(name).filter((i) => matches(i, filter?.where)));
+        return clone(read(name).filter((i) => matches(i, filter)));
       },
       async get(id: ID) {
         const found = read(name).find((i) => i.id === id);

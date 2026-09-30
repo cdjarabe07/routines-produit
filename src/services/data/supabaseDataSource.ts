@@ -95,6 +95,9 @@ export function createSupabaseDataSource(client: SupabaseClient, options: Supaba
         const pageQuery = (from: number, withCount: boolean) => {
           let query = table().select('*', withCount ? { count: 'exact' } : undefined);
           for (const [k, v] of Object.entries(filter?.where ?? {})) if (v !== undefined) query = query.eq(k, v as string);
+          const range = filter?.range;
+          if (range?.gte !== undefined) query = query.gte(range.field, range.gte);
+          if (range?.lt !== undefined) query = query.lt(range.field, range.lt);
           return query.order('id').range(from, from + PAGE_SIZE - 1);
         };
         const rows: T[] = [];
