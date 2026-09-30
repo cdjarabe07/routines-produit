@@ -436,6 +436,63 @@ suite('API — journal d’audit, limitation de débit, CORS', () => {
   });
 });
 
+suite('Régressions corrigées (migration 0013)', () => {
+  it('une annonce peut être retirée par qui peut l’écrire, pas par un opérateur', async () => {
+    const manager = await as('manager');
+    const { data: created, error } = await manager
+      .from('announcements')
+      .insert({ text: 'Annonce de test', date: today(), authorId: ACCOUNTS.manager.id })
+      .select('id')
+      .single();
+    expect(error).toBeNull();
+    const byOperator = await (await as('operatorA')).from('announcements').delete().eq('id', created!.id).select('id');
+    expect(byOperator.data ?? []).toHaveLength(0);
+    const byManager = await manager.from('announcements').delete().eq('id', created!.id).select('id');
+    expect(byManager.data ?? []).toHaveLength(1);
+  });
+
+  it('la notification Andon porte le libellé français du type', async () => {
+    // Opérateur de la ligne B : le quota d'Andon de l'opérateur A est consommé par le test de limitation de débit
+    const operator = await as('operatorB');
+    // Un seul Andon actif par type et par poste : premier poste de la ligne B libre pour un Andon « équipement »
+    let alert: { id: string } | null = null;
+    for (const workstationId of ['ws-p5', 'ws-p6', 'ws-p7', 'ws-p8']) {
+      const res = await operator
+        .from('andonAlerts')
+        .insert({ workstationId, type: 'equipment', urgency: 'low', detail: 'test', status: 'active', raisedBy: ACCOUNTS.operatorB.id })
+        .select('id')
+        .single();
+      if (!res.error) {
+        alert = res.data;
+        break;
+      }
+      expect(res.error.code).toBe('23505');
+    }
+    expect(alert).not.toBeNull();
+    const { data } = await (await as('manager')).from('notifications').select('title').eq('link', `/andon/${alert!.id}`);
+    expect((data ?? []).map((n) => n.title)).toEqual([expect.stringMatching(/^Andon équipement — /)]);
+  });
+
+  it('les invités sont prévenus d’un changement d’heure de réunion, pas d’un simple compte-rendu', async () => {
+    const manager = await as('manager');
+    const operator = await as('operatorA');
+    const { data: meeting } = await manager.from('meetings').select('id, startTime').eq('id', 'mt-today').single();
+    const count = async () =>
+      ((await operator.from('notifications').select('id').eq('link', '/reunions/mt-today').like('title', 'Réunion modifiée%')).data ?? [])
+        .length;
+    const before = await count();
+    await manager.from('meetings').update({ minutes: 'Compte-rendu de test' }).eq('id', 'mt-today');
+    expect(await count()).toBe(before);
+    const later = meeting!.startTime === '16:00';
+    const { error } = await manager
+      .from('meetings')
+      .update({ startTime: later ? '16:30' : '16:00', endTime: later ? '17:00' : '16:30' })
+      .eq('id', 'mt-today');
+    expect(error).toBeNull();
+    expect(await count()).toBe(before + 1);
+  });
+});
+
 afterAll(async () => {
   if (!configured) return;
   // Remise en état de l'environnement de démonstration (alertes et anomalies créées par les tests)
