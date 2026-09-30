@@ -1,33 +1,134 @@
 import type { DateKey, ISODateTime, TimeOfDay } from '@/types/domain';
 
-/* Toutes les dates « calendaires » sont en heure locale de l'atelier.
-   Le prototype mélangeait UTC et local (décalage d'un jour autour de minuit). */
+/* Dates de l'application.
+
+   Deux notions distinctes :
+   1. « Date opérationnelle » (jour, heure du jour) d'un INSTANT : toujours calculée dans le fuseau horaire de
+      l'ATELIER, jamais dans celui du poste. Source unique : `settings.timezone` en base (même valeur que la
+      fonction serveur app.today()), appliquée au démarrage de la session par <PlantTimeZone> (setPlantTimeZone).
+      Sans réglage (mode démo local, poste = atelier), le fuseau du navigateur sert de repli.
+   2. Arithmétique sur des dates « AAAA-MM-JJ » (ajout de jours, jour de la semaine, écart) : calendaire pure,
+      calculée en UTC interne, donc indépendante de tout fuseau. */
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
+/* ---------- Fuseau horaire de l'atelier ---------- */
+
+let plantTimeZone: string | null = null;
+
+/** Fuseau valide pour Intl ? */
+export function isValidTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Fixe le fuseau de l'atelier (null : repli sur le fuseau du navigateur). Renvoie false si le fuseau est invalide. */
+export function setPlantTimeZone(tz: string | null | undefined): boolean {
+  if (!tz) {
+    plantTimeZone = null;
+    return true;
+  }
+  if (!isValidTimeZone(tz)) return false;
+  plantTimeZone = tz;
+  return true;
+}
+
+/** Fuseau utilisé pour la date opérationnelle */
+export function getPlantTimeZone(): string {
+  return plantTimeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+const wallFormatters = new Map<string, Intl.DateTimeFormat>();
+
+/** Date et heure « murales » d'un instant dans le fuseau de l'atelier */
+function wallClock(date: Date): { y: number; m: number; d: number; h: number; min: number } {
+  const tz = getPlantTimeZone();
+  let fmt = wallFormatters.get(tz);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    wallFormatters.set(tz, fmt);
+  }
+  const p: Record<string, string> = {};
+  for (const part of fmt.formatToParts(date)) p[part.type] = part.value;
+  return { y: Number(p.year), m: Number(p.month), d: Number(p.day), h: Number(p.hour) % 24, min: Number(p.minute) };
+}
+
+/* ---------- Date opérationnelle d'un instant ---------- */
+
+/** Jour (AAAA-MM-JJ) d'un instant, dans le fuseau de l'atelier */
 export function toDateKey(date: Date = new Date()): DateKey {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const w = wallClock(date);
+  return `${w.y}-${pad(w.m)}-${pad(w.d)}`;
 }
 
+/** Date opérationnelle du jour, dans le fuseau de l'atelier */
 export const todayKey = (): DateKey => toDateKey(new Date());
-
-export function parseDateKey(key: DateKey): Date {
-  const [y, m, d] = key.split('-').map(Number);
-  return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
-}
-
-export function addDays(key: DateKey, days: number): DateKey {
-  const d = parseDateKey(key);
-  d.setDate(d.getDate() + days);
-  return toDateKey(d);
-}
-
-export function daysBetween(from: DateKey, to: DateKey): number {
-  return Math.round((parseDateKey(to).getTime() - parseDateKey(from).getTime()) / 86_400_000);
-}
 
 export function dateKeyOf(iso: ISODateTime): DateKey {
   return toDateKey(new Date(iso));
+}
+
+/** Minutes écoulées depuis minuit, dans le fuseau de l'atelier */
+export function minutesOfDay(date: Date = new Date()): number {
+  const w = wallClock(date);
+  return w.h * 60 + w.min;
+}
+
+/** Instant correspondant à une heure HH:mm de l'atelier, un jour donné (changements d'heure compris). */
+export function atTime(key: DateKey, time: TimeOfDay): ISODateTime {
+  const [y, m, d] = key.split('-').map(Number);
+  const mins = timeToMinutes(time);
+  const target = Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1, Math.floor(mins / 60), mins % 60);
+  // On part de l'heure lue comme UTC, puis on corrige du décalage du fuseau (deux passes pour les changements d'heure)
+  let guess = target;
+  for (let i = 0; i < 2; i++) {
+    const w = wallClock(new Date(guess));
+    const diff = Date.UTC(w.y, w.m - 1, w.d, w.h, w.min) - target;
+    if (diff === 0) break;
+    guess -= diff;
+  }
+  return new Date(guess).toISOString();
+}
+
+export function minutesBetween(fromIso: ISODateTime, to: Date | ISODateTime = new Date()): number {
+  const end = typeof to === 'string' ? new Date(to) : to;
+  return Math.max(0, Math.floor((end.getTime() - new Date(fromIso).getTime()) / 60_000));
+}
+
+/* ---------- Arithmétique calendaire (sans fuseau) ---------- */
+
+const utcOf = (key: DateKey) => {
+  const [y, m, d] = key.split('-').map(Number);
+  return Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1);
+};
+const keyOfUtc = (ms: number): DateKey => {
+  const d = new Date(ms);
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+};
+
+/** Date « AAAA-MM-JJ » sous forme de Date à minuit UTC (calcul calendaire, jamais un instant de l'atelier) */
+export function parseDateKey(key: DateKey): Date {
+  return new Date(utcOf(key));
+}
+
+export function addDays(key: DateKey, days: number): DateKey {
+  return keyOfUtc(utcOf(key) + days * 86_400_000);
+}
+
+export function daysBetween(from: DateKey, to: DateKey): number {
+  return Math.round((utcOf(to) - utcOf(from)) / 86_400_000);
 }
 
 export function enumerateDays(from: DateKey, to: DateKey): DateKey[] {
@@ -38,46 +139,43 @@ export function enumerateDays(from: DateKey, to: DateKey): DateKey[] {
 
 /** Jour de la semaine ISO : 1 = lundi … 7 = dimanche. */
 export function isoWeekday(key: DateKey): number {
-  const d = parseDateKey(key).getDay();
+  const d = new Date(utcOf(key)).getUTCDay();
   return d === 0 ? 7 : d;
 }
 
 /** Lundi de la semaine contenant la date. */
 export const startOfWeek = (key: DateKey): DateKey => addDays(key, 1 - isoWeekday(key));
 
+/** Premier jour du mois de la date */
+export const startOfMonth = (key: DateKey): DateKey => `${key.slice(0, 7)}-01`;
+
 export function timeToMinutes(time: TimeOfDay): number {
   const [h, m] = time.split(':').map(Number);
   return (h ?? 0) * 60 + (m ?? 0);
 }
 
-export function minutesOfDay(date: Date = new Date()): number {
-  return date.getHours() * 60 + date.getMinutes();
+/* ---------- Affichage ----------
+   Une date « AAAA-MM-JJ » s'affiche telle quelle (aucune conversion) ; un instant s'affiche à l'heure de l'atelier,
+   cohérente avec les horaires planifiés. */
+
+const displayFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function display(options: Intl.DateTimeFormatOptions, v: DateKey | ISODateTime | Date): string {
+  const isKey = typeof v === 'string' && v.length === 10;
+  const timeZone = isKey ? 'UTC' : getPlantTimeZone();
+  const cacheKey = `${timeZone}|${JSON.stringify(options)}`;
+  let fmt = displayFormatters.get(cacheKey);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('fr-FR', { ...options, timeZone });
+    displayFormatters.set(cacheKey, fmt);
+  }
+  return fmt.format(isKey ? parseDateKey(v) : v instanceof Date ? v : new Date(v));
 }
 
-/** Construit un horodatage ISO à partir d'une date locale et d'une heure HH:mm. */
-export function atTime(key: DateKey, time: TimeOfDay): ISODateTime {
-  const d = parseDateKey(key);
-  const mins = timeToMinutes(time);
-  d.setHours(Math.floor(mins / 60), mins % 60, 0, 0);
-  return d.toISOString();
-}
-
-export function minutesBetween(fromIso: ISODateTime, to: Date | ISODateTime = new Date()): number {
-  const end = typeof to === 'string' ? new Date(to) : to;
-  return Math.max(0, Math.floor((end.getTime() - new Date(fromIso).getTime()) / 60_000));
-}
-
-const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-const shortDateFmt = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' });
-const longDateFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
-const asDate = (v: DateKey | ISODateTime | Date) => (v instanceof Date ? v : v.length === 10 ? parseDateKey(v) : new Date(v));
-
-export const formatDate = (v: DateKey | ISODateTime | Date) => dateFmt.format(asDate(v));
-export const formatShortDate = (v: DateKey | ISODateTime | Date) => shortDateFmt.format(asDate(v));
-export const formatLongDate = (v: DateKey | ISODateTime | Date) => longDateFmt.format(asDate(v));
-export const formatTime = (v: ISODateTime | Date) => timeFmt.format(asDate(v));
+export const formatDate = (v: DateKey | ISODateTime | Date) => display({ day: '2-digit', month: '2-digit', year: 'numeric' }, v);
+export const formatShortDate = (v: DateKey | ISODateTime | Date) => display({ day: '2-digit', month: 'short' }, v);
+export const formatLongDate = (v: DateKey | ISODateTime | Date) => display({ weekday: 'long', day: 'numeric', month: 'long' }, v);
+export const formatTime = (v: ISODateTime | Date) => display({ hour: '2-digit', minute: '2-digit' }, v);
 export const formatDateTime = (v: ISODateTime | Date) => `${formatDate(v)} ${formatTime(v)}`;
 
 /** Durée lisible : « 04:12 » sous une heure, « 1 h 05 » au-delà. */

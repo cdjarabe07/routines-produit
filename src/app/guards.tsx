@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { AccessDenied, LoadingState } from '@/components/feedback/States';
 import { homePath, type Permission } from '@/services/auth/permissions';
+import { PlantTimeZone } from './PlantTimeZone';
 import { useAuth } from './providers/AuthProvider';
 
 /** Accès réservé aux utilisateurs connectés ; sinon redirection vers la connexion (retour prévu). */
@@ -15,7 +16,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     const back = from !== '/' && signedOutFrom !== `#${from}`;
     return <Navigate to={`/login${back ? `?retour=${encodeURIComponent(from)}` : ''}`} replace />;
   }
-  return <>{children}</>;
+  return <PlantTimeZone>{children}</PlantTimeZone>;
 }
 
 /** Racine : chaque profil arrive sur son espace (docs/role-model.md §4). */

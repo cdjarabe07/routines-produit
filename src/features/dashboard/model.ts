@@ -159,10 +159,9 @@ export function buildPriorities(d: CockpitData): Priority[] {
       });
   }
 
-  if (d.can('handover.write') && d.now.getHours() >= 12) {
-    const since = new Date(d.now);
-    since.setHours(0, 0, 0, 0);
-    const written = d.handovers.some((h) => h.authorId === d.user.id && new Date(h.createdAt) >= since);
+  // Après midi (heure de l'atelier), sans passation rédigée depuis le début de la journée de l'atelier
+  if (d.can('handover.write') && minutesOfDay(d.now) >= 12 * 60) {
+    const written = d.handovers.some((h) => h.authorId === d.user.id && dateKeyOf(h.createdAt) === d.today);
     if (!written)
       out.push({
         id: 'handover',

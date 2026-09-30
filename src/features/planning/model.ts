@@ -1,6 +1,6 @@
 import type { Tone } from '@/components/ui/Badge';
 import type { DateKey, ID, Recurrence, RoutineRun, RoutineTemplate, Schedule, TimeOfDay, User } from '@/types/domain';
-import { addDays, enumerateDays, isoWeekday, minutesOfDay, timeToMinutes } from '@/utils/date';
+import { addDays, dateKeyOf, enumerateDays, isoWeekday, minutesOfDay, timeToMinutes } from '@/utils/date';
 
 /* Planification → occurrences.
    Une occurrence = une planification à une date. Elle est CALCULÉE, jamais stockée :
@@ -118,9 +118,9 @@ export function occurrenceState(
 /** Terminée à l'heure : clôture au plus tard à l'heure prévue + durée + tolérance. */
 export function completedOnTime(o: Pick<Occurrence, 'date' | 'time' | 'run' | 'routine'>, toleranceMin: number): boolean {
   if (!o.run?.completedAt) return false;
-  const done = new Date(o.run.completedAt);
-  const sameDay = done.getFullYear() * 10000 + (done.getMonth() + 1) * 100 + done.getDate() === Number(o.date.replaceAll('-', ''));
-  return sameDay && minutesOfDay(done) <= timeToMinutes(o.time) + o.routine.durationMin + toleranceMin;
+  // Jour et heure de clôture lus dans le fuseau de l'atelier
+  const sameDay = dateKeyOf(o.run.completedAt) === o.date;
+  return sameDay && minutesOfDay(new Date(o.run.completedAt)) <= timeToMinutes(o.time) + o.routine.durationMin + toleranceMin;
 }
 
 export interface OccurrenceCounts {

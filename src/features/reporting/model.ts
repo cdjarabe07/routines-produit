@@ -11,7 +11,7 @@ import {
 } from '@/features/planning/model';
 import { runSummary } from '@/features/routines/model';
 import { conformity } from '@/features/quality/model';
-import { addDays, dateKeyOf, daysBetween, enumerateDays, formatDate, parseDateKey, toDateKey } from '@/utils/date';
+import { addDays, dateKeyOf, daysBetween, enumerateDays, formatDate, startOfMonth, toDateKey } from '@/utils/date';
 import { ratio } from '@/utils/format';
 
 /* Indicateurs calculés UNIQUEMENT à partir des données saisies (docs/functional-spec.md §7).
@@ -29,10 +29,7 @@ export interface Period {
 
 export function resolvePeriod(preset: PeriodPreset, today: DateKey, custom?: { from?: string | null; to?: string | null }): Period {
   if (preset === '30d') return { from: addDays(today, -29), to: today, label: '30 derniers jours' };
-  if (preset === 'month') {
-    const d = parseDateKey(today);
-    return { from: toDateKey(new Date(d.getFullYear(), d.getMonth(), 1)), to: today, label: 'Mois en cours' };
-  }
+  if (preset === 'month') return { from: startOfMonth(today), to: today, label: 'Mois en cours' };
   if (preset === 'custom' && custom?.from && custom?.to && custom.from <= custom.to) {
     return { from: custom.from, to: custom.to, label: `Du ${formatDate(custom.from)} au ${formatDate(custom.to)}` };
   }

@@ -20,7 +20,7 @@ import { useLookups, useSettings } from '@/features/shared/api';
 import { MEMBER_STATUS, memberStatus, teamMembers, type MemberStatus } from '@/features/team/model';
 import { useCollection } from '@/hooks/useData';
 import { useNow } from '@/hooks/useNow';
-import { formatLongDate, formatTime, todayKey } from '@/utils/date';
+import { formatLongDate, formatTime, minutesOfDay, todayKey } from '@/utils/date';
 import { formatPercent } from '@/utils/format';
 import { AnnouncementPanel } from './components/AnnouncementPanel';
 import { DailyReportDrawer } from './components/DailyReportDrawer';
@@ -114,7 +114,8 @@ export function DashboardPage() {
     checks.data,
   ]);
 
-  const hour = now.getHours();
+  // Heure de l'atelier, pas celle du poste
+  const hour = Math.floor(minutesOfDay(now) / 60);
   const greeting = hour < 5 || hour >= 18 ? 'Bonsoir' : 'Bonjour';
 
   return (

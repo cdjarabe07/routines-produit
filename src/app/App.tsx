@@ -33,8 +33,8 @@ function createServices(): { auth: AuthService; dataSource: DataSource } {
   if (import.meta.env.VITE_DATA_MODE === 'supabase' && env.supabaseUrl && env.supabaseKey && env.configErrors.length === 0) {
     const client = createSupabaseBrowserClient(env.supabaseUrl, env.supabaseKey);
     const dataSource = createSupabaseDataSource(client, {
+      // Le fuseau de l'atelier reste celui du serveur : le navigateur n'envoie pas le sien
       loadDemoDataset: async () => (await import('@/data/demo/seed')).buildDemoData(new Date()),
-      timezone: () => Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
     return { auth: createSupabaseAuthProvider(client, { emailDomain: env.authEmailDomain }), dataSource };
   }
