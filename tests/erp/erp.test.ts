@@ -250,6 +250,8 @@ describe('Séparation navigateur / serveur', () => {
     const files = import.meta.glob('/src/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
     expect(Object.keys(files).length).toBeGreaterThan(50);
     const offenders = Object.entries(files)
+      // Les fichiers de test ne sont pas livrés au navigateur
+      .filter(([file]) => !/\.test\.tsx?$/.test(file))
       // Import du code serveur, ou lecture d'une variable d'environnement serveur (seules les VITE_* sont publiques)
       .filter(([, code]) => /from ['"][^'"]*(supabase\/functions|_shared\/erp)|Deno\.env|import\.meta\.env\.SAP_|process\.env/.test(code))
       .map(([file]) => file);

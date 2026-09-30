@@ -17,7 +17,7 @@ export default defineConfig({
     baseURL: 'http://localhost:4173',
     channel: process.env.PW_CHANNEL ?? 'msedge',
     locale: 'fr-FR',
-    // Fuseau du navigateur de test ; à aligner sur celui de l'atelier en mode Supabase (le serveur impose sa date du jour)
+    // Fuseau simulé du navigateur de test (facultatif) : la date opérationnelle reste celle de l'atelier quel qu'il soit
     timezoneId: process.env.PW_TIMEZONE || undefined,
     trace: 'retain-on-failure',
   },

@@ -439,14 +439,15 @@ suite('API — journal d’audit, limitation de débit, CORS', () => {
 afterAll(async () => {
   if (!configured) return;
   // Remise en état de l'environnement de démonstration (alertes et anomalies créées par les tests)
-  // Import résolu par Vitest à l'exécution : le code de l'application n'est pas typé avec la configuration Node
+  // Imports résolus par Vitest à l'exécution : le code de l'application n'est pas typé avec la configuration Node
+  const dateModule = '../../src/utils/date';
   const seedModule = '../../src/data/demo/seed';
+  const { setPlantTimeZone } = (await import(/* @vite-ignore */ dateModule)) as { setPlantTimeZone: (tz: string | null) => boolean };
   const { buildDemoData } = (await import(/* @vite-ignore */ seedModule)) as { buildDemoData: (now: Date) => unknown };
-  const res = await callFunction(
-    'demo-seed',
-    { dataset: buildDemoData(new Date()), timezone: 'Africa/Dakar' },
-    { token: await tokenOf(await as('admin')) },
-  );
+  // Jeu daté selon le fuseau de l'atelier (settings.timezone), pas celui du poste
+  const { data: settings } = await (await as('admin')).from('settings').select('timezone').single();
+  setPlantTimeZone(settings?.timezone ?? null);
+  const res = await callFunction('demo-seed', { dataset: buildDemoData(new Date()) }, { token: await tokenOf(await as('admin')) });
   if (res.status !== 200) throw new Error(`Remise en état impossible : ${res.status}`);
 });
 
