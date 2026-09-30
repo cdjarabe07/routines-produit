@@ -42,7 +42,7 @@ const TASK_STATE: Record<TaskState, { label: string; tone: 'neutral' | 'info' | 
 /** Exécution d'une routine planifiée : Démarrer → tâches et contrôles → Terminer (durée réelle enregistrée). */
 export function RoutineRunPage() {
   const { scheduleId = '', date = todayKey() } = useParams();
-  const { queries, source, checklistById } = usePlanningData();
+  const { queries, source, checklistById } = usePlanningData({ from: date, to: date });
   const lookup = useLookups();
   const { can } = useAuth();
   const user = useCurrentUser();

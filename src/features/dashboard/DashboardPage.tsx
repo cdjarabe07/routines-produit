@@ -20,7 +20,7 @@ import { useLookups, useSettings } from '@/features/shared/api';
 import { MEMBER_STATUS, memberStatus, teamMembers, type MemberStatus } from '@/features/team/model';
 import { useCollection } from '@/hooks/useData';
 import { useNow } from '@/hooks/useNow';
-import { formatLongDate, formatTime, minutesOfDay, todayKey } from '@/utils/date';
+import { dayRange, formatLongDate, formatTime, minutesOfDay, todayKey } from '@/utils/date';
 import { formatPercent } from '@/utils/format';
 import { AnnouncementPanel } from './components/AnnouncementPanel';
 import { DailyReportDrawer } from './components/DailyReportDrawer';
@@ -44,7 +44,7 @@ export function DashboardPage() {
   const { settings } = useSettings();
   const [reportOpen, setReportOpen] = useState(false);
 
-  const planning = usePlanningData();
+  const planning = usePlanningData({ from: today, to: today });
   const alerts = useCollection('andonAlerts');
   const actions = useCollection('actions');
   const anomalies = useCollection('anomalies');
@@ -52,9 +52,10 @@ export function DashboardPage() {
   const stocks = useCollection('materialStocks');
   const orders = useCollection('productionOrders');
   const handovers = useCollection('handovers');
-  const checks = useCollection('qualityChecks');
+  // Contrôles et présence : seulement ceux du jour (seuls utilisés par cet écran)
+  const checks = useCollection('qualityChecks', { range: { field: 'createdAt', ...dayRange(today, today) } });
   const announcements = useCollection('announcements');
-  const presence = useCollection('presence');
+  const presence = useCollection('presence', { where: { date: today } });
   const leaves = useCollection('leaves');
   const { queries, lookups } = useLookups();
   const all = [

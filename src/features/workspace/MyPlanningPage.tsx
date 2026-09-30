@@ -30,10 +30,6 @@ export function MyPlanningPage() {
   const [params, setParams] = useSearchParams();
   const view: View = params.get('vue') === 'semaine' ? 'week' : params.get('vue') === 'periode' ? 'period' : 'day';
   const date = params.get('date') ?? today;
-  const planning = usePlanningData();
-  const meetings = useCollection('meetings');
-  const actions = useCollection('actions');
-
   const range = useMemo(() => {
     if (view === 'day') return { from: date, to: date };
     if (view === 'week') {
@@ -44,6 +40,9 @@ export function MyPlanningPage() {
     const to = params.get('au') ?? addDays(today, 13);
     return from <= to && daysBetween(from, to) < MAX_PERIOD_DAYS ? { from, to } : { from: today, to: addDays(today, 13) };
   }, [view, date, params, today]);
+  const planning = usePlanningData(range);
+  const meetings = useCollection('meetings');
+  const actions = useCollection('actions');
 
   const entries = useMemo(() => {
     if (!planning.source || !meetings.data || !actions.data) return [];

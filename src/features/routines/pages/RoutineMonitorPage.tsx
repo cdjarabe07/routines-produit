@@ -47,7 +47,7 @@ export function RoutineMonitorPage() {
   ) as View;
   const teamId = params.get('equipe') ?? '';
   const lineId = params.get('ligne') ?? '';
-  const planning = usePlanningData();
+  const planning = usePlanningData({ from: date, to: date });
   const { queries, lookups } = useLookups();
 
   const setParam = (patch: Record<string, string | null>) => {

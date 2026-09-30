@@ -4,14 +4,15 @@ import { useCollection, useOperation } from '@/hooks/useData';
 import { ValidationError } from '@/services/errors';
 import type { DataSource, NewEntity } from '@/services/data/types';
 import type { DateKey, ID, Schedule, User } from '@/types/domain';
-import { formatDate } from '@/utils/date';
+import { addDays, formatDate } from '@/utils/date';
 import { describeRecurrence, type OccurrenceSource } from './model';
 
-/** Données nécessaires au calcul des occurrences (planifications, routines, exécutions, checklists). */
-export function usePlanningData() {
+/** Données nécessaires au calcul des occurrences (planifications, routines, exécutions, checklists).
+    Les exécutions sont chargées pour la seule plage de jours affichée (`from` et `to` inclus) : leur historique grossit chaque jour. */
+export function usePlanningData(days: { from: DateKey; to: DateKey }) {
   const schedules = useCollection('schedules');
   const routines = useCollection('routineTemplates');
-  const runs = useCollection('routineRuns');
+  const runs = useCollection('routineRuns', { range: { field: 'date', gte: days.from, lt: addDays(days.to, 1) } });
   const checklists = useCollection('checklists');
   const source = useMemo<OccurrenceSource | null>(
     () => (schedules.data && routines.data && runs.data ? { schedules: schedules.data, routines: routines.data, runs: runs.data } : null),

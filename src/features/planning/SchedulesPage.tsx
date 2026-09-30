@@ -33,7 +33,8 @@ export function SchedulesPage() {
   const weekStart = startOfWeek(params.get('semaine') ?? today);
   const editingId = params.get('modifier');
   const newFor = params.get('nouvelle');
-  const planning = usePlanningData();
+  // Exécutions : seulement la semaine affichée (la vue liste n'en utilise pas)
+  const planning = usePlanningData({ from: weekStart, to: addDays(weekStart, 6) });
   const { queries, lookups } = useLookups();
   const cancel = useCancelSchedule();
   const restore = useRestoreSchedule();

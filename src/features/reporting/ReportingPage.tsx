@@ -15,7 +15,7 @@ import { DEFINITIONS } from '@/features/shared/definitions';
 import { useLookups, useSettings } from '@/features/shared/api';
 import { usePlanningData } from '@/features/planning/api';
 import { useCollection } from '@/hooks/useData';
-import { formatMinutes, formatShortDate, todayKey } from '@/utils/date';
+import { dayRange, formatMinutes, formatShortDate, todayKey } from '@/utils/date';
 import { formatPercent } from '@/utils/format';
 import { PeriodSelector } from './PeriodSelector';
 import {
@@ -57,11 +57,12 @@ export function ReportingPage() {
           : null;
   const previous = previousPeriod(period);
 
-  const planning = usePlanningData();
+  // Période affichée et période de comparaison
+  const planning = usePlanningData({ from: previous.from, to: period.to });
   const anomalies = useCollection('anomalies');
   const actions = useCollection('actions');
   const alerts = useCollection('andonAlerts');
-  const checks = useCollection('qualityChecks');
+  const checks = useCollection('qualityChecks', { range: { field: 'createdAt', ...dayRange(previous.from, period.to) } });
   const { queries, lookups } = useLookups();
   const all = [...planning.queries, anomalies, actions, alerts, checks, ...queries];
 

@@ -28,7 +28,7 @@ export function UserDashboardPage() {
   const now = useNow(30_000);
   const today = todayKey();
   const { settings } = useSettings();
-  const planning = usePlanningData();
+  const planning = usePlanningData({ from: today, to: today });
   const { queries, lookups } = useLookups();
   const actions = useCollection('actions');
   const meetings = useCollection('meetings');

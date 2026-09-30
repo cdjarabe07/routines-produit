@@ -27,7 +27,8 @@ export function TeamPage() {
   const user = useCurrentUser();
   const { can } = useAuth();
   const today = todayKey();
-  const presence = useCollection('presence');
+  // Présence : seulement celle du jour (seule utilisée par cet écran)
+  const presence = useCollection('presence', { where: { date: today } });
   const leaves = useCollection('leaves');
   const { queries, lookups } = useLookups();
   const setPresence = useSetPresence();

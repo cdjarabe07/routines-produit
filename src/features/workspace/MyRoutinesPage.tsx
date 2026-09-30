@@ -25,7 +25,7 @@ export function MyRoutinesPage() {
   const { settings } = useSettings();
   const [params, setParams] = useSearchParams();
   const view = (VIEWS as string[]).includes(params.get('vue') ?? '') ? (params.get('vue') as View) : 'today';
-  const planning = usePlanningData();
+  const planning = usePlanningData({ from: addDays(today, -WINDOW_DAYS), to: addDays(today, WINDOW_DAYS) });
   const { queries, lookups } = useLookups();
 
   const all = useMemo(

@@ -15,7 +15,8 @@ export function useNavCounts(): Partial<Record<NavCountKey, { value: number; urg
   const { user } = useAuth();
   const now = useNow(60_000);
   const { settings } = useSettings();
-  const planning = usePlanningData();
+  const today = todayKey();
+  const planning = usePlanningData({ from: today, to: today });
   const actions = useCollection('actions');
   const alerts = useCollection('andonAlerts');
   const anomalies = useCollection('anomalies');

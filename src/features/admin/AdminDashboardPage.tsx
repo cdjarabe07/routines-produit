@@ -27,7 +27,8 @@ export function AdminDashboardPage() {
   const now = useNow(60_000);
   const today = todayKey();
   const { settings } = useSettings();
-  const planning = usePlanningData();
+  // Aujourd'hui et les 6 jours précédents (indicateurs de la semaine)
+  const planning = usePlanningData({ from: addDays(today, -6), to: today });
   const alerts = useCollection('andonAlerts');
   const actions = useCollection('actions');
   const meetings = useCollection('meetings');

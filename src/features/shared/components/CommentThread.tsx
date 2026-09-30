@@ -36,7 +36,8 @@ export function CommentThread({
   userName,
 }: Props) {
   const user = useCurrentUser();
-  const comments = useCollection('comments');
+  // Seulement les commentaires de l'élément affiché (le point d'ancrage éventuel est filtré ci-dessous)
+  const comments = useCollection('comments', { where: { targetType, targetId } });
   const add = useAddComment();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
