@@ -28,6 +28,11 @@ import type {
 
 const log = createLogger('data:supabase');
 
+/** Taille de page demandée (la limite « Max rows » du serveur, 1 000 par défaut, peut la réduire sans risque) */
+export const PAGE_SIZE = 1000;
+/** Au-delà, un avertissement technique signale une collection à charger par période */
+const LARGE_COLLECTION = 5000;
+
 interface PgError {
   code?: string;
   message?: string;
@@ -85,11 +90,26 @@ export function createSupabaseDataSource(client: SupabaseClient, options: Supaba
     const table = () => client.from(name);
     return {
       async list(filter?: ListFilter<T>) {
-        let query = table().select('*');
-        for (const [k, v] of Object.entries(filter?.where ?? {})) if (v !== undefined) query = query.eq(k, v as string);
-        const { data, error } = await query;
-        if (error) throw toAppError(error, `list ${name}`);
-        return (data ?? []).map((r) => fromRow<T>(r));
+        // Le serveur renvoie un nombre limité de lignes par requête (« Max rows »), sans signaler la coupure :
+        // lecture page par page, dans un ordre stable (identifiant), jusqu'au total annoncé par le serveur.
+        const pageQuery = (from: number, withCount: boolean) => {
+          let query = table().select('*', withCount ? { count: 'exact' } : undefined);
+          for (const [k, v] of Object.entries(filter?.where ?? {})) if (v !== undefined) query = query.eq(k, v as string);
+          return query.order('id').range(from, from + PAGE_SIZE - 1);
+        };
+        const rows: T[] = [];
+        let total: number | null = null;
+        while (total === null || rows.length < total) {
+          const { data, error, count } = await pageQuery(rows.length, total === null);
+          if (error) throw toAppError(error, `list ${name}`);
+          if (total === null) total = count ?? 0;
+          // Page vide : la table a changé pendant la lecture, on s'arrête sur ce qui a été lu
+          if (!data || data.length === 0) break;
+          for (const r of data) rows.push(fromRow<T>(r));
+        }
+        if (rows.length > LARGE_COLLECTION)
+          log.warn(`${name} : ${rows.length} lignes chargées en entier (chargement par période à prévoir)`);
+        return rows;
       },
       async get(id: ID) {
         const { data, error } = await table().select('*').eq('id', id).maybeSingle();
