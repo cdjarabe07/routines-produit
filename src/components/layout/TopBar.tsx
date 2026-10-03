@@ -14,6 +14,7 @@ import { formatDateTime, formatLongDate, formatTime } from '@/utils/date';
 import { initials } from '@/utils/format';
 import { cx } from '@/utils/cx';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
+import { HelpPanel } from './HelpPanel';
 import styles from './TopBar.module.css';
 
 export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
@@ -111,11 +112,7 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
       {service.changePassword && <ChangePasswordDialog open={passwordOpen} onClose={() => setPasswordOpen(false)} />}
 
       <Drawer open={helpOpen} onClose={() => setHelpOpen(false)} title={`Aide — ${help.title}`} size="sm">
-        <ul className={styles.helpList}>
-          {help.points.map((p) => (
-            <li key={p}>{p}</li>
-          ))}
-        </ul>
+        <HelpPanel topic={help} onNavigate={() => setHelpOpen(false)} />
       </Drawer>
 
       <Drawer
