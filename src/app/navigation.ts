@@ -27,6 +27,7 @@ import {
   Users,
   UserCog,
   Presentation,
+  Workflow,
 } from 'lucide-react';
 import type { Permission } from '@/services/auth/permissions';
 import type { Role } from '@/types/domain';
@@ -92,7 +93,10 @@ export const SPACES: Space[] = [
       },
       {
         label: 'Ressources',
-        items: [{ path: '/app/connaissances', label: 'Centre de connaissances', icon: BookOpen, permission: 'space.app' }],
+        items: [
+          { path: '/app/connaissances', label: 'Centre de connaissances', icon: BookOpen, permission: 'space.app' },
+          { path: '/processus', label: 'Carte du processus', icon: Workflow, permission: 'space.app' },
+        ],
       },
     ],
   },
@@ -108,6 +112,7 @@ export const SPACES: Space[] = [
           { path: '/manager', label: 'Vue d’ensemble', icon: LayoutDashboard, permission: 'space.supervision', end: true },
           { path: '/manager/equipe', label: 'Équipe', icon: Users, permission: 'team.updateStatus' },
           { path: '/manager/routines', label: 'Suivi des routines', icon: ClipboardList, permission: 'routine.supervise' },
+          { path: '/processus', label: 'Carte du processus', icon: Workflow, permission: 'space.supervision' },
         ],
       },
       {
@@ -144,7 +149,10 @@ export const SPACES: Space[] = [
     groups: [
       {
         label: 'Pilotage',
-        items: [{ path: '/admin/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, permission: 'settings.manage' }],
+        items: [
+          { path: '/admin/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, permission: 'settings.manage' },
+          { path: '/processus', label: 'Carte du processus', icon: Workflow, permission: 'space.admin' },
+        ],
       },
       {
         label: 'Planification',

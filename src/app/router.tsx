@@ -39,6 +39,7 @@ const P = {
   RoutineMonitor: page(() => import('@/features/routines/pages/RoutineMonitorPage'), 'RoutineMonitorPage'),
   Production: page(() => import('@/features/production/pages/ProductionPage'), 'ProductionPage'),
   PlantMap: page(() => import('@/features/plant/PlantMapPage'), 'PlantMapPage'),
+  ProcessMap: page(() => import('@/features/process/ProcessMapPage'), 'ProcessMapPage'),
   Anomalies: page(() => import('@/features/anomalies/pages/AnomaliesPage'), 'AnomaliesPage'),
   AnomalyDetail: page(() => import('@/features/anomalies/pages/AnomalyDetailPage'), 'AnomalyDetailPage'),
   Gemba: page(() => import('@/features/gemba/pages/GembaListPage'), 'GembaListPage'),
@@ -158,6 +159,7 @@ export const appRoutes: RouteObject[] = [
       { path: 'connaissances/:id', element: guarded(P.KnowledgeDetail) },
       { path: 'gemba/:id', element: guarded(P.GembaDetail) },
       { path: 'sequences/execution/:runId', element: guarded(P.SequenceRun, 'sequence.run', 'cette séquence') },
+      { path: 'processus', element: guarded(P.ProcessMap) },
       { path: 'signaler', element: guarded(P.ReportAnomaly, 'anomaly.create', 'la déclaration d’anomalie') },
 
       // Anciennes adresses
