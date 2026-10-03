@@ -26,6 +26,8 @@
 .title {
   font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 .description {
   margin-top: var(--space-1);

@@ -3,7 +3,7 @@
   inset: 0;
   z-index: var(--z-modal);
   display: flex;
-  background: rgba(13, 19, 28, 0.5);
+  background: rgba(24, 24, 27, 0.4);
   animation: fade 120ms ease-out;
 }
 

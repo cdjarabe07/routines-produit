@@ -4,30 +4,38 @@
    ============================================================ */
 :root {
   /* Surfaces */
-  --color-background: #f3f4f6;
+  --color-background: #fafafb;
   --color-surface: #ffffff;
-  --color-surface-muted: #f8f9fa;
-  --color-surface-sunken: #eceef1;
-  --color-border: #d8dce2;
-  --color-border-strong: #b9c0ca;
+  --color-surface-muted: #f7f7f9;
+  --color-surface-sunken: #f0f0f3;
+  --color-border: #e6e6ea;
+  --color-border-strong: #cfcfd6;
 
   /* Texte */
-  --color-text: #151c26;
-  --color-text-muted: #56606e;
-  --color-text-subtle: #646e7c;
+  --color-text: #18181b;
+  --color-text-muted: #55555f;
+  --color-text-subtle: #676772;
   --color-text-inverse: #ffffff;
 
-  /* Chrome applicatif (barre latérale, en-tête) */
-  --color-chrome: #1d2632;
-  --color-chrome-raised: #273241;
-  --color-chrome-text: #c9d1dc;
+  /* Surfaces sombres ponctuelles (bulles d'aide, notifications, avatar) */
+  --color-chrome: #18181b;
+  --color-chrome-raised: #2a2a2f;
+  --color-chrome-text: #d4d4d8;
   --color-chrome-text-strong: #ffffff;
-  --color-chrome-muted: #8793a3;
+  --color-chrome-muted: #a1a1aa;
+
+  /* Barre latérale (claire) */
+  --color-sidebar: #f7f7f8;
+  --color-sidebar-hover: #ededf0;
+  --color-sidebar-active: #e7e7ec;
+  --color-sidebar-text: #3f3f46;
+  --color-sidebar-text-strong: #18181b;
+  --color-sidebar-muted: #6b6b75;
 
   /* Action principale */
-  --color-primary: #1c5bb8;
-  --color-primary-hover: #164a96;
-  --color-primary-soft: #e7eefa;
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-soft: #eef0ff;
 
   /* Statuts — sens métier */
   --color-success: #1d7a3a; /* conforme, OK, terminé */
@@ -38,19 +46,19 @@
   --color-danger: #b8261b; /* critique, arrêt, non conforme */
   --color-danger-strong: #d62f22;
   --color-danger-soft: #fbe7e5;
-  --color-info: #1c5bb8; /* information, en cours */
-  --color-info-soft: #e7eefa;
+  --color-info: #4f46e5; /* information, en cours */
+  --color-info-soft: #eef0ff;
   --color-neutral: #5f6b7a; /* neutre, planifié, annulé */
-  --color-neutral-soft: #edf0f3;
+  --color-neutral-soft: #f0f0f3;
 
   /* Typographie */
-  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --font-sans: 'Inter Variable', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
   --text-xs: 0.75rem; /* 12 px — métadonnées */
   --text-sm: 0.8125rem; /* 13 px — tableaux, libellés */
   --text-md: 0.875rem; /* 14 px — corps */
   --text-lg: 1rem; /* 16 px — titres de section */
-  --text-xl: 1.25rem; /* 20 px — titre de page */
+  --text-xl: 1.5rem; /* 24 px — titre de page */
   --text-kpi: 1.75rem; /* 28 px — valeurs clés */
   --text-display: 2.75rem; /* 44 px — minuteurs, affichage à distance */
   --weight-regular: 400;
@@ -70,15 +78,16 @@
   --space-10: 40px;
 
   /* Formes */
-  --radius-sm: 3px;
-  --radius-md: 5px;
-  --radius-lg: 8px;
-  --shadow-overlay: 0 12px 32px rgba(15, 23, 35, 0.22);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.05);
+  --shadow-overlay: 0 16px 40px rgba(24, 24, 27, 0.16), 0 2px 6px rgba(24, 24, 27, 0.06);
 
   /* Tailles */
   --touch-target: 40px;
   --sidebar-width: 240px;
-  --topbar-height: 52px;
+  --topbar-height: 56px;
   --content-max: 1440px;
 
   /* Focus */

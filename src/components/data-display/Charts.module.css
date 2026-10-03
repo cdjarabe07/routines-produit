@@ -22,7 +22,7 @@
   fill: var(--color-primary);
 }
 .barCompare {
-  fill: #b7c3d4;
+  fill: #c8c8cf;
 }
 .line {
   fill: none;
@@ -31,7 +31,7 @@
 }
 .lineCompare {
   fill: none;
-  stroke: #9aa8bb;
+  stroke: #a1a1aa;
   stroke-width: 1.5;
   stroke-dasharray: 4 4;
 }
@@ -71,7 +71,7 @@
   background: var(--color-primary);
 }
 .keyCompare {
-  background: #9aa8bb;
+  background: #a1a1aa;
   margin-left: var(--space-2);
 }
 
@@ -195,10 +195,10 @@
   white-space: nowrap;
 }
 .tipCompare {
-  color: #c9d1dc;
+  color: #d4d4d8;
 }
 .tipHint {
-  color: #9fb3cc;
+  color: #a1a1aa;
 }
 .rankedButton {
   width: 100%;

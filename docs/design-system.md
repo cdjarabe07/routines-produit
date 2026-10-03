@@ -4,18 +4,19 @@ Objectif : un logiciel métier industriel, sobre et dense, lisible sur tablette 
 
 ## Tokens (`src/styles/tokens.css`)
 
-| Famille  | Tokens                                                                                | Usage                                                                                          |
-| -------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Surfaces | `background`, `surface`, `surface-muted`, `surface-sunken`, `border`, `border-strong` | Fond d’application gris clair, contenus sur blanc, séparation par filets plutôt que par ombres |
-| Texte    | `text`, `text-muted`, `text-subtle`, `text-inverse`                                   |                                                                                                |
-| Chrome   | `chrome`, `chrome-raised`, `chrome-text…`                                             | Barre latérale sombre (ambiance salle de contrôle)                                             |
-| Action   | `primary`, `primary-hover`, `primary-soft`                                            | Bouton principal, liens, sélection                                                             |
-| Statuts  | `success`, `warning`, `danger`, `info`, `neutral` (+ `-soft`, `-strong`)              | **Sens métier uniquement**                                                                     |
-| Démo     | `demo`, `demo-soft`                                                                   | Réservé au signalement du mode démonstration et des contenus d’exemple                         |
-| Typo     | `text-xs` 12 → `text-display` 44, poids 400/500/600                                   | IBM Plex Sans auto-hébergée, chiffres tabulaires                                               |
-| Espaces  | `space-1` 4 px → `space-10` 40 px                                                     | Base 4 px                                                                                      |
-| Formes   | `radius-sm/md/lg` 3/5/8 px                                                            |                                                                                                |
-| Tailles  | `touch-target` 40 px                                                                  | Cible minimale des contrôles                                                                   |
+| Famille  | Tokens                                                                                | Usage                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Surfaces | `background`, `surface`, `surface-muted`, `surface-sunken`, `border`, `border-strong` | Fond presque blanc, contenus sur blanc, séparation par filets fins ; ombre légère réservée au survol et aux fenêtres |
+| Texte    | `text`, `text-muted`, `text-subtle`, `text-inverse`                                   |                                                                                                                      |
+| Barre    | `sidebar`, `sidebar-hover`, `sidebar-active`, `sidebar-text…`                         | Barre latérale claire (style SaaS)                                                                                   |
+| Chrome   | `chrome`, `chrome-raised`, `chrome-text…`                                             | Surfaces sombres ponctuelles : bulles d’aide, notifications, avatar                                                  |
+| Action   | `primary`, `primary-hover`, `primary-soft`                                            | Bouton principal, liens, sélection                                                                                   |
+| Statuts  | `success`, `warning`, `danger`, `info`, `neutral` (+ `-soft`, `-strong`)              | **Sens métier uniquement**                                                                                           |
+| Démo     | `demo`, `demo-soft`                                                                   | Réservé au signalement du mode démonstration et des contenus d’exemple                                               |
+| Typo     | `text-xs` 12 → `text-display` 44, poids 400/500/600                                   | Inter (variable) auto-hébergée, chiffres tabulaires                                                                  |
+| Espaces  | `space-1` 4 px → `space-10` 40 px                                                     | Base 4 px                                                                                                            |
+| Formes   | `radius-sm/md/lg` 6/8/10 px, `shadow-sm`, `shadow-overlay`                            | Badges en pastilles ; indicateurs en cartes séparées                                                                 |
+| Tailles  | `touch-target` 40 px                                                                  | Cible minimale des contrôles                                                                                         |
 
 ### Sens des couleurs
 

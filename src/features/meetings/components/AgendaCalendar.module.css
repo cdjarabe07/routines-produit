@@ -147,7 +147,7 @@
   position: absolute;
   right: var(--space-2);
   transform: translateY(-50%);
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: var(--text-xs);
   color: var(--color-text-subtle);
 }
@@ -197,7 +197,7 @@
   white-space: nowrap;
 }
 .eventTime {
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   color: var(--color-text-muted);
 }
 .eventTitle {
