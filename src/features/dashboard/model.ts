@@ -28,6 +28,8 @@ export interface CockpitData {
   now: Date;
   today: DateKey;
   can: (p: Permission, resource?: PolicyResource) => boolean;
+  /** Module production actif (Paramètres) ; absent = actif */
+  productionEnabled?: boolean;
   lines: Line[];
   workstations: Workstation[];
   alerts: AndonAlert[];
@@ -147,7 +149,7 @@ export function buildPriorities(d: CockpitData): Priority[] {
     });
   }
 
-  if (d.can('production.update')) {
+  if (d.can('production.update') && d.productionEnabled !== false) {
     const low = d.stocks.filter(needsReorder);
     if (low.length)
       out.push({

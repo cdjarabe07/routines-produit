@@ -1,3 +1,4 @@
+import type { ModuleKey } from '@/app/modules';
 import type { Permission } from '@/services/auth/permissions';
 
 /* Étapes du processus de travail : de la configuration au pilotage, puis retour aux standards.
@@ -15,6 +16,8 @@ export interface ProcessNode {
   description: string;
   /** Clé des chiffres calculés par workMetrics */
   metrics?: string;
+  /** Nœud masqué quand ce module est désactivé */
+  module?: ModuleKey;
   links: ProcessLink[];
 }
 
@@ -124,6 +127,7 @@ export const PROCESS_STAGES: ProcessStage[] = [
         title: 'Contrôles LQC',
         description: 'Mesures qualité en ligne comparées aux tolérances.',
         metrics: 'quality',
+        module: 'quality',
         links: [{ to: '/manager/qualite', permissions: ['space.supervision', 'quality.record'] }],
       },
     ],
@@ -146,6 +150,7 @@ export const PROCESS_STAGES: ProcessStage[] = [
         key: 'gemba',
         title: 'Gemba Walk',
         description: 'Tournée terrain : les observations à traiter deviennent des actions.',
+        module: 'gemba',
         links: [{ to: '/manager/gemba', permissions: ['space.supervision', 'gemba.conduct'] }],
       },
     ],
@@ -173,7 +178,11 @@ export const PROCESS_STAGES: ProcessStage[] = [
   },
 ];
 
-/** Premier écran du nœud accessible à l'utilisateur, ou null */
-export function linkFor(node: ProcessNode, can: (p: Permission) => boolean): string | null {
-  return node.links.find((l) => l.permissions.every((p) => can(p)))?.to ?? null;
+/** Premier écran du nœud accessible à l'utilisateur (droits et modules actifs), ou null */
+export function linkFor(
+  node: ProcessNode,
+  can: (p: Permission) => boolean,
+  pathEnabled: (path: string) => boolean = () => true,
+): string | null {
+  return node.links.find((l) => pathEnabled(l.to) && l.permissions.every((p) => can(p)))?.to ?? null;
 }

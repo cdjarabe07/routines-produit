@@ -1,10 +1,13 @@
 import { Link } from 'react-router';
 import { Workflow } from 'lucide-react';
 import { GLOSSARY, type HelpTopic } from '@/app/help';
+import { useModules } from '@/app/modules';
 import styles from './HelpPanel.module.css';
 
 /** Contenu du panneau d'aide : rubrique de l'écran, liens utiles, lexique. */
 export function HelpPanel({ topic, onNavigate }: { topic: HelpTopic; onNavigate: () => void }) {
+  const { pathEnabled } = useModules();
+  const related = topic.related?.filter((r) => pathEnabled(r.to)) ?? [];
   return (
     <div className={styles.panel}>
       <section aria-labelledby="help-purpose">
@@ -38,13 +41,13 @@ export function HelpPanel({ topic, onNavigate }: { topic: HelpTopic; onNavigate:
         </section>
       )}
 
-      {topic.related && topic.related.length > 0 && (
+      {related.length > 0 && (
         <section aria-labelledby="help-related">
           <h3 id="help-related" className={styles.heading}>
             Voir aussi
           </h3>
           <ul className={styles.links}>
-            {topic.related.map((r) => (
+            {related.map((r) => (
               <li key={r.to}>
                 <Link to={r.to} onClick={onNavigate}>
                   {r.label}

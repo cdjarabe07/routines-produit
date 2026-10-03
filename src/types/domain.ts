@@ -505,4 +505,6 @@ export interface AppSettings extends BaseEntity {
   timezone?: string;
   /** Environnement serveur : la réinitialisation n'est possible qu'en démonstration. */
   environment?: 'demo' | 'production';
+  /** Modules masqués par l'administrateur (src/app/modules.ts) ; vide = tout est actif. */
+  disabledModules?: string[];
 }

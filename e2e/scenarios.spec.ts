@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { loginWithForm } from './support/auth';
+import { BACKEND, loginWithForm, signIn } from './support/auth';
 
 /* Scénarios de la demande (§46), dans un vrai navigateur et une seule session :
    les données saisies par l'administrateur sont retrouvées par l'opératrice, puis par le manager.
@@ -229,4 +229,36 @@ test('reporting interactif : survol, détail d’un jour, d’une catégorie et 
   await expect(page.getByRole('heading', { name: /^Audit terrain — / })).toBeVisible();
   await page.getByRole('button', { name: 'Fermer' }).click();
   await expect(page.getByRole('heading', { name: /^Audit terrain — / })).toHaveCount(0);
+});
+
+test('modules : un module décoché disparaît du menu et de la carte, ses écrans l’indiquent', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Modifie les paramètres du site : vérifié en mode démo uniquement');
+  await signIn(page, 'u-admin');
+  await page.goto('/#/admin/parametres');
+  await page.reload();
+  await page.getByLabel('Gemba Walk').uncheck();
+  await page.getByRole('button', { name: 'Enregistrer les modules' }).click();
+  await expect(page.getByText('Modules enregistrés.')).toBeVisible();
+
+  await page.goto('/#/manager');
+  const nav = page.getByRole('navigation', { name: 'Navigation principale' });
+  await expect(nav.getByRole('link', { name: 'Anomalies' })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Gemba Walk' })).toHaveCount(0);
+  await page.goto('/#/manager/gemba');
+  await expect(page.getByText('Module désactivé')).toBeVisible();
+  await page.goto('/#/processus');
+  await expect(page.getByText('Actions correctives', { exact: true })).toBeVisible();
+  await expect(page.getByText('Gemba Walk', { exact: true })).toHaveCount(0);
+});
+
+test('sections : les écrans regroupés se parcourent par onglets', async ({ page }) => {
+  await signIn(page, 'u-admin');
+  await page.goto('/#/admin/agenda');
+  await page.reload();
+  const tabs = page.getByRole('navigation', { name: 'Sections' });
+  await tabs.getByRole('link', { name: 'Gestion des réunions' }).click();
+  await expect(page).toHaveURL(/#\/admin\/reunions/);
+  await expect(
+    page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('link', { name: 'Agenda et réunions' }),
+  ).toHaveClass(/active/);
 });

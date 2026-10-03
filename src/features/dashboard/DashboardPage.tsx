@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { ClipboardList } from 'lucide-react';
+import { useModules } from '@/app/modules';
 import { useAuth, useCurrentUser } from '@/app/providers/AuthProvider';
 import { DataTable, type Column } from '@/components/data-display/DataTable';
 import { ItemList } from '@/components/data-display/ItemList';
@@ -39,6 +40,7 @@ import {
 export function DashboardPage() {
   const user = useCurrentUser();
   const { can } = useAuth();
+  const modules = useModules();
   const now = useNow(30_000);
   const today = todayKey();
   const { settings } = useSettings();
@@ -133,7 +135,7 @@ export function DashboardPage() {
       <QueryBoundary queries={all}>
         {() => {
           if (!data) return null;
-          const priorities = buildPriorities(data);
+          const priorities = buildPriorities({ ...data, productionEnabled: modules.isEnabled('production') });
           const statuses = lineStatuses(data);
           const ind = dayIndicators(data);
           const { people, teamPending } = routinesByPerson(data.occurrences, today, now, settings.routineLateToleranceMinutes);
@@ -242,14 +244,16 @@ export function DashboardPage() {
                   detail={`${ind.criticalAnomalies} critique(s)`}
                   to={can('anomaly.manage') ? '/manager/anomalies' : undefined}
                 />
-                <Kpi
-                  label="Conformité LQC"
-                  definition={DEFINITIONS.quality}
-                  value={formatPercent(ind.qualityPct, 1)}
-                  tone={ind.qualityPct !== null && ind.qualityPct < 95 ? 'warning' : 'neutral'}
-                  detail={ind.qualityCount ? `${ind.qualityCount} mesure(s) aujourd’hui` : 'Aucune mesure aujourd’hui'}
-                  to={can('quality.record') ? '/manager/qualite' : undefined}
-                />
+                {modules.isEnabled('quality') && (
+                  <Kpi
+                    label="Conformité LQC"
+                    definition={DEFINITIONS.quality}
+                    value={formatPercent(ind.qualityPct, 1)}
+                    tone={ind.qualityPct !== null && ind.qualityPct < 95 ? 'warning' : 'neutral'}
+                    detail={ind.qualityCount ? `${ind.qualityCount} mesure(s) aujourd’hui` : 'Aucune mesure aujourd’hui'}
+                    to={can('quality.record') ? '/manager/qualite' : undefined}
+                  />
+                )}
               </KpiStrip>
 
               <Columns>
@@ -376,9 +380,11 @@ export function DashboardPage() {
                     )}
                   </Panel>
 
-                  <p style={{ fontSize: 'var(--text-sm)' }}>
-                    <Link to="/manager/production">Production et stocks</Link> · <Link to="/manager/atelier">Plan de l’atelier</Link>
-                  </p>
+                  {modules.isEnabled('production') && (
+                    <p style={{ fontSize: 'var(--text-sm)' }}>
+                      <Link to="/manager/production">Production et stocks</Link> · <Link to="/manager/atelier">Plan de l’atelier</Link>
+                    </p>
+                  )}
                 </Stack>
               </Columns>
             </Stack>

@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from 'react-router';
+import { NavLink, useLocation, useNavigate } from 'react-router';
+import { useModules } from '@/app/modules';
 import { accessibleSpaces, SPACES, visibleGroups, type SpaceId } from '@/app/navigation';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { useNavCounts } from '@/app/useNavCounts';
@@ -9,10 +10,12 @@ import styles from './SideNav.module.css';
 export function SideNav({ space, onNavigate }: { space: SpaceId; onNavigate?: () => void }) {
   const { can } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { pathEnabled } = useModules();
   const counts = useNavCounts();
   const spaces = accessibleSpaces(can);
   const current = SPACES.find((s) => s.id === space) ?? SPACES[0]!;
-  const groups = visibleGroups(current, can);
+  const groups = visibleGroups(current, can, pathEnabled);
 
   return (
     <nav aria-label="Navigation principale" className={styles.nav}>
@@ -46,7 +49,7 @@ export function SideNav({ space, onNavigate }: { space: SpaceId; onNavigate?: ()
                   <NavLink
                     to={item.path}
                     end={item.end}
-                    className={({ isActive }) => cx(styles.link, isActive && styles.active)}
+                    className={({ isActive }) => cx(styles.link, (isActive || item.match?.includes(pathname)) && styles.active)}
                     onClick={onNavigate}
                   >
                     <Icon size={18} aria-hidden className={styles.icon} />

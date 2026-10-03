@@ -382,9 +382,16 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
     match: /^\/admin\/parametres/,
     topic: {
       title: 'Paramètres',
-      purpose: 'Les réglages de l’atelier : nom, délai d’escalade des Andon, tolérance de retard des routines.',
-      steps: ['Modifiez une valeur puis enregistrez.'],
-      tips: ['Le fuseau horaire de l’atelier, qui fixe la date du jour pour tous, se règle côté serveur.'],
+      purpose: 'Les réglages de l’atelier : nom, délai d’escalade des Andon, tolérance de retard des routines, modules utilisés.',
+      steps: [
+        'Modifiez une valeur puis enregistrez.',
+        'Dans « Modules », décochez ce que le site n’utilise pas (Gemba Walk, contrôles LQC, production…) puis enregistrez.',
+      ],
+      tips: [
+        'Un module décoché disparaît des menus, des tableaux de bord et de l’aide ; ses données sont conservées et il se réactive à tout moment.',
+        'Les tableaux BI restent masqués tant qu’aucun outil BI n’est connecté.',
+        'Le fuseau horaire de l’atelier, qui fixe la date du jour pour tous, se règle côté serveur.',
+      ],
     },
   },
   {

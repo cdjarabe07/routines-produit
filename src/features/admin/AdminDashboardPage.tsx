@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useModules } from '@/app/modules';
 import { Link } from 'react-router';
 import { CalendarPlus, ClipboardPlus, UserPlus } from 'lucide-react';
 import { ItemList } from '@/components/data-display/ItemList';
@@ -35,6 +36,7 @@ export function AdminDashboardPage() {
   const knowledge = useCollection('knowledgeItems');
   const { queries, lookups } = useLookups();
   const notifications = useMyNotifications();
+  const modules = useModules();
 
   const stats = useMemo(() => {
     if (!planning.source) return null;
@@ -179,7 +181,7 @@ export function AdminDashboardPage() {
                     <ItemList
                       items={[
                         ...requests.map((n) => ({ id: n.id, title: n.title, meta: formatDateTime(n.createdAt), to: n.link })),
-                        ...(toReview
+                        ...(toReview && modules.isEnabled('knowledge')
                           ? [
                               {
                                 id: 'kb',

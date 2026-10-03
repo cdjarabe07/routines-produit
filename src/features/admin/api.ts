@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDataSource } from '@/app/providers/DataSourceProvider';
 import { useToast } from '@/components/ui/Toast';
 import { useOperation } from '@/hooks/useData';
+import { DEFAULT_SETTINGS } from '@/features/shared/api';
 import { toUserMessage, ValidationError } from '@/services/errors';
 import type { NewEntity } from '@/services/data/types';
 import type { AppSettings, ID, Team, User, Workstation } from '@/types/domain';
@@ -101,6 +102,19 @@ export function useSaveSettings() {
       return existing ? ds.repo('settings').update(existing.id, input) : ds.repo('settings').create({ id: 'app', ...input });
     },
     { invalidates: ['settings'], success: 'Paramètres enregistrés.' },
+  );
+}
+
+/** Modules masqués (src/app/modules.ts) : aucune donnée n'est supprimée */
+export function useSaveModules() {
+  return useOperation(
+    async (ds, disabledModules: string[]) => {
+      const existing = (await ds.repo('settings').list())[0];
+      return existing
+        ? ds.repo('settings').update(existing.id, { disabledModules })
+        : ds.repo('settings').create({ id: 'app', ...DEFAULT_SETTINGS, disabledModules });
+    },
+    { invalidates: ['settings'], success: 'Modules enregistrés.' },
   );
 }
 

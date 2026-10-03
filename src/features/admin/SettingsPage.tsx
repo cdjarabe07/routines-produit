@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { env } from '@/app/config/env';
+import { MODULE_KEYS, MODULES, type ModuleKey } from '@/app/modules';
 import { useDataSource } from '@/app/providers/DataSourceProvider';
 import { KeyValueList } from '@/components/data-display/ItemList';
 import { QueryBoundary } from '@/components/feedback/States';
@@ -6,14 +8,14 @@ import { Columns, PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useConfirm } from '@/components/ui/ConfirmDialog';
-import { FormActions, FormGrid, TextField } from '@/components/ui/Field';
+import { Checkbox, FormActions, FormGrid, TextField } from '@/components/ui/Field';
 import { Panel } from '@/components/ui/Panel';
 import { resolveBIConfig } from '@/features/analytics/biProvider';
 import { useSettings, DEFAULT_SETTINGS } from '@/features/shared/api';
 import { useForm } from '@/hooks/useForm';
 import type { AppSettings } from '@/types/domain';
 import { numberRange, required } from '@/utils/validation';
-import { useResetDemoData, useSaveSettings } from './api';
+import { useResetDemoData, useSaveModules, useSaveSettings } from './api';
 
 export function SettingsPage() {
   const query = useSettings();
@@ -31,6 +33,16 @@ export function SettingsPage() {
             <Stack>
               <Panel title="Seuils métier">
                 <SettingsForm key={query.settings.updatedAt ?? 'default'} settings={query.settings} />
+              </Panel>
+              <Panel
+                title="Modules"
+                description="Décochez ce que le site n’utilise pas : le module disparaît des menus et de l’aide. Aucune donnée n’est supprimée."
+              >
+                <ModulesForm
+                  key={(query.settings.disabledModules ?? []).join(',') || 'all'}
+                  disabled={query.settings.disabledModules ?? []}
+                  biConfigured={bi.status === 'configured'}
+                />
               </Panel>
               {ds.resetDemoData && (ds.kind === 'demo' || query.settings.environment === 'demo') && (
                 <Panel title="Environnement de démonstration" accent="warning">
@@ -166,6 +178,46 @@ function SettingsForm({ settings }: { settings: Omit<AppSettings, 'id' | 'create
       <FormActions>
         <Button type="submit" variant="primary" loading={form.submitting}>
           Enregistrer
+        </Button>
+      </FormActions>
+    </form>
+  );
+}
+
+function ModulesForm({ disabled, biConfigured }: { disabled: string[]; biConfigured: boolean }) {
+  const save = useSaveModules();
+  const [off, setOff] = useState<Set<string>>(() => new Set(disabled));
+  const changed = off.size !== disabled.length || disabled.some((k) => !off.has(k));
+  const toggle = (key: ModuleKey, enabled: boolean) =>
+    setOff((prev) => {
+      const next = new Set(prev);
+      if (enabled) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void save.mutateAsync(MODULE_KEYS.filter((k) => off.has(k)));
+      }}
+    >
+      <Stack gap={3}>
+        {MODULE_KEYS.map((key) => (
+          <Checkbox
+            key={key}
+            label={MODULES[key].label}
+            description={
+              key === 'bi' && !biConfigured ? `${MODULES[key].description} Aucun outil connecté pour l’instant.` : MODULES[key].description
+            }
+            checked={!off.has(key)}
+            onChange={(e) => toggle(key, e.target.checked)}
+          />
+        ))}
+      </Stack>
+      <FormActions>
+        <Button type="submit" variant="primary" disabled={!changed} loading={save.isPending}>
+          Enregistrer les modules
         </Button>
       </FormActions>
     </form>

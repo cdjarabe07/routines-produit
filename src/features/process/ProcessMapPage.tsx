@@ -5,6 +5,7 @@ import { EmptyState, QueryBoundary } from '@/components/feedback/States';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs } from '@/components/ui/Tabs';
+import { useModules } from '@/app/modules';
 import { useAuth } from '@/app/providers/AuthProvider';
 import { usePlanningData } from '@/features/planning/api';
 import { occurrencesBetween } from '@/features/planning/model';
@@ -29,7 +30,8 @@ const VIEWS = [
 /** Carte du processus : comment le travail s'enchaîne, avec les chiffres du moment. */
 export function ProcessMapPage() {
   const [params, setParams] = useSearchParams();
-  const view: View = params.get('vue') === 'fabrication' ? 'fabrication' : 'organisation';
+  const flowEnabled = useModules().isEnabled('production');
+  const view: View = flowEnabled && params.get('vue') === 'fabrication' ? 'fabrication' : 'organisation';
 
   return (
     <>
@@ -37,14 +39,16 @@ export function ProcessMapPage() {
         title="Carte du processus"
         description="Comment le travail s’enchaîne dans l’atelier, de la préparation au pilotage. Les chiffres sont ceux d’aujourd’hui, dans votre périmètre."
       />
-      <div className={styles.tabs}>
-        <Tabs
-          label="Vue de la carte"
-          items={[...VIEWS]}
-          value={view}
-          onChange={(v) => setParams(v === 'organisation' ? {} : { vue: v }, { replace: true })}
-        />
-      </div>
+      {flowEnabled && (
+        <div className={styles.tabs}>
+          <Tabs
+            label="Vue de la carte"
+            items={[...VIEWS]}
+            value={view}
+            onChange={(v) => setParams(v === 'organisation' ? {} : { vue: v }, { replace: true })}
+          />
+        </div>
+      )}
       {view === 'organisation' ? <WorkMap /> : <FlowMap />}
     </>
   );
@@ -54,6 +58,7 @@ export function ProcessMapPage() {
 
 function WorkMap() {
   const { can } = useAuth();
+  const modules = useModules();
   const now = useNow(60_000);
   const today = todayKey();
   const { settings } = useSettings();
@@ -103,26 +108,28 @@ function WorkMap() {
                   {stage.title}
                 </h2>
                 <div className={styles.nodes}>
-                  {stage.nodes.map((node) => {
-                    const to = linkFor(node, can);
-                    const body = (
-                      <>
-                        <span className={styles.nodeTitle}>{node.title}</span>
-                        <span className={styles.nodeText}>{node.description}</span>
-                        {node.metrics && metrics?.[node.metrics] && <Metrics list={metrics[node.metrics]!} />}
-                      </>
-                    );
-                    return to ? (
-                      <Link key={node.key} to={to} className={cx(styles.node, styles.nodeLink)}>
-                        {body}
-                      </Link>
-                    ) : (
-                      <div key={node.key} className={styles.node}>
-                        {body}
-                        <span className={styles.restricted}>Géré par un autre rôle</span>
-                      </div>
-                    );
-                  })}
+                  {stage.nodes
+                    .filter((node) => !node.module || modules.isEnabled(node.module))
+                    .map((node) => {
+                      const to = linkFor(node, can, modules.pathEnabled);
+                      const body = (
+                        <>
+                          <span className={styles.nodeTitle}>{node.title}</span>
+                          <span className={styles.nodeText}>{node.description}</span>
+                          {node.metrics && metrics?.[node.metrics] && <Metrics list={metrics[node.metrics]!} />}
+                        </>
+                      );
+                      return to ? (
+                        <Link key={node.key} to={to} className={cx(styles.node, styles.nodeLink)}>
+                          {body}
+                        </Link>
+                      ) : (
+                        <div key={node.key} className={styles.node}>
+                          {body}
+                          <span className={styles.restricted}>Géré par un autre rôle</span>
+                        </div>
+                      );
+                    })}
                 </div>
                 {i < PROCESS_STAGES.length - 1 && (
                   <span className={styles.arrow} aria-hidden>

@@ -11,11 +11,9 @@ import {
   ClipboardList,
   Factory,
   Footprints,
-  Gauge,
   LayoutDashboard,
   ListChecks,
   ListTodo,
-  Map as MapIcon,
   PlayCircle,
   QrCode,
   Ruler,
@@ -23,7 +21,6 @@ import {
   ShieldCheck,
   Siren,
   TriangleAlert,
-  UsersRound,
   Users,
   UserCog,
   Presentation,
@@ -49,6 +46,8 @@ export interface NavItem {
   count?: NavCountKey;
   /** Correspondance exacte du chemin pour l'état actif (page d'accueil d'un espace) */
   end?: boolean;
+  /** Écrans regroupés sous cette entrée (onglets de section) : l'entrée reste active sur chacun */
+  match?: string[];
 }
 
 export interface NavGroup {
@@ -113,6 +112,7 @@ export const SPACES: Space[] = [
           { path: '/manager/equipe', label: 'Équipe', icon: Users, permission: 'team.updateStatus' },
           { path: '/manager/routines', label: 'Suivi des routines', icon: ClipboardList, permission: 'routine.supervise' },
           { path: '/processus', label: 'Carte du processus', icon: Workflow, permission: 'space.supervision' },
+          { path: '/manager/reporting', label: 'Reporting', icon: BarChart3, permission: 'reporting.view' },
         ],
       },
       {
@@ -120,7 +120,6 @@ export const SPACES: Space[] = [
         items: [
           { path: '/andon', label: 'Andon', icon: Siren, permission: 'andon.respond', count: 'andon' },
           { path: '/manager/production', label: 'Production', icon: Factory, permission: 'production.view' },
-          { path: '/manager/atelier', label: 'Plan de l’atelier', icon: MapIcon, permission: 'production.view' },
         ],
       },
       {
@@ -130,13 +129,6 @@ export const SPACES: Space[] = [
           { path: '/manager/actions', label: 'Actions correctives', icon: ListTodo, permission: 'action.manage' },
           { path: '/manager/gemba', label: 'Gemba Walk', icon: Footprints, permission: 'gemba.conduct' },
           { path: '/manager/qualite', label: 'Contrôles LQC', icon: Ruler, permission: 'quality.record' },
-        ],
-      },
-      {
-        label: 'Analyse',
-        items: [
-          { path: '/manager/reporting', label: 'Reporting', icon: BarChart3, permission: 'reporting.view' },
-          { path: '/manager/bi', label: 'Tableaux BI', icon: Gauge, permission: 'reporting.view' },
         ],
       },
     ],
@@ -158,15 +150,13 @@ export const SPACES: Space[] = [
         label: 'Planification',
         items: [
           { path: '/admin/planification', label: 'Planification', icon: CalendarClock, permission: 'schedule.manage' },
-          { path: '/admin/reunions', label: 'Réunions', icon: Presentation, permission: 'meeting.manage' },
-          { path: '/admin/agenda', label: 'Agenda', icon: CalendarDays, permission: 'agenda.manage' },
+          { path: '/admin/agenda', label: 'Agenda et réunions', icon: CalendarDays, permission: 'agenda.manage' },
         ],
       },
       {
         label: 'Contenu',
         items: [
           { path: '/admin/routines', label: 'Routines', icon: ClipboardCheck, permission: 'routine.manage' },
-          { path: '/admin/checklists', label: 'Checklists', icon: ListChecks, permission: 'checklist.manage' },
           { path: '/admin/sequences', label: 'Séquences guidées', icon: PlayCircle, permission: 'sequence.manage' },
           { path: '/admin/connaissances', label: 'Centre de connaissances', icon: BookOpen, permission: 'knowledge.manage' },
         ],
@@ -174,8 +164,7 @@ export const SPACES: Space[] = [
       {
         label: 'Organisation',
         items: [
-          { path: '/admin/utilisateurs', label: 'Utilisateurs', icon: UserCog, permission: 'user.manage' },
-          { path: '/admin/equipes', label: 'Équipes', icon: UsersRound, permission: 'team.manage' },
+          { path: '/admin/utilisateurs', label: 'Utilisateurs et équipes', icon: UserCog, permission: 'user.manage' },
           { path: '/admin/postes', label: 'Postes et QR codes', icon: QrCode, permission: 'workstation.manage' },
         ],
       },
@@ -202,9 +191,61 @@ export function spaceOfPath(pathname: string): SpaceId | null {
   return SPACES.find((s) => pathname === s.prefix || pathname.startsWith(`${s.prefix}/`))?.id ?? null;
 }
 
-/** Menu d'un espace, filtré par permission. */
-export function visibleGroups(space: Space, can: (p: Permission) => boolean): NavGroup[] {
-  return space.groups.map((g) => ({ ...g, items: g.items.filter((i) => can(i.permission)) })).filter((g) => g.items.length > 0);
+/* ---------- Sections : écrans voisins regroupés sous une entrée de menu, avec des onglets ---------- */
+
+export interface SectionTab {
+  path: string;
+  label: string;
+  permission: Permission;
+}
+
+export const SECTIONS: SectionTab[][] = [
+  [
+    { path: '/admin/agenda', label: 'Calendrier', permission: 'agenda.manage' },
+    { path: '/admin/reunions', label: 'Gestion des réunions', permission: 'meeting.manage' },
+  ],
+  [
+    { path: '/admin/routines', label: 'Routines', permission: 'routine.manage' },
+    { path: '/admin/checklists', label: 'Checklists', permission: 'checklist.manage' },
+  ],
+  [
+    { path: '/admin/utilisateurs', label: 'Utilisateurs', permission: 'user.manage' },
+    { path: '/admin/equipes', label: 'Équipes', permission: 'team.manage' },
+  ],
+  [
+    { path: '/manager/production', label: 'Ordres et stocks', permission: 'production.view' },
+    { path: '/manager/atelier', label: 'Plan de l’atelier', permission: 'production.view' },
+  ],
+  [
+    { path: '/manager/reporting', label: 'Indicateurs', permission: 'reporting.view' },
+    { path: '/manager/bi', label: 'Tableaux BI', permission: 'reporting.view' },
+  ],
+];
+
+type PathFilter = (pathname: string) => boolean;
+const always: PathFilter = () => true;
+
+/** Section contenant cet écran (null si l'écran n'est pas regroupé) */
+export function sectionOf(pathname: string): SectionTab[] | null {
+  return SECTIONS.find((tabs) => tabs.some((t) => t.path === pathname)) ?? null;
+}
+
+/** Onglets d'une section accessibles à l'utilisateur (droits et modules actifs) */
+export function visibleTabs(tabs: SectionTab[], can: (p: Permission) => boolean, pathEnabled: PathFilter = always): SectionTab[] {
+  return tabs.filter((t) => can(t.permission) && pathEnabled(t.path));
+}
+
+/** Menu d'un espace, filtré par permission et par module. Une entrée de section mène au premier onglet accessible. */
+export function visibleGroups(space: Space, can: (p: Permission) => boolean, pathEnabled: PathFilter = always): NavGroup[] {
+  const resolve = (item: NavItem): NavItem | null => {
+    const section = sectionOf(item.path);
+    if (!section) return can(item.permission) && pathEnabled(item.path) ? item : null;
+    const tabs = visibleTabs(section, can, pathEnabled);
+    return tabs.length > 0 ? { ...item, path: tabs[0]!.path, match: tabs.map((t) => t.path) } : null;
+  };
+  return space.groups
+    .map((g) => ({ ...g, items: g.items.map(resolve).filter((i): i is NavItem => i !== null) }))
+    .filter((g) => g.items.length > 0);
 }
 
 /** Espaces accessibles, chacun avec sa première page autorisée. */

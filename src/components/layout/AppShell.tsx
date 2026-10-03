@@ -1,5 +1,6 @@
 import { Suspense, useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
+import { moduleOfPath, useModules } from '@/app/modules';
 import { accessibleSpaces, homeSpace, spaceOfPath, type SpaceId } from '@/app/navigation';
 import { useAuth, useCurrentUser } from '@/app/providers/AuthProvider';
 import { useDataSource } from '@/app/providers/DataSourceProvider';
@@ -7,6 +8,7 @@ import { LoadingState } from '@/components/feedback/States';
 import { Drawer } from '@/components/ui/Overlay';
 import { useSettings } from '@/features/shared/api';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { ModuleDisabled, SectionTabs } from './SectionTabs';
 import { SideNav } from './SideNav';
 import { TopBar } from './TopBar';
 import styles from './AppShell.module.css';
@@ -17,6 +19,9 @@ export function AppShell() {
   const online = useOnlineStatus();
   const { settings } = useSettings();
   const space = useCurrentSpace();
+  const { pathname } = useLocation();
+  const { pathEnabled } = useModules();
+  const disabledModule = pathEnabled(pathname) ? null : moduleOfPath(pathname);
 
   return (
     <div className={styles.shell}>
@@ -57,9 +62,8 @@ export function AppShell() {
         )}
         <main id="contenu" className={styles.main} tabIndex={-1}>
           <div className={styles.content}>
-            <Suspense fallback={<LoadingState />}>
-              <Outlet />
-            </Suspense>
+            <SectionTabs />
+            <Suspense fallback={<LoadingState />}>{disabledModule ? <ModuleDisabled module={disabledModule} /> : <Outlet />}</Suspense>
           </div>
         </main>
       </div>
