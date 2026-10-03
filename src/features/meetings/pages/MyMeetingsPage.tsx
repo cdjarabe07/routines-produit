@@ -11,9 +11,10 @@ import { EVENT_TYPE } from '@/features/shared/labels';
 import { useCollection } from '@/hooks/useData';
 import type { Meeting } from '@/types/domain';
 import { addDays, formatLongDate, todayKey } from '@/utils/date';
+import { AgendaCalendar, type AgendaView } from '../components/AgendaCalendar';
 import { MEETING_STATUS, meetingsForUser } from '../model';
 
-type View = 'upcoming' | 'past';
+type View = 'upcoming' | 'past' | 'calendar';
 
 /** Réunions, formations et événements auxquels la personne est invitée (consultation). */
 export function MyMeetingsPage() {
@@ -22,6 +23,7 @@ export function MyMeetingsPage() {
   const meetings = useCollection('meetings');
   const { queries, lookups } = useLookups();
   const [view, setView] = useState<View>('upcoming');
+  const [calendar, setCalendar] = useState<{ view: AgendaView; anchor: string }>({ view: 'week', anchor: today });
 
   const columns: Column<Meeting>[] = [
     {
@@ -68,19 +70,31 @@ export function MyMeetingsPage() {
                 items={[
                   { value: 'upcoming', label: 'À venir', count: upcoming.length },
                   { value: 'past', label: '30 derniers jours', count: past.length },
+                  { value: 'calendar', label: 'Calendrier' },
                 ]}
               />
-              <Panel flush>
-                <DataTable
-                  caption="Mes réunions"
-                  rows={view === 'upcoming' ? upcoming : past}
-                  columns={columns}
-                  rowKey={(m) => m.id}
-                  rowLink={(m) => `/reunions/${m.id}`}
-                  initialSort={{ id: 'date', direction: view === 'upcoming' ? 'asc' : 'desc' }}
-                  empty={{ title: view === 'upcoming' ? 'Aucune réunion prévue.' : 'Aucune réunion sur les 30 derniers jours.' }}
+              {view === 'calendar' ? (
+                <AgendaCalendar
+                  meetings={mine}
+                  view={calendar.view}
+                  views={['day', 'week', 'month']}
+                  anchor={calendar.anchor}
+                  onChange={(next) => setCalendar((c) => ({ view: next.view ?? c.view, anchor: next.anchor ?? c.anchor }))}
+                  eventLink={(m) => `/reunions/${m.id}`}
                 />
-              </Panel>
+              ) : (
+                <Panel flush>
+                  <DataTable
+                    caption="Mes réunions"
+                    rows={view === 'upcoming' ? upcoming : past}
+                    columns={columns}
+                    rowKey={(m) => m.id}
+                    rowLink={(m) => `/reunions/${m.id}`}
+                    initialSort={{ id: 'date', direction: view === 'upcoming' ? 'asc' : 'desc' }}
+                    empty={{ title: view === 'upcoming' ? 'Aucune réunion prévue.' : 'Aucune réunion sur les 30 derniers jours.' }}
+                  />
+                </Panel>
+              )}
             </Stack>
           );
         }}

@@ -8,7 +8,7 @@ import { EVENT_TYPE, options } from '@/features/shared/labels';
 import { userOptions, type Lookups } from '@/features/shared/api';
 import { useForm } from '@/hooks/useForm';
 import type { AgendaPoint, EventType, Meeting } from '@/types/domain';
-import { addDays, todayKey } from '@/utils/date';
+import { addDays, timeToMinutes, todayKey } from '@/utils/date';
 import { createId } from '@/utils/id';
 import { required } from '@/utils/validation';
 import { useSaveMeeting } from '../api';
@@ -39,11 +39,13 @@ interface Props {
   types: EventType[];
   defaultType: EventType;
   defaultDate?: string;
+  /** Heure de début proposée (clic sur un créneau du calendrier) ; fin 30 min plus tard */
+  defaultStartTime?: string;
   onDone: () => void;
 }
 
 /** Création et modification d'un événement d'agenda (réunion, briefing, formation, audit…). */
-export function EventForm({ meeting, lookups, types, defaultType, defaultDate, onDone }: Props) {
+export function EventForm({ meeting, lookups, types, defaultType, defaultDate, defaultStartTime, onDone }: Props) {
   const me = useCurrentUser();
   const save = useSaveMeeting();
   const [search, setSearch] = useState('');
@@ -52,8 +54,8 @@ export function EventForm({ meeting, lookups, types, defaultType, defaultDate, o
       title: meeting?.title ?? '',
       type: meeting?.type ?? defaultType,
       date: meeting?.date ?? defaultDate ?? todayKey(),
-      startTime: meeting?.startTime ?? '09:00',
-      endTime: meeting?.endTime ?? '09:30',
+      startTime: meeting?.startTime ?? defaultStartTime ?? '09:00',
+      endTime: meeting?.endTime ?? halfHourAfter(defaultStartTime ?? '09:00'),
       location: meeting?.location ?? '',
       organizerId: meeting?.organizerId ?? me.id,
       participantIds: meeting?.participantIds ?? [],
@@ -291,4 +293,9 @@ export function EventForm({ meeting, lookups, types, defaultType, defaultDate, o
       </FormActions>
     </form>
   );
+}
+
+function halfHourAfter(time: string): string {
+  const m = Math.min(timeToMinutes(time) + 30, 23 * 60 + 59);
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }

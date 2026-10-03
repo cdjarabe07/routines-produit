@@ -180,6 +180,7 @@ function display(options: Intl.DateTimeFormatOptions, v: DateKey | ISODateTime |
 export const formatDate = (v: DateKey | ISODateTime | Date) => display({ day: '2-digit', month: '2-digit', year: 'numeric' }, v);
 export const formatShortDate = (v: DateKey | ISODateTime | Date) => display({ day: '2-digit', month: 'short' }, v);
 export const formatLongDate = (v: DateKey | ISODateTime | Date) => display({ weekday: 'long', day: 'numeric', month: 'long' }, v);
+export const formatMonth = (v: DateKey) => display({ month: 'long', year: 'numeric' }, v);
 export const formatTime = (v: ISODateTime | Date) => display({ hour: '2-digit', minute: '2-digit' }, v);
 export const formatDateTime = (v: ISODateTime | Date) => `${formatDate(v)} ${formatTime(v)}`;
 
