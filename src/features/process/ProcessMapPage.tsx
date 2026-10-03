@@ -229,7 +229,7 @@ function FlowMap() {
               </section>
             ))}
             {canSeePlant && (
-              <p className={styles.loop}>
+              <p className={styles.note}>
                 Emplacement physique des postes et détail des signaux : <Link to="/manager/atelier">plan de l’atelier</Link>.
               </p>
             )}

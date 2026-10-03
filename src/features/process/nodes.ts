@@ -175,5 +175,5 @@ export const PROCESS_STAGES: ProcessStage[] = [
 
 /** Premier écran du nœud accessible à l'utilisateur, ou null */
 export function linkFor(node: ProcessNode, can: (p: Permission) => boolean): string | null {
-  return node.links.find((l) => l.permissions.every(can))?.to ?? null;
+  return node.links.find((l) => l.permissions.every((p) => can(p)))?.to ?? null;
 }

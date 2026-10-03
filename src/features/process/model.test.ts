@@ -99,5 +99,8 @@ describe('Carte du processus — organisation du travail', () => {
     expect(linkFor(node, operator)).toBe('/app/actions');
     expect(linkFor(node, manager)).toBe('/manager/actions');
     expect(linkFor(node, () => false)).toBeNull();
+    // can() reçoit la permission seule : un second argument serait lu comme une ressource
+    const strict = (...args: unknown[]) => args.length === 1 && operator(args[0] as Permission);
+    expect(linkFor(node, strict)).toBe('/app/actions');
   });
 });
