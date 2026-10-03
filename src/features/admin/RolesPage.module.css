@@ -1,4 +1,6 @@
 .scroller {
+  /* Positionné : les textes masqués (position absolue) des cellules restent dans la zone défilante */
+  position: relative;
   overflow-x: auto;
 }
 .table {

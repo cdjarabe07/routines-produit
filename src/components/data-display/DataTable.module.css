@@ -37,6 +37,8 @@
 }
 
 .scroller {
+  /* Positionné : les textes masqués (position absolue) des cellules restent dans la zone défilante */
+  position: relative;
   overflow-x: auto;
 }
 
@@ -46,12 +48,12 @@
 .table th {
   position: sticky;
   top: 0;
-  padding: var(--space-2) var(--space-4);
-  background: var(--color-surface-muted);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-muted);
+  color: var(--color-text-subtle);
   font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   text-align: left;
@@ -61,7 +63,7 @@
   padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
-  height: 44px;
+  height: 48px;
 }
 .table tbody tr:last-child td {
   border-bottom: 0;
