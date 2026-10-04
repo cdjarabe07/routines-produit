@@ -50,20 +50,21 @@ Tout utilisateur actif peut aussi se connecter avec son email (`karim.benali@ate
 
 ## Scripts
 
-| Commande                 | Rôle                                                                                                                                                              |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`            | Serveur de développement                                                                                                                                          |
-| `npm run dev:supabase`   | Serveur de développement relié au projet Supabase (`.env.supabase.local`)                                                                                         |
-| `npm run build:supabase` | Build de production en mode Supabase                                                                                                                              |
-| `npm run test:security`  | Tests de sécurité **contre le serveur** : AUTH, RBAC, périmètre, IDOR, validation, audit, débit, CORS ([`docs/SECURITY_TESTS.md`](docs/SECURITY_TESTS.md))        |
-| `npm run db:permissions` | Régénère la matrice de permissions de la base et [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md) depuis `permissions.ts`                                             |
-| `npm run build`          | Vérification TypeScript (application et tests) puis build de production dans `dist/`                                                                              |
-| `npm run preview`        | Sert le build de production                                                                                                                                       |
-| `npm test`               | Tests unitaires et d’intégration (Vitest, 71 tests)                                                                                                               |
-| `npm run e2e`            | Tests de bout en bout dans Edge (Playwright) : scénarios administration → exécution → Andon → reporting, 49 routes × 4 profils, 4 largeurs, audit axe WCAG 2.1 AA |
-| `npm run lint`           | ESLint (dont interdiction de `console.*` hors logger)                                                                                                             |
-| `npm run screens`        | Captures d’écran pour l’audit visuel (`npm run screens -- <url> <dossier> <profil> <routes…>`)                                                                    |
-| `npm run format`         | Prettier                                                                                                                                                          |
+| Commande                 | Rôle                                                                                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run dev`            | Serveur de développement                                                                                                                                           |
+| `npm run dev:supabase`   | Serveur de développement relié au projet Supabase (`.env.supabase.local`)                                                                                          |
+| `npm run build:supabase` | Build de production en mode Supabase                                                                                                                               |
+| `npm run build:staging`  | Build relié au serveur Supabase de **test** (`.env.staging.local`), utilisé par les tests de bout en bout                                                          |
+| `npm run test:security`  | Tests de sécurité **contre le serveur de test** : AUTH, RBAC, périmètre, IDOR, validation, audit, débit, CORS ([`docs/SECURITY_TESTS.md`](docs/SECURITY_TESTS.md)) |
+| `npm run db:permissions` | Régénère la matrice de permissions de la base et [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md) depuis `permissions.ts`                                              |
+| `npm run build`          | Vérification TypeScript (application et tests) puis build de production dans `dist/`                                                                               |
+| `npm run preview`        | Sert le build de production                                                                                                                                        |
+| `npm test`               | Tests unitaires et d’intégration (Vitest, 71 tests)                                                                                                                |
+| `npm run e2e`            | Tests de bout en bout dans Edge (Playwright) : scénarios administration → exécution → Andon → reporting, 49 routes × 4 profils, 4 largeurs, audit axe WCAG 2.1 AA  |
+| `npm run lint`           | ESLint (dont interdiction de `console.*` hors logger)                                                                                                              |
+| `npm run screens`        | Captures d’écran pour l’audit visuel (`npm run screens -- <url> <dossier> <profil> <routes…>`)                                                                     |
+| `npm run format`         | Prettier                                                                                                                                                           |
 
 ## Configuration
 

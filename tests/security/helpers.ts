@@ -1,16 +1,16 @@
 import fs from 'node:fs';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { loadEnv } from 'vite';
+import { loadStagingEnv } from '../stagingEnv';
 
-/* Tests de sécurité exécutés CONTRE LE SERVEUR (environnement de démonstration uniquement).
+/* Tests de sécurité exécutés CONTRE LE SERVEUR DE TEST (jamais la production : voir tests/stagingEnv.ts).
    Aucun contournement : chaque test utilise la clé publique et la session réelle d'un compte, comme un navigateur hostile.
    Configuration (hors Git) :
-     .env.supabase.local        VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY
+     .env.staging.local         VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY du projet de test
      SECURITY_ACCOUNTS_FILE     chemin d'un JSON { "email": "mot de passe" } des comptes de démonstration */
 
-const env = loadEnv('supabase', process.cwd(), '');
-export const URL = env.VITE_SUPABASE_URL ?? '';
-export const KEY = env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '';
+const staging = loadStagingEnv();
+export const URL = staging.url;
+export const KEY = staging.key;
 const accountsFile = process.env.SECURITY_ACCOUNTS_FILE;
 const passwords: Record<string, string> =
   accountsFile && fs.existsSync(accountsFile) ? JSON.parse(fs.readFileSync(accountsFile, 'utf8')) : {};

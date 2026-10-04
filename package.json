@@ -8,6 +8,7 @@
     "dev:supabase": "vite --mode supabase",
     "build": "tsc -b && vite build",
     "build:supabase": "tsc -b && vite build --mode supabase",
+    "build:staging": "node -e \"require('fs').existsSync('.env.staging.local')||(console.error('.env.staging.local manquant (serveur de test)'),process.exit(1))\" && tsc -b && vite build --mode staging",
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "lint": "eslint .",

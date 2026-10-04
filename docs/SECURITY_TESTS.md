@@ -4,16 +4,16 @@
 
 ## 1. Suites et commandes
 
-| Suite                    | Commande                                   | Cible                                    | Contenu                                                                                                 |
-| ------------------------ | ------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Serveur (API)            | `npm run test:security`                    | Projet Supabase de **démonstration**     | 44 tests : AUTH, RBAC, SCOPE, IDOR, DATA, API                                                           |
-| Navigateur, serveur réel | `E2E_BACKEND=supabase npx playwright test` | Build Supabase + projet de démonstration | Parcours métier complets avec les vrais comptes, toutes les routes pour 4 rôles, `e2e/security.spec.ts` |
-| Navigateur, mode démo    | `npx playwright test`                      | Build démo (stockage local)              | Non-régression fonctionnelle, accessibilité, mise en page                                               |
-| Unitaires                | `npm test`                                 | jsdom                                    | Permissions, politiques, modèles métier                                                                 |
+| Suite                    | Commande                                   | Cible                            | Contenu                                                                                                 |
+| ------------------------ | ------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Serveur (API)            | `npm run test:security`                    | Projet Supabase de **test**      | 63 tests : AUTH, RBAC, SCOPE, IDOR, DATA, API, ERP                                                      |
+| Navigateur, serveur réel | `E2E_BACKEND=supabase npx playwright test` | Build `staging` + projet de test | Parcours métier complets avec les vrais comptes, toutes les routes pour 4 rôles, `e2e/security.spec.ts` |
+| Navigateur, mode démo    | `npx playwright test`                      | Build démo (stockage local)      | Non-régression fonctionnelle, accessibilité, mise en page                                               |
+| Unitaires                | `npm test`                                 | jsdom                            | Permissions, politiques, modèles métier                                                                 |
 
 ### Pré-requis (hors Git)
 
-- `.env.supabase.local` : `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (clé **publique**), `VITE_AUTH_EMAIL_DOMAIN`.
+- `.env.staging.local` : `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (clé **publique**), `VITE_AUTH_EMAIL_DOMAIN` du **projet Supabase de test** (`routines-app-test`), distinct de la production. Les suites qui écrivent sur le serveur ne lisent que ce fichier.
 - `SECURITY_ACCOUNTS_FILE` (tests serveur) et `E2E_ACCOUNTS_FILE` (e2e) : chemin d'un fichier JSON `{ "email": "mot de passe" }` des comptes de démonstration. Ce fichier n'est **jamais** versionné.
 
 Sans ces éléments, `npm run test:security` n'exécute rien : la suite apparaît comme **ignorée** (« skipped »), jamais comme réussie.
@@ -22,6 +22,7 @@ Sans ces éléments, `npm run test:security` n'exécute rien : la suite apparaî
 
 ### Garde-fous
 
+- Les suites serveur et e2e Supabase refusent de démarrer si `.env.staging.local` pointe vers le projet de production (`tests/stagingEnv.ts`).
 - Le premier test vérifie que `settings.environment = 'demo'`. Les tests n'utilisent **aucune donnée de production**.
 - La suite serveur se termine par une réinitialisation du jeu de démonstration (alertes et anomalies de test effacées). La suite e2e Supabase le recharge avant de commencer (`e2e/global-setup.ts`).
 - La réinitialisation est refusée par le serveur sur un environnement de production.

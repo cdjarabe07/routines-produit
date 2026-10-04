@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { createServer, loadEnv } from 'vite';
+import { createServer } from 'vite';
+import { loadStagingEnv } from '../tests/stagingEnv';
 import { credentials } from './support/auth';
 
-/* E2E_BACKEND=supabase : recharge le jeu de démonstration du serveur avant la suite (données datées d'aujourd'hui,
+/* E2E_BACKEND=supabase : recharge le jeu de démonstration du serveur de TEST avant la suite (données datées d'aujourd'hui,
    saisies des exécutions précédentes effacées). Refusé par le serveur hors environnement de démonstration. */
 export default async function globalSetup() {
-  const env = loadEnv('supabase', process.cwd(), '');
-  const client = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false } });
+  const { url, key } = loadStagingEnv();
+  const client = createClient(url, key, { auth: { persistSession: false } });
   const { identifier, password } = credentials('admin');
   const { error } = await client.auth.signInWithPassword({ email: identifier, password });
   if (error) throw new Error(`Connexion administrateur impossible : ${error.message}`);
