@@ -34,7 +34,7 @@ import type {
 } from '@/types/domain';
 import type { Dataset } from '@/services/data/types';
 import { resolveCatalog } from '@/app/catalog';
-import { SECTOR_TEMPLATES, type SectorKey, type SectorRoutine } from '@/data/sectors';
+import { SECTOR_TEMPLATES, type Cadence, type SectorKey, type SectorRoutine } from '@/data/sectors';
 import { SECTOR_DEMO } from './sectorDemo';
 import { occursOn, slotsOf, usesSlot } from '@/features/planning/model';
 import { buildSample, checkKey, evaluateCheck, taskChecks } from '@/features/routines/model';
@@ -79,23 +79,19 @@ const plusHours = (time: string, hours: number) => {
 
 /** Routine d'un modèle de secteur, planifiée selon sa fréquence conseillée */
 function sectorDemoRoutine(r: SectorRoutine, i: number, checklistIdByName: Map<string, string>): DemoRoutine {
-  const freq = r.suggestedFrequency.toLowerCase();
-  const schedule: DemoRoutine['schedules'][number] = freq.startsWith('sur événement')
-    ? {
-        id: `sc-sec-${i}`,
-        recurrence: 'on_demand',
-        team: 'team-a',
-        ...(freq.includes('ordre de fabrication') ? { triggerOn: 'order_start' as const } : {}),
-      }
-    : freq.includes('toutes les heures')
-      ? { id: `sc-sec-${i}`, recurrence: 'weekdays', team: 'team-a', everyHours: 1, endTime: plusHours(r.defaultTime, 6) }
-      : freq.includes('toutes les 2 heures')
-        ? { id: `sc-sec-${i}`, recurrence: 'weekdays', team: 'team-a', everyHours: 2, endTime: plusHours(r.defaultTime, 8) }
-        : freq.includes('chaque semaine')
-          ? { id: `sc-sec-${i}`, recurrence: 'weekly', weekdays: [3], assignee: 'u-karim' }
-          : freq.includes('chaque jour')
-            ? { id: `sc-sec-${i}`, recurrence: 'daily', assignee: 'u-yann' }
-            : { id: `sc-sec-${i}`, recurrence: 'weekdays', ...(i % 2 ? { team: 'team-a' } : { assignee: 'u-nadia' }) };
+  const id = `sc-sec-${i}`;
+  const SCHEDULE: Record<Cadence, DemoRoutine['schedules'][number]> = {
+    shift: { id, recurrence: 'weekdays', ...(i % 2 ? { team: 'team-a' } : { assignee: 'u-nadia' }) },
+    hourly: { id, recurrence: 'weekdays', team: 'team-a', everyHours: 1, endTime: plusHours(r.defaultTime, 6) },
+    every2h: { id, recurrence: 'weekdays', team: 'team-a', everyHours: 2, endTime: plusHours(r.defaultTime, 8) },
+    daily: { id, recurrence: 'daily', assignee: 'u-yann' },
+    weekly: { id, recurrence: 'weekly', weekdays: [3], assignee: 'u-karim' },
+    event: { id, recurrence: 'on_demand', team: 'team-a' },
+    event_order: { id, recurrence: 'on_demand', team: 'team-a', triggerOn: 'order_start' },
+    // L'audit par couches est déjà présent dans l'atelier de démonstration (trois niveaux)
+    layers: { id, recurrence: 'weekdays', assignee: 'u-yann', layer: 1 },
+  };
+  const schedule = SCHEDULE[r.cadence];
   return {
     id: `rt-sec-${i}`,
     title: r.title,

@@ -46,7 +46,7 @@ export async function applySectorTemplate(ds: DataSource, key: SectorKey): Promi
     }));
     await ds.repo('routineTemplates').create({
       title: r.title,
-      description: `${r.description} Fréquence conseillée : ${r.suggestedFrequency.toLowerCase()}.`,
+      description: `${r.description} Fréquence conseillée : ${r.suggestedFrequency.toLowerCase()}.${r.reference ? ` Référence : ${r.reference}.` : ''}`,
       durationMin: r.durationMin,
       defaultTime: r.defaultTime,
       tasks,

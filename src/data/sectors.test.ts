@@ -4,7 +4,7 @@ import { MODULES } from '@/app/modules';
 import { buildDemoData } from '@/data/demo/seed';
 import { applySectorTemplate } from '@/features/admin/sectorTemplates';
 import { createMemoryStore, createStoreDataSource } from '@/services/data/storeDataSource';
-import { SECTOR_KEYS, SECTOR_TEMPLATES } from './sectors';
+import { SECTOR_KEYS, SECTOR_TEMPLATES, isExampleValue } from './sectors';
 
 /* Clés acceptées par la base (migration 0017) pour les étapes et les catégories */
 const KEY = /^[a-z0-9_-]{1,40}$/;
@@ -35,18 +35,33 @@ describe('modèles de secteur', () => {
     const ds = createStoreDataSource(createMemoryStore(), () => buildDemoData());
     const routinesBefore = (await ds.repo('routineTemplates').list()).length;
     const first = await applySectorTemplate(ds, 'food');
-    expect(first).toEqual({ checklists: 1, routines: 4 });
+    expect(first).toEqual({ checklists: 1, routines: 6 });
     const settings = (await ds.repo('settings').list())[0]!;
     expect(settings.sectorTemplate).toBe('food');
     expect(settings.catalog?.productionStages?.map((s) => s.label)).toContain('Cuisson');
     expect(settings.disabledModules).toContain('erp');
     const routines = await ds.repo('routineTemplates').list();
-    expect(routines.length).toBe(routinesBefore + 4);
+    expect(routines.length).toBe(routinesBefore + 6);
     const hygiene = routines.find((r) => r.title === 'Hygiène avant démarrage')!;
     const checklist = (await ds.repo('checklists').list()).find((c) => c.name === 'Hygiène avant démarrage')!;
     expect(hygiene.tasks[0]!.checklistId).toBe(checklist.id);
     expect(hygiene.description).toMatch(/Fréquence conseillée/);
     expect(await applySectorTemplate(ds, 'food')).toEqual({ checklists: 0, routines: 0 });
+  });
+});
+
+describe('valeurs réglementaires des modèles', () => {
+  const check = (sector: keyof typeof SECTOR_TEMPLATES, id: string) =>
+    SECTOR_TEMPLATES[sector].routines.flatMap((r) => r.tasks.flatMap((t) => t.checks ?? [])).find((c) => c.id === id)!;
+  it('plats cuisinés réfrigérés entre 0 et +3 °C, refroidissement en 2 h au plus, maintien au chaud à 63 °C', () => {
+    expect([check('food', 'chambre').min, check('food', 'chambre').max]).toEqual([0, 3]);
+    expect(check('food', 'refroidissement').max).toBe(120);
+    expect(check('food', 'chaud').min).toBe(63);
+  });
+  it('ESD : plan de travail sous 1×10⁹ Ω ; les valeurs propres à l’usine sont signalées comme exemples', () => {
+    expect(check('electronics', 'plan').max).toBe(1000);
+    expect(isExampleValue(check('plastics', 'temp'))).toBe(true);
+    expect(isExampleValue(check('food', 'chambre'))).toBe(false);
   });
 });
 
