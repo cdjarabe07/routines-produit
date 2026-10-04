@@ -35,7 +35,7 @@ export function credentials(who: string): { identifier: string; password: string
 
 export async function loginWithForm(page: Page, who: string) {
   const { identifier, password } = credentials(who);
-  await page.goto('/#/login');
+  await page.goto('/app/#/login');
   await page.getByLabel(/Identifiant ou email/).fill(identifier);
   await page.getByLabel(/^Mot de passe/).fill(password);
   await page.getByRole('button', { name: 'Se connecter' }).click();
@@ -44,14 +44,14 @@ export async function loginWithForm(page: Page, who: string) {
 /** Ouvre une session pour un utilisateur : injection directe en démo (rapide), vraie connexion avec Supabase. */
 export async function signIn(page: Page, userId: string) {
   if (BACKEND === 'demo') {
-    await page.goto('/#/login');
+    await page.goto('/app/#/login');
     await page.evaluate((id) => {
       localStorage.clear();
       sessionStorage.setItem('ra:session', JSON.stringify({ userId: id, startedAt: new Date().toISOString(), mode: 'demo' }));
     }, userId);
     return;
   }
-  await page.goto('/#/login');
+  await page.goto('/app/#/login');
   await page.evaluate(() => sessionStorage.clear());
   await loginWithForm(page, userId);
   await expect(page).not.toHaveURL(/#\/login/, { timeout: 20_000 });

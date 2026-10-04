@@ -24,7 +24,7 @@ test('administration → planification → exécution → Andon → action corre
   test.setTimeout(240_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('/#/login');
+  await page.goto('/app/#/login');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
@@ -36,7 +36,7 @@ test('administration → planification → exécution → Andon → action corre
   await expect(page.getByRole('heading', { level: 1, name: 'Administration' })).toBeVisible();
 
   // Routine et tâches
-  await page.goto('/#/admin/routines');
+  await page.goto('/app/#/admin/routines');
   await page.getByRole('button', { name: 'Nouvelle routine' }).click();
   const editor = page.getByRole('dialog', { name: 'Nouvelle routine' });
   await editor.getByRole('textbox', { name: 'Titre', exact: true }).fill(ROUTINE);
@@ -59,7 +59,7 @@ test('administration → planification → exécution → Andon → action corre
   await expect(page.getByRole('row').filter({ hasText: ROUTINE })).toContainText('Nadia Roussel');
 
   // Réunion avec Nadia
-  await page.goto('/#/admin/reunions');
+  await page.goto('/app/#/admin/reunions');
   await page.getByRole('button', { name: 'Nouvelle réunion' }).click();
   const meetingForm = page.getByRole('dialog', { name: 'Nouvelle réunion' });
   await meetingForm.getByRole('textbox', { name: 'Titre', exact: true }).fill(MEETING);
@@ -71,7 +71,7 @@ test('administration → planification → exécution → Andon → action corre
   await expect(page.getByRole('row').filter({ hasText: MEETING })).toBeVisible();
 
   // Vérification du planning (semaine)
-  await page.goto('/#/admin/planification?vue=semaine');
+  await page.goto('/app/#/admin/planification?vue=semaine');
   await expect(page.getByRole('link', { name: ROUTINE })).toBeVisible();
   await logout(page);
 
@@ -80,10 +80,10 @@ test('administration → planification → exécution → Andon → action corre
   await expect(page).toHaveURL(/#\/app$/);
   await expect(page.getByRole('heading', { level: 1, name: /Bonjour Nadia/ })).toBeVisible();
   await expect(page.getByRole('link', { name: ROUTINE }).first()).toBeVisible();
-  await page.goto('/#/app/reunions');
+  await page.goto('/app/#/app/reunions');
   await expect(page.getByRole('link', { name: MEETING })).toBeVisible();
 
-  await page.goto('/#/app');
+  await page.goto('/app/#/app');
   await page
     .getByRole('button', { name: `Démarrer ${ROUTINE}` })
     .first()
@@ -113,7 +113,7 @@ test('administration → planification → exécution → Andon → action corre
   ).toContainText(ROUTINE);
 
   /* ---------- Scénario 3 : anomalie ---------- */
-  await page.goto('/#/andon?declencher=1');
+  await page.goto('/app/#/andon?declencher=1');
   const raise = page.getByRole('dialog', { name: 'Déclencher un Andon' });
   await raise.getByRole('button', { name: /^P4/ }).click();
   await raise.getByRole('button', { name: 'Équipement' }).click();
@@ -121,13 +121,13 @@ test('administration → planification → exécution → Andon → action corre
   await raise.getByRole('radio', { name: /Critique/ }).click();
   await raise.getByRole('button', { name: 'Déclencher' }).click();
   await expect(raise).toBeHidden();
-  await page.goto('/#/app');
+  await page.goto('/app/#/app');
   await expect(page.getByText('Andon actif · Poste 4 — Rubanage')).toBeVisible();
   await logout(page);
 
   await login(page, 'manager');
   await expect(page).toHaveURL(/#\/manager$/);
-  await page.goto('/#/andon');
+  await page.goto('/app/#/andon');
   const tile = page.getByRole('listitem').filter({ hasText: 'Carter de protection fissuré' });
   await tile.getByRole('button', { name: 'Je prends en charge' }).click();
   await expect(tile).toContainText('Xavier Dupont intervient');
@@ -157,7 +157,7 @@ test('administration → planification → exécution → Andon → action corre
   await expect(page.getByRole('heading', { name: 'Résolution' })).toBeVisible();
 
   // Reporting : l'Andon, l'action et la routine de Nadia sont comptés
-  await page.goto('/#/manager/reporting');
+  await page.goto('/app/#/manager/reporting');
   const byRoutine = page.getByRole('row').filter({ hasText: ROUTINE });
   await expect(byRoutine).toContainText('1');
   await expect(page.getByText('Andon déclenchés', { exact: true })).toBeVisible();
@@ -166,7 +166,7 @@ test('administration → planification → exécution → Andon → action corre
 });
 
 test('déconnexion depuis la supervision puis connexion opérateur : arrivée directe sur son espace', async ({ page }) => {
-  await page.goto('/#/login');
+  await page.goto('/app/#/login');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
@@ -183,20 +183,20 @@ test('déconnexion depuis la supervision puis connexion opérateur : arrivée di
 
   // Un lien protégé reste respecté s'il est autorisé, sinon l'espace d'accueil prend le relais
   await logout(page);
-  await page.goto('/#/manager/reporting');
+  await page.goto('/app/#/manager/reporting');
   await expect(page).toHaveURL(/retour=/);
   await login(page, 'operateur');
   await expect(page).toHaveURL(/#\/app$/);
 });
 
 test('reporting interactif : survol, détail d’un jour, d’une catégorie et d’une routine', async ({ page }) => {
-  await page.goto('/#/login');
+  await page.goto('/app/#/login');
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
   await login(page, 'manager');
-  await page.goto('/#/manager/reporting');
+  await page.goto('/app/#/manager/reporting');
 
   // Clavier : flèches puis Entrée
   const chart = page.getByRole('group', { name: /^Anomalies déclarées par jour/ });
@@ -234,26 +234,26 @@ test('reporting interactif : survol, détail d’un jour, d’une catégorie et 
 test('modules : un module décoché disparaît du menu et de la carte, ses écrans l’indiquent', async ({ page }) => {
   test.skip(BACKEND === 'supabase', 'Modifie les paramètres du site : vérifié en mode démo uniquement');
   await signIn(page, 'u-admin');
-  await page.goto('/#/admin/parametres');
+  await page.goto('/app/#/admin/parametres');
   await page.reload();
   await page.getByLabel('Gemba Walk').uncheck();
   await page.getByRole('button', { name: 'Enregistrer les modules' }).click();
   await expect(page.getByText('Modules enregistrés.')).toBeVisible();
 
-  await page.goto('/#/manager');
+  await page.goto('/app/#/manager');
   const nav = page.getByRole('navigation', { name: 'Navigation principale' });
   await expect(nav.getByRole('link', { name: 'Anomalies' })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Gemba Walk' })).toHaveCount(0);
-  await page.goto('/#/manager/gemba');
+  await page.goto('/app/#/manager/gemba');
   await expect(page.getByText('Module désactivé')).toBeVisible();
-  await page.goto('/#/processus');
+  await page.goto('/app/#/processus');
   await expect(page.getByText('Actions correctives', { exact: true })).toBeVisible();
   await expect(page.getByText('Gemba Walk', { exact: true })).toHaveCount(0);
 });
 
 test('sections : les écrans regroupés se parcourent par onglets', async ({ page }) => {
   await signIn(page, 'u-admin');
-  await page.goto('/#/admin/agenda');
+  await page.goto('/app/#/admin/agenda');
   await page.reload();
   const tabs = page.getByRole('navigation', { name: 'Sections' });
   await tabs.getByRole('link', { name: 'Gestion des réunions' }).click();

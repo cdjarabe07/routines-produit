@@ -8,19 +8,19 @@ test.describe('sécurité — serveur Supabase', () => {
   test.skip(BACKEND !== 'supabase', 'Mode démo : aucune sécurité réelle, par construction (docs/SECURITY_AUDIT.md)');
 
   test('une session forgée dans le navigateur n’ouvre aucun accès', async ({ page }) => {
-    await page.goto('/#/login');
+    await page.goto('/app/#/login');
     await page.evaluate(() => {
       sessionStorage.clear();
       // Attaque de l'audit (P0-1) : fonctionnait avec les comptes simulés
       sessionStorage.setItem('ra:session', JSON.stringify({ userId: 'u-admin', startedAt: new Date().toISOString(), mode: 'demo' }));
     });
-    await page.goto('/#/admin/utilisateurs');
+    await page.goto('/app/#/admin/utilisateurs');
     await expect(page).toHaveURL(/#\/login/);
     await expect(page.getByRole('heading', { name: 'Connexion' })).toBeVisible();
   });
 
   test('le mot de passe des comptes simulés est refusé', async ({ page }) => {
-    await page.goto('/#/login');
+    await page.goto('/app/#/login');
     await page.getByLabel(/Identifiant ou email/).fill('claire.fontaine@atelier.local');
     await page.getByLabel(/^Mot de passe/).fill('Routines2026');
     await page.getByRole('button', { name: 'Se connecter' }).click();
@@ -39,7 +39,7 @@ test.describe('sécurité — serveur Supabase', () => {
     await expect(page).toHaveURL(/#\/app$/);
     const userRequests: number[] = [];
     page.on('response', (r) => r.url().includes('/rest/v1/users') && userRequests.push(r.status()));
-    await page.goto('/#/admin/utilisateurs');
+    await page.goto('/app/#/admin/utilisateurs');
     await expect(page.getByText('Accès non autorisé')).toBeVisible();
     // L'écran est refusé par l'interface ; et même une requête directe ne renverrait que l'annuaire des comptes actifs (RLS)
     await expect(page.getByRole('cell', { name: 'Désactivé' })).toHaveCount(0);

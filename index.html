@@ -5,11 +5,253 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#fafafb" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <title>Routines atelier</title>
+    <title>Routine — standards, alertes et actions de l’atelier</title>
+    <meta
+      name="description"
+      content="Routine digitalise les routines terrain, les alertes Andon et les actions correctives des équipes de production. Pour toute industrie manufacturière. Démo gratuite, sans inscription."
+    />
+    <meta property="og:title" content="Routine — standards, alertes et actions de l’atelier" />
+    <meta
+      property="og:description"
+      content="Les routines terrain de votre usine, faites, prouvées et suivies. Démo gratuite, sans inscription."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./vitrine/supervision.jpg" />
   </head>
   <body>
-    <div id="root"></div>
-    <noscript>Cette application nécessite JavaScript.</noscript>
-    <script type="module" src="/src/main.tsx"></script>
+    <a class="skip" href="#contenu">Aller au contenu</a>
+    <header class="topbar">
+      <div class="wrap topbar-inner">
+        <a class="brand" href="./" aria-label="Routine, accueil">
+          <span class="brand-mark" aria-hidden="true">R</span>
+          <span class="brand-name">Routine</span>
+        </a>
+        <nav class="nav" aria-label="Sections">
+          <a href="#fonctions">Fonctions</a>
+          <a href="#roles">Pour qui</a>
+          <a href="#methode">Méthode</a>
+          <a href="#securite">Sécurité</a>
+        </nav>
+        <a class="button button-primary button-small" href="./app/">Essayer la démo</a>
+      </div>
+    </header>
+
+    <main id="contenu">
+      <section class="hero">
+        <div class="wrap hero-inner">
+          <div class="hero-text">
+            <p class="eyebrow">Pour toute industrie manufacturière</p>
+            <h1>Les routines terrain de votre usine, faites, prouvées et suivies.</h1>
+            <p class="lead">
+              Routine rassemble les standards de travail, les alertes Andon et les actions correctives de vos équipes de production. Chacun
+              sait quoi faire, chaque problème remonte en minutes, et rien ne se perd entre deux équipes.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="./app/">Essayer la démo</a>
+              <a class="button button-secondary" href="#fonctions">Voir les fonctions</a>
+              <a class="button button-secondary" data-contact hidden>Demander une présentation</a>
+            </div>
+            <p class="hero-note">Démo gratuite, sans inscription : vous choisissez un rôle et entrez dans un atelier fictif.</p>
+          </div>
+          <figure class="hero-shot">
+            <img
+              src="./vitrine/supervision.jpg"
+              width="1440"
+              height="900"
+              alt="Vue d’ensemble de la supervision : état des lignes, indicateurs du jour et actions à traiter"
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="benefices">
+        <div class="wrap">
+          <h2 id="benefices" class="section-title">Ce qui change dans l’atelier</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <h3>Des standards réellement tenus</h3>
+              <p>
+                Les routines (5S, démarrage poste, audits, contrôles) sont planifiées pour chaque personne ou équipe, exécutées avec leur
+                checklist, et prouvées : qui, quand, avec quel résultat.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Des problèmes remontés en minutes</h3>
+              <p>
+                Un opérateur déclenche un Andon depuis son poste. La bonne personne est prévenue, le temps de réaction est chronométré et
+                l’alerte reste visible jusqu’à sa résolution.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Des actions suivies jusqu’au bout</h3>
+              <p>
+                Chaque anomalie, Andon ou observation de Gemba Walk devient une action avec un responsable et une échéance. Les retards et
+                les blocages sautent aux yeux.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-muted" id="fonctions" aria-labelledby="fonctions-titre">
+        <div class="wrap">
+          <h2 id="fonctions-titre" class="section-title">Fonctions</h2>
+          <p class="section-lead">
+            Tout ce que vos équipes de production utilisent au quotidien, au même endroit. Les modules inutiles se désactivent en un clic.
+          </p>
+          <div class="grid grid-4">
+            <article class="feature">
+              <h3>Routines et checklists</h3>
+              <p>Standards de travail, tâches obligatoires, mesures et contrôles, photos.</p>
+            </article>
+            <article class="feature">
+              <h3>Planification</h3>
+              <p>Routines affectées à une personne ou une équipe, quotidiennes, hebdomadaires ou ponctuelles.</p>
+            </article>
+            <article class="feature">
+              <h3>Andon</h3>
+              <p>Alerte au poste, prise en charge, escalade automatique, tableau d’atelier en plein écran.</p>
+            </article>
+            <article class="feature">
+              <h3>Anomalies et actions</h3>
+              <p>Signalement avec photo et gravité, actions correctives, responsables, échéances.</p>
+            </article>
+            <article class="feature">
+              <h3>Gemba Walk</h3>
+              <p>Tournées terrain guidées ; les observations à traiter deviennent des actions.</p>
+            </article>
+            <article class="feature">
+              <h3>Contrôles qualité</h3>
+              <p>Mesures en ligne comparées aux tolérances, conformité du jour.</p>
+            </article>
+            <article class="feature">
+              <h3>Agenda et réunions</h3>
+              <p>Calendrier jour, semaine, mois ; points quotidiens, ordre du jour, compte-rendu.</p>
+            </article>
+            <article class="feature">
+              <h3>Pilotage</h3>
+              <p>Tableaux de bord par rôle, reporting, carte du processus avec les chiffres du jour.</p>
+            </article>
+          </div>
+          <div class="shots">
+            <figure>
+              <img src="./vitrine/agenda.jpg" width="1440" height="900" loading="lazy" alt="Agenda de l’atelier en vue semaine" />
+              <figcaption>Agenda de l’atelier, vue semaine</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="./vitrine/actions.jpg"
+                width="1440"
+                height="900"
+                loading="lazy"
+                alt="Suivi des actions correctives avec priorités et échéances"
+              />
+              <figcaption>Actions correctives : priorités, responsables, retards</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="roles" aria-labelledby="roles-titre">
+        <div class="wrap">
+          <h2 id="roles-titre" class="section-title">Pour qui</h2>
+          <p class="section-lead">Chaque rôle voit ce qui le concerne, avec les droits qui lui correspondent.</p>
+          <div class="roles">
+            <div class="grid grid-2">
+              <article class="card">
+                <h3>Opérateur</h3>
+                <p>
+                  Ses routines du jour au poste, sur téléphone ou tablette. Un bouton pour déclencher un Andon ou signaler une anomalie.
+                </p>
+              </article>
+              <article class="card">
+                <h3>Chef d’équipe</h3>
+                <p>Son équipe, les alertes à prendre en charge, les routines en retard, la passation de consignes entre équipes.</p>
+              </article>
+              <article class="card">
+                <h3>Responsable de production</h3>
+                <p>L’état de l’atelier en temps réel, les actions correctives, la qualité, le reporting et les réunions.</p>
+              </article>
+              <article class="card">
+                <h3>Administrateur</h3>
+                <p>Routines, checklists, planification, utilisateurs, équipes, postes et modules activés pour le site.</p>
+              </article>
+            </div>
+            <figure class="phone">
+              <img
+                src="./vitrine/operateur.jpg"
+                width="390"
+                height="844"
+                loading="lazy"
+                alt="Tableau de bord d’un opérateur sur téléphone"
+              />
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-muted" id="methode" aria-labelledby="methode-titre">
+        <div class="wrap">
+          <h2 id="methode-titre" class="section-title">Une méthode, pas seulement un outil</h2>
+          <p class="section-lead">Routine suit la boucle d’amélioration continue de l’atelier.</p>
+          <ol class="steps">
+            <li><strong>Configurer</strong><span>les standards : routines et checklists.</span></li>
+            <li><strong>Planifier</strong><span>qui fait quoi, et quand.</span></li>
+            <li><strong>Exécuter</strong><span>au poste, avec preuve.</span></li>
+            <li><strong>Détecter</strong><span>Andon, anomalies, contrôles qualité.</span></li>
+            <li><strong>Corriger</strong><span>actions avec responsable et échéance.</span></li>
+            <li><strong>Piloter</strong><span>et faire évoluer les standards.</span></li>
+          </ol>
+          <h3 class="subtitle">Adapté à votre secteur</h3>
+          <p class="sectors">
+            Automobile et équipementiers · Câblage et électronique · Agroalimentaire · Mécanique et usinage · Plasturgie · Pharmacie et
+            cosmétique
+          </p>
+          <p class="section-lead">
+            Vos routines, checklists, postes et équipes reprennent vos propres standards ; les modules non utilisés se masquent. La démo
+            présente un exemple : un atelier de câblage.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="securite" aria-labelledby="securite-titre">
+        <div class="wrap">
+          <h2 id="securite-titre" class="section-title">Sécurité et données</h2>
+          <div class="grid grid-3">
+            <article class="card">
+              <h3>Droits par rôle</h3>
+              <p>Chaque action est vérifiée par le serveur selon le rôle et le périmètre (site, ligne, équipe) de la personne.</p>
+            </article>
+            <article class="card">
+              <h3>Traçabilité</h3>
+              <p>Connexions, modifications sensibles et refus d’accès sont inscrits dans un journal d’audit non modifiable.</p>
+            </article>
+            <article class="card">
+              <h3>Hébergement en Europe</h3>
+              <p>Données hébergées dans un centre de données à Paris, comptes créés uniquement par votre administrateur.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta">
+        <div class="wrap cta-inner">
+          <h2>Voyez Routine en situation</h2>
+          <p>Entrez dans l’atelier de démonstration comme opérateur, chef d’équipe, manager ou administrateur.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="./app/">Essayer la démo</a>
+            <a class="button button-secondary" data-contact hidden>Demander une présentation</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <span>© 2026 Routine</span>
+        <span>La démo fonctionne dans votre navigateur : aucune donnée n’est envoyée.</span>
+      </div>
+    </footer>
+    <script type="module" src="/src/vitrine/main.ts"></script>
   </body>
 </html>

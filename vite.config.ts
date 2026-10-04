@@ -8,6 +8,15 @@ export default defineConfig({
   base: './',
   define: { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version) },
   plugins: [react()],
+  // Deux pages : la vitrine (racine) et l'application (app/, démo sans serveur pour le produit)
+  build: {
+    rollupOptions: {
+      input: {
+        vitrine: fileURLToPath(new URL('./index.html', import.meta.url)),
+        app: fileURLToPath(new URL('./app/index.html', import.meta.url)),
+      },
+    },
+  },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

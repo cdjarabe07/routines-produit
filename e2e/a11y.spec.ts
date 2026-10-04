@@ -75,7 +75,7 @@ const today = () => {
 test('aucune violation WCAG A/AA détectée par axe', async ({ page }) => {
   test.skip(BACKEND === 'supabase', 'Interface indépendante du serveur : vérifiée en mode démo');
   test.setTimeout(600_000);
-  await page.goto('/#/login');
+  await page.goto('/app/#/login');
   await page.evaluate(() => localStorage.clear());
   const report: string[] = [];
 
@@ -85,7 +85,7 @@ test('aucune violation WCAG A/AA détectée par axe', async ({ page }) => {
         sessionStorage.setItem('ra:session', JSON.stringify({ userId: 'u-admin', startedAt: new Date().toISOString(), mode: 'demo' }));
       else sessionStorage.removeItem('ra:session');
     }, route !== '/login');
-    await page.goto(`/#${route.replace('TODAY', today())}`);
+    await page.goto(`/app/#${route.replace('TODAY', today())}`);
     await page.reload();
     await expect(page.getByRole('status', { name: /Chargement/ })).toHaveCount(0, { timeout: 10_000 });
     await page.waitForTimeout(300);

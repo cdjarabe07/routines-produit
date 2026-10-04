@@ -1,6 +1,21 @@
-# Routines atelier
+# Routine
 
-Application métier de digitalisation des routines de travail d’un atelier de câblage. Elle suit la chaîne :
+Produit de digitalisation des routines terrain pour l’industrie manufacturière, issu de l’outil interne [routines-app](https://github.com/cdjarabe07/routines-app) (étiquette `v1.0-atelier`).
+
+## Site
+
+| Adresse | Contenu                                                                                                                                            |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`     | Vitrine (`index.html`, `src/vitrine/`) : présentation du produit, accès à la démo                                                                  |
+| `/app/` | Application (`app/index.html`, `src/main.tsx`) : démo publique sans serveur, entrée par profil (opérateur, chef d’équipe, manager, administrateur) |
+
+`VITE_CONTACT_EMAIL` (facultatif, public) affiche le bouton « Demander une présentation » de la vitrine.
+
+Le dépôt de l’atelier est déclaré en remote `atelier` en lecture seule : on peut y récupérer une correction, jamais y pousser.
+
+## Application
+
+L’application suit la chaîne :
 
 ```text
 ADMINISTRATION (configure) → PLANIFICATION (affecte) → MON TRAVAIL (exécute, signale) → SUPERVISION (suit, corrige) → REPORTING
