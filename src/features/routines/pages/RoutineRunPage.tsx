@@ -18,6 +18,7 @@ import { useCollection } from '@/hooks/useData';
 import { KnowledgeQuickView } from '@/features/knowledge/components/KnowledgeQuickView';
 import { usePlanningData } from '@/features/planning/api';
 import {
+  LAYER_LABELS,
   OCCURRENCE_STATE,
   assignmentLabel,
   findOccurrence,
@@ -163,6 +164,7 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
             <span className={styles.metaText}>
               {formatLongDate(date)} · {occurrence.time} · {plannedMin} min prévues
               {occurrence.trigger && ` · Déclenchée : ${occurrence.trigger.reason}`}
+              {schedule.layer && ` · Audit par couches, ${LAYER_LABELS[schedule.layer].toLowerCase()}`}
               {where && ` · ${where}`} · {assignmentLabel(schedule, lookups.userName, lookups.teamName)}
             </span>
           </>
@@ -264,7 +266,7 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
               key={task.id}
               index={index}
               task={task}
-              checks={taskChecks(task, checklists)}
+              checks={taskChecks(task, checklists, run)}
               run={run}
               editable={editable}
               busyKey={record.isPending ? record.variables?.key : undefined}

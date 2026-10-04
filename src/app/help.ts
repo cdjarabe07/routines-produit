@@ -278,6 +278,7 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
         'Créez une planification : routine, personne ou équipe, heure, récurrence (une fois, jours ouvrés, jours choisis, chaque mois…).',
         'Pour un contrôle fréquent, choisissez « Dans la journée » : toutes les N heures jusqu’au dernier créneau.',
         'Pour une routine liée à un événement (libération de ligne, premier article), choisissez « Sur événement » : elle est déclenchée par le bouton « Déclencher » ou au démarrage d’un ordre de fabrication.',
+        'Audit par couches : planifiez la même routine d’audit à chaque niveau (chef d’équipe chaque jour, encadrement chaque semaine, direction chaque mois) et indiquez le niveau.',
         'La vue Semaine montre chaque occurrence et son état ; vous pouvez sauter une date ou annuler une planification.',
       ],
       tips: [
@@ -317,6 +318,7 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
       purpose: 'Définir les routines standard : tâches, durées, contrôles et checklists associées.',
       steps: [
         'Créez une routine et ses tâches ; marquez les tâches obligatoires.',
+        'Questions tournantes : indiquez combien de contrôles poser à chaque exécution ; ils changent à chaque fois, et tous finissent par être posés.',
         '« Planifier » l’affecte ensuite à des personnes ou des équipes.',
       ],
       tips: ['Archiver une routine arrête ses planifications à venir sans effacer l’historique.'],

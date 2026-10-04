@@ -138,6 +138,8 @@ export interface RoutineTask {
   checklistId?: ID;
   /** Contrôles propres à la tâche. Sans aucun contrôle, la tâche se valide en un geste. */
   checks: ChecklistItem[];
+  /** Questions tournantes : seuls N contrôles sont posés à chaque exécution, à tour de rôle */
+  sampleSize?: number;
 }
 
 /** Routine : ce qui doit être fait. Quand et par qui : voir Schedule. */
@@ -158,6 +160,8 @@ export interface RoutineTemplate extends BaseEntity {
 export type Recurrence = 'once' | 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'on_demand';
 /** Déclenchement automatique d'une planification à la demande */
 export type ScheduleTrigger = 'order_start';
+/** Niveau d'un audit par couches : 1 terrain, 2 encadrement, 3 direction */
+export type AuditLayer = 1 | 2 | 3;
 export type ScheduleStatus = 'active' | 'cancelled';
 
 /**
@@ -175,6 +179,8 @@ export interface Schedule extends BaseEntity {
   recurrence: Recurrence;
   /** Planification à la demande : déclenchée automatiquement par cet événement (sinon manuellement) */
   triggerOn?: ScheduleTrigger;
+  /** Audit par couches (LPA) : niveau hiérarchique de l'auditeur */
+  layer?: AuditLayer;
   /** Jours de la semaine pour « weekly » : 1 = lundi … 7 = dimanche */
   weekdays: number[];
   /** Affectation : une personne, ou une équipe (tous ses membres voient la routine) */
@@ -233,6 +239,8 @@ export interface RoutineRun extends BaseEntity {
   date: DateKey;
   /** Créneau de la journée (planification répétée dans la journée) ; absent = créneau unique */
   slot?: TimeOfDay;
+  /** Questions tournantes : contrôles posés à cette exécution, par tâche (fixés au démarrage) */
+  sample?: Record<ID, ID[]>;
   /** Personne qui a démarré l'exécution */
   assigneeId: ID;
   startedAt: ISODateTime;

@@ -1,5 +1,6 @@
 import type { Tone } from '@/components/ui/Badge';
 import type {
+  AuditLayer,
   DateKey,
   ID,
   Recurrence,
@@ -24,6 +25,12 @@ export const RECURRENCE_LABELS: Record<Recurrence, string> = {
   weekly: 'Certains jours de la semaine',
   monthly: 'Chaque mois',
   on_demand: 'Sur événement (à la demande)',
+};
+
+export const LAYER_LABELS: Record<AuditLayer, string> = {
+  1: 'Niveau 1 — terrain',
+  2: 'Niveau 2 — encadrement',
+  3: 'Niveau 3 — direction',
 };
 
 export const TRIGGER_LABELS: Record<ScheduleTrigger, string> = {

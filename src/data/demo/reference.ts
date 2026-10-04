@@ -308,6 +308,8 @@ export interface DemoTask {
   kb?: string;
   checklist?: string;
   checks?: DemoCheck[];
+  /** Questions tournantes */
+  sampleSize?: number;
 }
 
 export interface DemoRoutine {
@@ -332,6 +334,8 @@ export interface DemoRoutine {
     endTime?: string;
     /** Planification sur événement déclenchée automatiquement */
     triggerOn?: 'order_start';
+    /** Audit par couches : niveau */
+    layer?: 1 | 2 | 3;
   }[];
 }
 
@@ -545,6 +549,50 @@ export const DEMO_ROUTINES: DemoRoutine[] = [
       },
     ],
     schedules: [{ id: 'sc-ll-clearance', recurrence: 'on_demand', team: 'team-a', triggerOn: 'order_start' }],
+  },
+  {
+    id: 'rt-lpa-a',
+    title: 'Audit par couches — ligne A',
+    description: 'Vérification courte du respect des standards. Trois questions tirées à tour de rôle parmi huit, à chaque audit.',
+    time: '10:30',
+    durationMin: 10,
+    line: 'A',
+    tasks: [
+      {
+        title: 'Questions d’audit',
+        min: 10,
+        required: true,
+        priority: 'high',
+        sampleSize: 3,
+        checks: [
+          {
+            id: 'q1',
+            label: 'Le mode opératoire affiché correspond à la référence produite',
+            type: 'yes_no',
+            required: true,
+            commentOnFail: true,
+          },
+          { id: 'q2', label: 'Les EPI requis sont portés au poste', type: 'yes_no', required: true, commentOnFail: true },
+          { id: 'q3', label: 'Les pièces non conformes sont isolées et identifiées', type: 'yes_no', required: true, commentOnFail: true },
+          { id: 'q4', label: 'Le contrôle de démarrage du poste a été réalisé', type: 'yes_no', required: true, commentOnFail: true },
+          {
+            id: 'q5',
+            label: 'Les outils de contrôle sont étalonnés (étiquette valide)',
+            type: 'yes_no',
+            required: true,
+            commentOnFail: true,
+          },
+          { id: 'q6', label: 'Le 5S du poste est respecté', type: 'yes_no', required: true, commentOnFail: true },
+          { id: 'q7', label: 'L’opérateur connaît la réaction en cas de défaut', type: 'yes_no', required: true, commentOnFail: true },
+          { id: 'q8', label: 'Les actions du précédent audit sont soldées', type: 'yes_no', required: true, commentOnFail: true },
+        ],
+      },
+    ],
+    schedules: [
+      { id: 'sc-lpa-a-1', recurrence: 'weekdays', assignee: 'u-yann', layer: 1 },
+      { id: 'sc-lpa-a-2', recurrence: 'weekly', weekdays: [2], assignee: 'u-karim', time: '14:00', layer: 2 },
+      { id: 'sc-lpa-a-3', recurrence: 'monthly', assignee: 'u-dupont', time: '15:00', layer: 3 },
+    ],
   },
   {
     id: 'rt-ha-cut',

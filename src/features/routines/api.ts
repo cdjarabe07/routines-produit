@@ -4,7 +4,7 @@ import type { DataSource, NewEntity } from '@/services/data/types';
 import type { Checklist, DateKey, ID, ItemResult, RoutineRun, RoutineTemplate, Schedule, User } from '@/types/domain';
 import { addDays, todayKey } from '@/utils/date';
 import { isAssignedTo } from '@/features/planning/model';
-import { runSummary } from './model';
+import { buildSample, hasSampling, runSummary } from './model';
 
 /* Opérations d'exécution et de configuration des routines. */
 
@@ -20,11 +20,21 @@ export function useStartRoutine() {
       if (!isAssignedTo(schedule, user)) throw new ValidationError('Cette routine ne vous est pas affectée.');
       const existing = await findRun(ds, schedule.id, date, slot);
       if (existing) return existing;
+      // Questions tournantes : le tour dépend du nombre d'exécutions déjà faites de la planification
+      const routine = await ds.repo('routineTemplates').get(schedule.routineId);
+      let sample: Record<ID, ID[]> | undefined;
+      if (hasSampling(routine)) {
+        const ids = Array.from(new Set(routine.tasks.map((t) => t.checklistId).filter((id): id is ID => Boolean(id))));
+        const checklists = new Map((await Promise.all(ids.map((id) => ds.repo('checklists').get(id)))).map((c) => [c.id, c]));
+        const round = (await ds.repo('routineRuns').list({ where: { scheduleId: schedule.id } })).length;
+        sample = buildSample(routine, checklists, round);
+      }
       return ds.repo('routineRuns').create({
         scheduleId: schedule.id,
         templateId: schedule.routineId,
         date,
         ...(slot ? { slot } : {}),
+        ...(sample ? { sample } : {}),
         assigneeId: user.id,
         startedAt: new Date().toISOString(),
         results: {},

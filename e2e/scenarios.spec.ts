@@ -337,3 +337,14 @@ test('routine sur événement : déclenchée par l’opératrice, puis exécuté
   await expect(page.getByText('Déclenchée : Nouveau lot matière')).toBeVisible();
   await expect(page.getByText('Composants et faisceaux de la série précédente retirés').first()).toBeVisible();
 });
+
+test('audit par couches : niveau affiché, trois questions tournantes sur huit', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Jeu de démonstration daté au mardi matin : vérifié en mode démo');
+  await page.clock.install({ time: new Date('2026-10-06T08:05:00Z') });
+  await signIn(page, 'u-yann');
+  await page.goto('/app/#/app/routines/sc-lpa-a-1/2026-10-06');
+  await page.reload();
+  await expect(page.getByText(/Audit par couches, niveau 1 — terrain/)).toBeVisible();
+  await page.getByRole('button', { name: 'Démarrer' }).first().click();
+  await expect(page.getByRole('group', { name: /^Réponse : / })).toHaveCount(3);
+});

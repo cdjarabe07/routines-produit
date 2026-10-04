@@ -20,6 +20,7 @@ import { useCancelSchedule, usePlanningData, useRestoreSchedule, useSkipOccurren
 import { ScheduleForm } from './components/ScheduleForm';
 import { TriggerButton } from './components/TriggerButton';
 import {
+  LAYER_LABELS,
   OCCURRENCE_STATE,
   assignmentLabel,
   describeRecurrence,
@@ -70,7 +71,17 @@ export function SchedulesPage() {
       id: 'routine',
       header: 'Routine',
       mobile: 'title',
-      cell: (s) => routineById.get(s.routineId)?.title ?? 'Routine supprimée',
+      cell: (s) => (
+        <>
+          {routineById.get(s.routineId)?.title ?? 'Routine supprimée'}
+          {s.layer && (
+            <>
+              {' '}
+              <Badge tone="info">{LAYER_LABELS[s.layer]}</Badge>
+            </>
+          )}
+        </>
+      ),
       sortValue: (s) => routineById.get(s.routineId)?.title ?? '',
     },
     {

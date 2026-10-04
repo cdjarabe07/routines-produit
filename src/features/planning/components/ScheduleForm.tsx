@@ -4,11 +4,11 @@ import { Checkbox, FormActions, FormGrid, SelectField, TextAreaField, TextField 
 import { Tabs } from '@/components/ui/Tabs';
 import { lineOptions, teamOptions, userOptions, workstationOptions, type Lookups } from '@/features/shared/api';
 import { useForm } from '@/hooks/useForm';
-import type { Recurrence, RoutineTemplate, Schedule, ScheduleTrigger } from '@/types/domain';
+import type { AuditLayer, Recurrence, RoutineTemplate, Schedule, ScheduleTrigger } from '@/types/domain';
 import { formatLongDate, todayKey } from '@/utils/date';
 import { required } from '@/utils/validation';
 import { useSaveSchedule } from '../api';
-import { RECURRENCE_LABELS, TRIGGER_LABELS, WEEKDAY_SHORT, nextDates, slotsOf } from '../model';
+import { LAYER_LABELS, RECURRENCE_LABELS, TRIGGER_LABELS, WEEKDAY_SHORT, nextDates, slotsOf } from '../model';
 import styles from './ScheduleForm.module.css';
 
 interface Values {
@@ -21,6 +21,8 @@ interface Values {
   recurrence: Recurrence;
   /** Planification sur événement : '' = déclenchement manuel */
   triggerOn: '' | ScheduleTrigger;
+  /** Audit par couches : '' = non */
+  layer: '' | '1' | '2' | '3';
   weekdays: number[];
   endDate: string;
   target: 'person' | 'team';
@@ -53,6 +55,7 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
       endTime: schedule?.endTime ?? '',
       recurrence: schedule?.recurrence ?? 'weekdays',
       triggerOn: schedule?.triggerOn ?? '',
+      layer: schedule?.layer ? (String(schedule.layer) as Values['layer']) : '',
       weekdays: schedule?.weekdays ?? [1, 2, 3, 4, 5],
       endDate: schedule?.endDate ?? '',
       target: schedule?.teamId ? 'team' : 'person',
@@ -87,6 +90,7 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
           endTime: repeated ? v.endTime : undefined,
           recurrence: v.recurrence,
           triggerOn: v.recurrence === 'on_demand' && v.triggerOn ? v.triggerOn : undefined,
+          layer: v.layer ? (Number(v.layer) as AuditLayer) : undefined,
           weekdays: v.recurrence === 'weekly' ? [...v.weekdays].sort() : [],
           endDate: v.recurrence === 'once' ? undefined : v.endDate || undefined,
           assigneeId: v.target === 'person' ? v.assigneeId : undefined,
@@ -313,6 +317,16 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
           options={workstationOptions(stations)}
           value={values.workstationId}
           onChange={(e) => set('workstationId', e.target.value)}
+        />
+        <SelectField
+          label="Audit par couches"
+          options={[
+            { value: '', label: 'Non' },
+            ...(['1', '2', '3'] as const).map((l) => ({ value: l, label: LAYER_LABELS[Number(l) as AuditLayer] })),
+          ]}
+          value={values.layer}
+          hint="Planifiez la même routine d’audit à chaque niveau : chaque jour au niveau 1, chaque semaine au 2, chaque mois au 3."
+          onChange={(e) => set('layer', e.target.value as Values['layer'])}
         />
         <TextAreaField
           className="full"

@@ -34,7 +34,7 @@ import type {
 } from '@/types/domain';
 import type { Dataset } from '@/services/data/types';
 import { occursOn, slotsOf, usesSlot } from '@/features/planning/model';
-import { checkKey, evaluateCheck } from '@/features/routines/model';
+import { buildSample, checkKey, evaluateCheck, taskChecks } from '@/features/routines/model';
 import { addDays, atTime, isoWeekday, toDateKey } from '@/utils/date';
 import {
   DEMO_ANOMALY_SAMPLES,
@@ -219,6 +219,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
           knowledgeId: t.kb,
           checklistId: t.checklist,
           checks: (t.checks ?? []).map(toItem),
+          ...(t.sampleSize ? { sampleSize: t.sampleSize } : {}),
         })),
       },
       configured,
@@ -235,6 +236,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
           time: s.time ?? r.time,
           ...(s.everyHours ? { everyHours: s.everyHours, endTime: s.endTime } : {}),
           ...(s.triggerOn ? { triggerOn: s.triggerOn } : {}),
+          ...(s.layer ? { layer: s.layer } : {}),
           recurrence: s.recurrence,
           weekdays: s.weekdays ?? [],
           assigneeId: s.assignee,
@@ -310,6 +312,8 @@ export function buildDemoData(now: Date = new Date()): Dataset {
 
   const routineRuns: RoutineRun[] = [];
   const templateById = new Map(routineTemplates.map((t) => [t.id, t]));
+  /** Questions tournantes : nombre d'exécutions déjà générées par planification */
+  const rounds = new Map<string, number>();
   for (let d = HISTORY_DAYS - 1; d >= 0; d--) {
     const day = addDays(today, -d);
     for (const s of schedules) {
@@ -333,10 +337,11 @@ export function buildDemoData(now: Date = new Date()): Dataset {
         let cursor = Math.floor(rnd() * 15);
         const startedAt = at(day, time, cursor);
         const results: Record<string, ItemResult> = {};
+        const sample = buildSample(routine, checklistById, rounds.get(s.id) ?? 0);
         routine.tasks.forEach((task, ti) => {
           if (!complete && ti >= Math.ceil(routine.tasks.length / 2)) return;
           if (!task.required && chance(0.3)) return;
-          const checks = [...(task.checklistId ? (checklistById.get(task.checklistId)?.items ?? []) : []), ...task.checks];
+          const checks = taskChecks(task, checklistById, { sample });
           const step = Math.max(1, Math.round((task.estimatedMin ?? 4) / Math.max(1, checks.length)));
           if (checks.length === 0) {
             cursor += step + Math.floor(rnd() * 3);
@@ -365,6 +370,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
         });
         if (Object.keys(results).length === 0) continue;
         const completedAt = complete ? at(day, time, cursor + 1) : undefined;
+        rounds.set(s.id, (rounds.get(s.id) ?? 0) + 1);
         routineRuns.push(
           stamp(
             {
@@ -378,6 +384,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
               completedAt,
               completedBy: complete ? by : undefined,
               ...(multi ? { slot: time } : {}),
+              ...(sample ? { sample } : {}),
             },
             startedAt,
           ),

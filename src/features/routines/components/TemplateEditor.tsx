@@ -73,6 +73,7 @@ export function TemplateEditor({ template, knowledge, checklists, lookups, isCop
           knowledgeId: t.knowledgeId,
           checklistId: t.checklistId,
           checks: cleanChecks(t.checks),
+          sampleSize: t.sampleSize && t.sampleSize > 0 ? Math.floor(t.sampleSize) : undefined,
         }));
       await save.mutateAsync({
         id: isCopy ? undefined : template?.id,
@@ -284,6 +285,17 @@ export function TemplateEditor({ template, knowledge, checklists, lookups, isCop
                       value={task.checklistId ?? ''}
                       onChange={(e) => updateTask(i, { checklistId: e.target.value || undefined })}
                       hint="Les modifications de la checklist s’appliquent à toutes les routines qui l’utilisent."
+                    />
+                  </FormGrid>
+                  <FormGrid>
+                    <TextField
+                      label="Questions tournantes (facultatif)"
+                      type="number"
+                      min={0}
+                      max={50}
+                      value={task.sampleSize ?? ''}
+                      onChange={(e) => updateTask(i, { sampleSize: e.target.value ? Number(e.target.value) : undefined })}
+                      hint="Nombre de contrôles posés à chaque exécution, à tour de rôle (audits par couches). Vide : tous les contrôles."
                     />
                   </FormGrid>
                   <p className={styles.checksTitle}>Contrôles propres à la tâche</p>

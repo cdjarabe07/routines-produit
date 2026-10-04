@@ -28,11 +28,36 @@ export const CHECK_TYPE_LABELS: Record<CheckType, string> = {
 /** Clé de résultat d'un contrôle dans une tâche. */
 export const checkKey = (taskId: ID, checkId: ID) => `${taskId}/${checkId}`;
 
-/** Contrôles effectifs d'une tâche : checklist jointe puis contrôles propres. */
-export function taskChecks(task: RoutineTask, checklists: Map<ID, Checklist>): ChecklistItem[] {
+/** Contrôles effectifs d'une tâche : checklist jointe puis contrôles propres ;
+    limités aux questions tirées pour l'exécution quand la tâche a des questions tournantes. */
+export function taskChecks(task: RoutineTask, checklists: Map<ID, Checklist>, run?: Pick<RoutineRun, 'sample'>): ChecklistItem[] {
   const shared = task.checklistId ? (checklists.get(task.checklistId)?.items ?? []) : [];
-  return [...shared, ...task.checks];
+  const all = [...shared, ...task.checks];
+  const sample = run?.sample?.[task.id];
+  return sample ? all.filter((c) => sample.includes(c.id)) : all;
 }
+
+/** Questions tournantes : N contrôles consécutifs, en décalant de N à chaque exécution (tous finissent par être posés). */
+export function rotateSample(items: ChecklistItem[], size: number, round: number): ID[] {
+  const n = items.length;
+  const k = Math.min(Math.max(0, Math.floor(size)), n);
+  if (k === 0 || k === n) return items.map((i) => i.id);
+  const start = (round * k) % n;
+  return Array.from({ length: k }, (_, i) => items[(start + i) % n]!.id);
+}
+
+/** Échantillon d'une exécution (round = nombre d'exécutions déjà faites de la planification) ; absent sans question tournante. */
+export function buildSample(routine: RoutineTemplate, checklists: Map<ID, Checklist>, round: number): Record<ID, ID[]> | undefined {
+  const out: Record<ID, ID[]> = {};
+  for (const task of routine.tasks) {
+    const all = taskChecks(task, checklists);
+    if (task.sampleSize && task.sampleSize > 0 && all.length > task.sampleSize) out[task.id] = rotateSample(all, task.sampleSize, round);
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** La routine pose-t-elle des questions tournantes ? */
+export const hasSampling = (routine: RoutineTemplate) => routine.tasks.some((t) => (t.sampleSize ?? 0) > 0);
 
 /**
  * Résultat d'un contrôle selon sa valeur.
@@ -127,7 +152,7 @@ export function runSummary(routine: RoutineTemplate, checklists: Map<ID, Checkli
   let requiredDone = 0;
   let ko = 0;
   for (const task of routine.tasks) {
-    const p = taskProgress(task, taskChecks(task, checklists), run);
+    const p = taskProgress(task, taskChecks(task, checklists, run), run);
     const done = p.state === 'done';
     if (done) tasksDone += 1;
     if (task.required) {
