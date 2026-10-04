@@ -993,7 +993,15 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     ),
   ];
 
-  const settings = [stamp({ id: 'app', plantName: 'Atelier de câblage', andonEscalationMinutes: 10, routineLateToleranceMinutes: 120, disabledModules: [] })];
+  const settings = [
+    stamp({
+      id: 'app',
+      plantName: 'Atelier de câblage',
+      andonEscalationMinutes: 10,
+      routineLateToleranceMinutes: 120,
+      disabledModules: [],
+    }),
+  ];
 
   return {
     users,
