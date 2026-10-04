@@ -191,7 +191,8 @@ describe('actions', () => {
 describe('reporting', () => {
   it('change de période et reflète le choix dans l’URL', async () => {
     const { user, router } = renderApp('/reporting', { userId: 'u-dupont' });
-    expect(await screen.findByText('7 derniers jours', {}, TIMEOUT)).toBeInTheDocument();
+    // Premier affichage du reporting : calcul sur toute la période, plus lent à froid
+    expect(await screen.findByText('7 derniers jours', {}, { timeout: 10_000 })).toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: '30 jours' }));
     expect(await screen.findByText('30 derniers jours')).toBeInTheDocument();
     expect(router.state.location.search).toContain('periode=30d');

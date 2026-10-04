@@ -348,3 +348,19 @@ test('audit par couches : niveau affiché, trois questions tournantes sur huit',
   await page.getByRole('button', { name: 'Démarrer' }).first().click();
   await expect(page.getByRole('group', { name: /^Réponse : / })).toHaveCount(3);
 });
+
+test('modèle de secteur : l’administrateur applique le modèle plasturgie', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Modifie les paramètres du site : vérifié en mode démo uniquement');
+  await signIn(page, 'u-admin');
+  await page.goto('/app/#/admin/modele-secteur');
+  await page.reload();
+  await page.getByRole('radio', { name: /Plasturgie/ }).click();
+  await expect(page.getByText('Contenu du modèle « Plasturgie (injection) »')).toBeVisible();
+  await page.getByRole('button', { name: 'Appliquer ce modèle' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Appliquer' }).click();
+  await expect(page.getByText(/Modèle appliqué : référentiels mis à jour/)).toBeVisible();
+  await page.goto('/app/#/admin/routines');
+  await expect(page.getByText('Démarrage presse').first()).toBeVisible();
+  await page.goto('/app/#/manager/production');
+  await expect(page.getByRole('heading', { name: 'Injection' })).toBeVisible();
+});

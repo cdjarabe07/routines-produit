@@ -404,6 +404,24 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
     },
   },
   {
+    match: /^\/admin\/modele-secteur/,
+    topic: {
+      title: 'Modèle de secteur',
+      purpose:
+        'Démarrer vite : un modèle pré-remplit les référentiels, des checklists et des routines types adaptés à votre activité (automobile, plasturgie, usinage, agroalimentaire, électronique, ou générique).',
+      steps: [
+        'Choisissez le secteur le plus proche du vôtre et consultez le contenu proposé.',
+        'Appliquez le modèle : référentiels remplacés, checklists et routines types ajoutées (rien n’est planifié).',
+        'Planifiez ensuite les routines proposées, à la fréquence conseillée indiquée dans leur description.',
+      ],
+      tips: [
+        'Après application, tout reste modifiable : le modèle ne crée aucun lien durable.',
+        'Une routine ou une checklist portant déjà le même nom n’est pas dupliquée.',
+      ],
+      related: [{ label: 'Référentiels', to: '/admin/referentiels' }],
+    },
+  },
+  {
     match: /^\/admin\/referentiels/,
     topic: {
       title: 'Référentiels',

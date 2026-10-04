@@ -419,3 +419,30 @@ figcaption {
     flex: 1 1 100%;
   }
 }
+
+/* Démo au choix du secteur */
+.sector-grid {
+  margin: 24px 0;
+}
+.sector-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.sector-card h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.sector-card:hover,
+.sector-card:focus-visible {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+.sector-link {
+  margin-top: auto;
+  font-weight: 600;
+  color: var(--color-primary);
+}

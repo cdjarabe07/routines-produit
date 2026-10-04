@@ -33,6 +33,9 @@ import type {
   Workstation,
 } from '@/types/domain';
 import type { Dataset } from '@/services/data/types';
+import { resolveCatalog } from '@/app/catalog';
+import { SECTOR_TEMPLATES, type SectorKey, type SectorRoutine } from '@/data/sectors';
+import { SECTOR_DEMO } from './sectorDemo';
 import { occursOn, slotsOf, usesSlot } from '@/features/planning/model';
 import { buildSample, checkKey, evaluateCheck, taskChecks } from '@/features/routines/model';
 import { addDays, atTime, isoWeekday, toDateKey } from '@/utils/date';
@@ -66,13 +69,68 @@ const HISTORY_DAYS = 30;
 /** prénom.nom@atelier.local, sans accents */
 const emailOf = (name: string) => `${name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '.')}@atelier.local`;
 
-export function buildDemoData(now: Date = new Date()): Dataset {
+/** Routines propres au câblage : remplacées par les routines du modèle dans une démo d'un autre secteur */
+const WIRING_ROUTINES = new Set(['rt-op-start', 'rt-ha-crimp', 'rt-ha-crimp-hourly', 'rt-ha-cut', 'rt-ha-test', 'rt-q-first', 'rt-q-conn']);
+
+const plusHours = (time: string, hours: number) => {
+  const h = Math.min(22, Number(time.slice(0, 2)) + hours);
+  return `${String(h).padStart(2, '0')}:${time.slice(3)}`;
+};
+
+/** Routine d'un modèle de secteur, planifiée selon sa fréquence conseillée */
+function sectorDemoRoutine(r: SectorRoutine, i: number, checklistIdByName: Map<string, string>): DemoRoutine {
+  const freq = r.suggestedFrequency.toLowerCase();
+  const schedule: DemoRoutine['schedules'][number] = freq.startsWith('sur événement')
+    ? {
+        id: `sc-sec-${i}`,
+        recurrence: 'on_demand',
+        team: 'team-a',
+        ...(freq.includes('ordre de fabrication') ? { triggerOn: 'order_start' as const } : {}),
+      }
+    : freq.includes('toutes les heures')
+      ? { id: `sc-sec-${i}`, recurrence: 'weekdays', team: 'team-a', everyHours: 1, endTime: plusHours(r.defaultTime, 6) }
+      : freq.includes('toutes les 2 heures')
+        ? { id: `sc-sec-${i}`, recurrence: 'weekdays', team: 'team-a', everyHours: 2, endTime: plusHours(r.defaultTime, 8) }
+        : freq.includes('chaque semaine')
+          ? { id: `sc-sec-${i}`, recurrence: 'weekly', weekdays: [3], assignee: 'u-karim' }
+          : freq.includes('chaque jour')
+            ? { id: `sc-sec-${i}`, recurrence: 'daily', assignee: 'u-yann' }
+            : { id: `sc-sec-${i}`, recurrence: 'weekdays', ...(i % 2 ? { team: 'team-a' } : { assignee: 'u-nadia' }) };
+  return {
+    id: `rt-sec-${i}`,
+    title: r.title,
+    description: r.description,
+    time: r.defaultTime,
+    durationMin: r.durationMin,
+    line: 'A',
+    tasks: r.tasks.map((t) => ({
+      title: t.title,
+      min: t.estimatedMin,
+      required: t.required,
+      priority: t.priority,
+      checks: t.checks,
+      checklist: t.checklist ? checklistIdByName.get(t.checklist) : undefined,
+      sampleSize: t.sampleSize,
+    })),
+    schedules: [schedule],
+  };
+}
+
+/**
+ * Jeu de démonstration. Secteur « automotive » : l'atelier de câblage d'origine.
+ * Autre secteur : même organisation et mêmes personnes, habillées pour le secteur (postes, produits, référentiels,
+ * exemples), avec les routines du modèle de secteur à la place des routines propres au câblage.
+ */
+export function buildDemoData(now: Date = new Date(), sector: SectorKey = 'automotive'): Dataset {
   const rnd = mulberry32(20260929);
   const pick = <T>(arr: readonly T[]): T => arr[Math.floor(rnd() * arr.length)] as T;
   const chance = (p: number) => rnd() < p;
   const today = toDateKey(now);
   const nowIso = now.toISOString();
   const nowMs = now.getTime();
+  const dressing = sector === 'automotive' ? undefined : SECTOR_DEMO[sector];
+  const sectorTemplate = SECTOR_TEMPLATES[sector];
+  const sectorCatalog = dressing ? resolveCatalog(sectorTemplate.catalog) : undefined;
 
   /** Horodatage à une heure donnée, jamais dans le futur. */
   const at = (day: DateKey, time: string, offsetMin = 0) => {
@@ -90,8 +148,8 @@ export function buildDemoData(now: Date = new Date()): Dataset {
 
   /* ---------- Organisation ---------- */
   const lines = [
-    stamp({ id: 'line-a', code: 'A', name: 'Ligne A', description: 'Faisceaux portes' }),
-    stamp({ id: 'line-b', code: 'B', name: 'Ligne B', description: 'Faisceaux moteur' }),
+    stamp({ id: 'line-a', code: 'A', name: 'Ligne A', description: dressing?.lines[0] ?? 'Faisceaux portes' }),
+    stamp({ id: 'line-b', code: 'B', name: 'Ligne B', description: dressing?.lines[1] ?? 'Faisceaux moteur' }),
   ];
   const lineId = (l?: 'A' | 'B') => (l === 'B' ? 'line-b' : l === 'A' ? 'line-a' : undefined);
 
@@ -118,8 +176,17 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     }),
   );
 
-  const workstations: Workstation[] = DEMO_WORKSTATIONS.map((w) =>
-    stamp({ id: w.id, code: w.code, name: w.name, process: w.process, lineId: lineId(w.line)!, mapX: w.x, mapY: w.y, active: true }),
+  const workstations: Workstation[] = DEMO_WORKSTATIONS.map((w, i) =>
+    stamp({
+      id: w.id,
+      code: w.code,
+      name: dressing?.workstations[i]?.[0] ?? w.name,
+      process: dressing?.workstations[i]?.[1] ?? w.process,
+      lineId: lineId(w.line)!,
+      mapX: w.x,
+      mapY: w.y,
+      active: true,
+    }),
   );
   const wsIds = workstations.map((w) => w.id);
 
@@ -176,9 +243,13 @@ export function buildDemoData(now: Date = new Date()): Dataset {
   for (const c of DEMO_ROUTINES.flatMap((r) => r.tasks.flatMap((t) => t.checks ?? [])))
     if (c.nominal !== undefined) nominal.set(c.id, c.nominal);
 
-  const checklists: Checklist[] = DEMO_CHECKLISTS.map((c) =>
-    stamp({ id: c.id, name: c.name, description: c.description, active: true, items: c.items.map(toItem) }, configured),
-  );
+  const sectorChecklists = dressing ? sectorTemplate.checklists.map((c, i) => ({ ...c, id: `cl-sec-${i}` })) : [];
+  const checklists: Checklist[] = [
+    ...DEMO_CHECKLISTS.map((c) =>
+      stamp({ id: c.id, name: c.name, description: c.description, active: true, items: c.items.map(toItem) }, configured),
+    ),
+    ...sectorChecklists.map((c) => stamp({ id: c.id, name: c.name, description: c.description, active: true, items: c.items }, configured)),
+  ];
   const checklistById = new Map(checklists.map((c) => [c.id, c]));
 
   const audit: DemoRoutine = {
@@ -196,7 +267,15 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     })),
     schedules: [{ id: 'sc-ll-audit', recurrence: 'weekdays', assignee: 'u-karim' }],
   };
-  const demoRoutines = [...DEMO_ROUTINES, audit];
+  const sectorRoutines = dressing
+    ? sectorTemplate.routines
+        // L'audit par couches et le 5S existent déjà dans l'atelier de démonstration
+        .filter((r) => !r.title.startsWith('Audit par couches') && !r.title.startsWith('Audit 5S'))
+        .map((r, i) => sectorDemoRoutine(r, i, new Map(sectorChecklists.map((c) => [c.name, c.id]))))
+    : [];
+  const demoRoutines = dressing
+    ? [...DEMO_ROUTINES.filter((r) => !WIRING_ROUTINES.has(r.id)), audit, ...sectorRoutines]
+    : [...DEMO_ROUTINES, audit];
 
   const routineTemplates: RoutineTemplate[] = demoRoutines.map((r) =>
     stamp(
@@ -405,7 +484,9 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     const day = addDays(today, -d);
     const count = 1 + Math.floor(rnd() * 4);
     for (let i = 0; i < count; i++) {
-      const sample = pick(DEMO_ANOMALY_SAMPLES);
+      const sample = dressing
+        ? (([category, text]) => ({ category, text, ws: pick(wsIds) }))(pick(dressing.anomalies))
+        : pick(DEMO_ANOMALY_SAMPLES);
       const severity = sevOf();
       const reportedAt = at(
         day,
@@ -563,7 +644,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
 
   /* ---------- Andon ---------- */
   const andonTypes: AndonType[] = ['quality', 'equipment', 'material', 'safety'];
-  const andonDetails: Record<AndonType, string[]> = {
+  const andonDetails: Record<AndonType, string[]> = sectorCatalog?.andonPresets ?? {
     quality: ['Connecteur mal serti', 'Défaut de rubanage', 'Longueur hors tolérance'],
     equipment: ['Presse de sertissage à l’arrêt', 'Testeur de continuité en panne', 'Machine de coupe bloquée'],
     material: ['Rupture de terminaux', 'Connecteurs manquants', 'Ruban épuisé'],
@@ -610,7 +691,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
         workstationId: 'ws-p1',
         type: 'quality' as const,
         urgency: 'medium' as const,
-        detail: 'Connecteur mal serti',
+        detail: andonDetails.quality[0] ?? 'Pièce non conforme',
         status: 'active' as const,
         raisedBy: 'u-nadia',
         raisedAt: minutesAgo(6),
@@ -623,7 +704,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
         workstationId: 'ws-p5',
         type: 'equipment' as const,
         urgency: 'medium' as const,
-        detail: 'Testeur de continuité en panne',
+        detail: andonDetails.equipment[0] ?? 'Machine à l’arrêt',
         status: 'in_progress' as const,
         raisedBy: 'u-ibrahim',
         raisedAt: minutesAgo(14),
@@ -688,6 +769,13 @@ export function buildDemoData(now: Date = new Date()): Dataset {
   ];
 
   /* ---------- Production ---------- */
+  /** Étape du câblage → étape du secteur, à la même position relative dans le flux */
+  const WIRING_STAGES = ['cutting', 'crimping', 'assembly', 'taping', 'electrical_test', 'inspection', 'shipping'];
+  const sectorStage = (stage: string) => {
+    const target = sectorCatalog!.productionStages;
+    const pos = Math.max(0, WIRING_STAGES.indexOf(stage)) / (WIRING_STAGES.length - 1);
+    return target[Math.round(pos * (target.length - 1))]!.key;
+  };
   const productionOrders: ProductionOrder[] = [
     ['OF-2640', 'FX-PORTE-AVG-12', 'line-a', 120, 120, 'shipping', 'done'],
     ['OF-2641', 'FX-PORTE-AVD-12', 'line-a', 120, 86, 'taping', 'in_progress'],
@@ -702,15 +790,15 @@ export function buildDemoData(now: Date = new Date()): Dataset {
       {
         id: `of-${i}`,
         reference: reference as string,
-        harnessRef: harnessRef as string,
+        harnessRef: dressing?.products[i] ?? (harnessRef as string),
         lineId: line as string,
         quantityPlanned: planned as number,
         quantityDone: done as number,
-        stage: stage as ProductionOrder['stage'],
+        stage: sectorCatalog ? sectorStage(stage as string) : (stage as ProductionOrder['stage']),
         status: status as ProductionOrder['status'],
         ownerId: line === 'line-a' ? 'u-karim' : 'u-sofia',
         dueDate: addDays(today, i % 3),
-        blockedReason: status === 'blocked' ? 'Rupture de terminaux UY au poste 1' : undefined,
+        blockedReason: status === 'blocked' ? (dressing?.blockedReason ?? 'Rupture de terminaux UY au poste 1') : undefined,
       },
       minutesAgo(60 * (10 - i)),
     ),
@@ -1046,12 +1134,13 @@ export function buildDemoData(now: Date = new Date()): Dataset {
   const settings = [
     stamp({
       id: 'app',
-      plantName: 'Atelier de câblage',
+      plantName: dressing?.plantName ?? 'Atelier de câblage',
+      sectorTemplate: sector,
       andonEscalationMinutes: 10,
       routineLateToleranceMinutes: 120,
       disabledModules: [],
       // Exemple de catalogue d'un site : un atelier de câblage (étapes et motifs propres au secteur)
-      catalog: {
+      catalog: sectorCatalog ?? {
         productionStages: [
           { key: 'cutting', label: 'Coupe' },
           { key: 'crimping', label: 'Sertissage' },

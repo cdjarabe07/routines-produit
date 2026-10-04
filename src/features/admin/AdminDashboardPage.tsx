@@ -97,6 +97,19 @@ export function AdminDashboardPage() {
 
           return (
             <Stack>
+              {settings.environment === 'production' && !settings.sectorTemplate && (
+                <Panel
+                  title="Mise en route"
+                  accent="info"
+                  actions={
+                    <ButtonLink to="/admin/modele-secteur" variant="primary" size="sm">
+                      Choisir un modèle de secteur
+                    </ButtonLink>
+                  }
+                >
+                  Démarrez avec les référentiels, checklists et routines types de votre secteur, puis créez les comptes de vos équipes.
+                </Panel>
+              )}
               <KpiStrip>
                 <Kpi
                   label="Activités planifiées aujourd’hui"

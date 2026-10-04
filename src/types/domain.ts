@@ -559,6 +559,8 @@ export interface AppSettings extends BaseEntity {
   disabledModules?: string[];
   /** Référentiels du site (étapes, catégories, motifs, vocabulaire) ; absents = valeurs par défaut */
   catalog?: Partial<Catalog>;
+  /** Modèle de secteur appliqué à la mise en route ; absent = mise en route à faire (entreprise cliente sur serveur) */
+  sectorTemplate?: 'generic' | 'automotive' | 'plastics' | 'machining' | 'food' | 'electronics';
 }
 
 export interface CatalogEntry {

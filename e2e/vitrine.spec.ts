@@ -23,3 +23,17 @@ test('la vitrine ne déborde pas sur téléphone et reste lisible sans le bouton
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
   await expect(page.getByRole('link', { name: 'Demander une présentation' })).toHaveCount(0);
 });
+
+test('démo au choix du secteur : l’agroalimentaire, avec ses postes et ses routines', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: /Agroalimentaire/ }).click();
+  await expect(page.getByRole('heading', { name: 'Découvrir la démo' })).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: /Opérateur/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /(Bonjour|Bonsoir) Nadia/ })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText('Atelier de plats cuisinés').first()).toBeVisible();
+  await page.goto('/app/#/app/routines?vue=upcoming');
+  await expect(page.getByText('Hygiène avant démarrage').first()).toBeVisible();
+  // Retour à l'atelier d'origine par la vitrine
+  await page.goto('/app/?secteur=automotive#/app');
+  await expect(page.getByText('Atelier de câblage').first()).toBeVisible({ timeout: 15_000 });
+});

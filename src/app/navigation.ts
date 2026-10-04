@@ -219,6 +219,7 @@ export const SECTIONS: SectionTab[][] = [
   [
     { path: '/admin/parametres', label: 'Paramètres', permission: 'settings.manage' },
     { path: '/admin/referentiels', label: 'Référentiels', permission: 'settings.manage' },
+    { path: '/admin/modele-secteur', label: 'Modèle de secteur', permission: 'settings.manage' },
   ],
   [
     { path: '/admin/journal', label: 'Journal d’audit', permission: 'settings.manage' },
