@@ -493,6 +493,65 @@ suite('Régressions corrigées (migration 0013)', () => {
   });
 });
 
+suite('TELEMETRY — erreurs et fréquentation (migration 0016)', () => {
+  it('un visiteur non connecté ne peut ni signaler ni compter', async () => {
+    const anon = anonClient();
+    const r1 = await anon.rpc('track_screen_view', { p_route: '/andon' });
+    const r2 = await anon.rpc('report_client_error', {
+      p_message: 'x',
+      p_stack: null,
+      p_route: '/',
+      p_source: 'window',
+      p_version: null,
+      p_agent: null,
+    });
+    expect(r1.error).not.toBeNull();
+    expect(r2.error).not.toBeNull();
+  });
+
+  it('un opérateur signale et compte, mais ne lit pas le suivi', async () => {
+    const operator = await as('operatorA');
+    expect((await operator.rpc('track_screen_view', { p_route: '/app/routines' })).error).toBeNull();
+    const marker = `Erreur de test sécurité ${Date.now()}`;
+    expect(
+      (
+        await operator.rpc('report_client_error', {
+          p_message: marker,
+          p_stack: 'Error\n    at test',
+          p_route: '/app',
+          p_source: 'react',
+          p_version: 'test',
+          p_agent: 'vitest',
+        })
+      ).error,
+    ).toBeNull();
+    for (const table of ['errorReports', 'usageDaily']) {
+      const { data } = await operator.from(table).select('*').limit(5);
+      expect(data ?? []).toHaveLength(0);
+    }
+    const admin = await as('admin');
+    const { data } = await admin.from('errorReports').select('message, role, route, count').eq('message', marker);
+    // Rôle conservé, aucune identité de personne
+    expect(data).toEqual([{ message: marker, role: 'operator', route: '/app', count: 1 }]);
+  });
+
+  it('aucune écriture directe dans les tables de suivi, même pour l’administrateur', async () => {
+    const admin = await as('admin');
+    const insert = await admin.from('usageDaily').insert({ day: today(), route: '/faux', role: 'admin', views: 999 });
+    expect(insert.error).not.toBeNull();
+    const update = await admin.from('errorReports').update({ count: 1 }).neq('id', '');
+    expect((update.data ?? []).length).toBe(0);
+  });
+
+  it('refuse une adresse d’écran invalide et un type d’erreur inconnu (sans erreur visible)', async () => {
+    const operator = await as('operatorA');
+    expect((await operator.rpc('track_screen_view', { p_route: 'javascript:alert(1)' })).error).toBeNull();
+    const admin = await as('admin');
+    const { data } = await admin.from('usageDaily').select('route').eq('route', 'javascript:alert(1)');
+    expect(data ?? []).toHaveLength(0);
+  });
+});
+
 afterAll(async () => {
   if (!configured) return;
   // Remise en état de l'environnement de démonstration (alertes et anomalies créées par les tests)
