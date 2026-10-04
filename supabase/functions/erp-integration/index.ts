@@ -8,8 +8,9 @@
 // - outbox-test   : crée un envoi de test (Mock SAP uniquement) ;
 // - configure     : active ou désactive l'envoi sortant.
 // Aucune donnée n'est aujourd'hui placée automatiquement dans l'outbox par l'application.
+// Chaque action se limite à l'entreprise de l'administrateur appelant.
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.57.4';
-import { audit, callerWithPermission, corsHeaders, json, serviceClient } from '../_shared/http.ts';
+import { audit, callerCompany, callerWithPermission, corsHeaders, json, serviceClient } from '../_shared/http.ts';
 import { supabaseOutboxStore, supabaseSyncStore } from '../_shared/erp-store.ts';
 import { createErpAdapter, parseIntegrationMode, parseScenario } from '../_shared/erp/factory.ts';
 import { MOCK_SCENARIO_LABELS, MOCK_SCENARIOS } from '../_shared/erp/mockSapAdapter.ts';
@@ -48,11 +49,12 @@ interface Context {
   req: Request;
   admin: SupabaseClient;
   actorId: string;
+  companyId: string;
   mode: IntegrationMode;
   body: Record<string, unknown>;
 }
 
-async function sync({ req, admin, actorId, mode, body }: Context): Promise<Response> {
+async function sync({ req, admin, actorId, companyId, mode, body }: Context): Promise<Response> {
   if (mode === 'off') return json(req, 409, { error: 'Intégration ERP désactivée sur le serveur.' });
   const scenario = mode === 'mock' ? parseScenario(body.scenario) : null;
   const dataVersion = body.dataVersion === 2 ? 2 : 1;
@@ -61,6 +63,7 @@ async function sync({ req, admin, actorId, mode, body }: Context): Promise<Respo
   await admin
     .from('integrationSyncRuns')
     .update({ status: 'failed', finishedAt: new Date().toISOString(), errorMessage: 'Interrompue (délai dépassé)' })
+    .eq('companyId', companyId)
     .eq('source', SYSTEM)
     .eq('status', 'running')
     .lt('startedAt', new Date(Date.now() - 15 * 60_000).toISOString());
@@ -68,6 +71,7 @@ async function sync({ req, admin, actorId, mode, body }: Context): Promise<Respo
   const { data: run, error: startError } = await admin
     .from('integrationSyncRuns')
     .insert({
+      companyId,
       source: SYSTEM,
       mode: mode === 'real' ? 'real' : 'mock',
       scenario,
@@ -87,22 +91,31 @@ async function sync({ req, admin, actorId, mode, body }: Context): Promise<Respo
       .from('integrationSyncRuns')
       .update({ ...patch, finishedAt: new Date().toISOString() })
       .eq('id', run.id)
+      .eq('companyId', companyId)
       .select()
       .single();
-    await audit(admin, actorId, 'ERP_SYNC', 'integrationSyncRuns', run.id, {
-      mode,
-      scenario,
-      status: patch.status,
-      created: patch.recordsCreated ?? 0,
-      updated: patch.recordsUpdated ?? 0,
-      failed: patch.recordsFailed ?? 0,
-    });
+    await audit(
+      admin,
+      actorId,
+      'ERP_SYNC',
+      'integrationSyncRuns',
+      run.id,
+      {
+        mode,
+        scenario,
+        status: patch.status,
+        created: patch.recordsCreated ?? 0,
+        updated: patch.recordsUpdated ?? 0,
+        failed: patch.recordsFailed ?? 0,
+      },
+      companyId,
+    );
     return data;
   };
 
   try {
     const adapter = createErpAdapter(mode, { scenario: scenario ?? undefined, dataVersion });
-    const result = await runSync(adapter, supabaseSyncStore(admin), {
+    const result = await runSync(adapter, supabaseSyncStore(admin, companyId), {
       runId: run.id,
       policy: mode === 'mock' ? MOCK_POLICY : undefined,
     });
@@ -125,43 +138,45 @@ async function sync({ req, admin, actorId, mode, body }: Context): Promise<Respo
   }
 }
 
-async function outboxProcess({ req, admin, actorId, mode, body }: Context): Promise<Response> {
+async function outboxProcess({ req, admin, actorId, companyId, mode, body }: Context): Promise<Response> {
   if (mode === 'off') return json(req, 409, { error: 'Intégration ERP désactivée sur le serveur.' });
-  const { data: settings, error } = await admin.from('integrationSettings').select('*').eq('id', 'erp').single();
+  const { data: settings, error } = await admin.from('integrationSettings').select('*').eq('companyId', companyId).eq('id', 'erp').single();
   if (error) throw error;
   if (!settings.outboundEnabled) return json(req, 409, { error: 'L’envoi vers l’ERP est désactivé.' });
   const adapter = createErpAdapter(mode, { scenario: mode === 'mock' ? parseScenario(body.scenario) : undefined });
-  const report = await processOutbox(adapter, supabaseOutboxStore(admin), {
+  const report = await processOutbox(adapter, supabaseOutboxStore(admin, companyId), {
     maxAttempts: settings.maxAttempts,
     policy: mode === 'mock' ? MOCK_POLICY : undefined,
   });
-  await audit(admin, actorId, 'ERP_OUTBOX_PROCESSED', 'integrationOutbox', null, { mode, ...report });
+  await audit(admin, actorId, 'ERP_OUTBOX_PROCESSED', 'integrationOutbox', null, { mode, ...report }, companyId);
   return json(req, 200, { report });
 }
 
-async function outboxRetry({ req, admin, actorId, body }: Context): Promise<Response> {
+async function outboxRetry({ req, admin, actorId, companyId, body }: Context): Promise<Response> {
   if (typeof body.id !== 'string' || body.id.length > 64) return json(req, 400, { error: 'Élément invalide.' });
   // Relance manuelle : nouveau cycle d'essais
   const { data, error } = await admin
     .from('integrationOutbox')
     .update({ status: 'pending', attempts: 0, nextRetryAt: new Date().toISOString() })
     .eq('id', body.id)
+    .eq('companyId', companyId)
     .in('status', ['failed', 'dead'])
     .select()
     .maybeSingle();
   if (error) throw error;
   if (!data) return json(req, 409, { error: 'Seul un envoi en échec ou abandonné peut être relancé.' });
-  await audit(admin, actorId, 'ERP_OUTBOX_RETRY', 'integrationOutbox', data.id);
+  await audit(admin, actorId, 'ERP_OUTBOX_RETRY', 'integrationOutbox', data.id, {}, companyId);
   return json(req, 200, { item: data });
 }
 
-async function outboxTest({ req, admin, actorId, mode, body }: Context): Promise<Response> {
+async function outboxTest({ req, admin, actorId, companyId, mode, body }: Context): Promise<Response> {
   if (mode !== 'mock') return json(req, 409, { error: 'Envoi de test disponible uniquement avec le Mock SAP.' });
   const test = body.kind === 'maintenance' ? TEST_REQUESTS.maintenance : TEST_REQUESTS.quality;
   const entityId = crypto.randomUUID();
   const { data, error } = await admin
     .from('integrationOutbox')
     .insert({
+      companyId,
       target: SYSTEM,
       entityType: 'integrationTest',
       entityId,
@@ -174,20 +189,21 @@ async function outboxTest({ req, admin, actorId, mode, body }: Context): Promise
     .select()
     .single();
   if (error) throw error;
-  await audit(admin, actorId, 'ERP_OUTBOX_TEST_ENQUEUED', 'integrationOutbox', data.id, { operation: test.operation });
+  await audit(admin, actorId, 'ERP_OUTBOX_TEST_ENQUEUED', 'integrationOutbox', data.id, { operation: test.operation }, companyId);
   return json(req, 200, { item: data });
 }
 
-async function configure({ req, admin, actorId, body }: Context): Promise<Response> {
+async function configure({ req, admin, actorId, companyId, body }: Context): Promise<Response> {
   if (typeof body.outboundEnabled !== 'boolean') return json(req, 400, { error: 'Réglage invalide.' });
   const { data, error } = await admin
     .from('integrationSettings')
     .update({ outboundEnabled: body.outboundEnabled })
+    .eq('companyId', companyId)
     .eq('id', 'erp')
     .select()
     .single();
   if (error) throw error;
-  await audit(admin, actorId, 'ERP_SETTINGS_CHANGED', 'integrationSettings', 'erp', { outboundEnabled: body.outboundEnabled });
+  await audit(admin, actorId, 'ERP_SETTINGS_CHANGED', 'integrationSettings', 'erp', { outboundEnabled: body.outboundEnabled }, companyId);
   return json(req, 200, { settings: data });
 }
 
@@ -205,7 +221,15 @@ Deno.serve(async (req) => {
   const admin = serviceClient();
   const caller = await callerWithPermission(admin, req, 'settings.manage');
   if (!caller) {
-    await audit(admin, null, 'PERMISSION_DENIED', 'erp-integration', null, { reason: 'appel sans droit d’administration' });
+    await audit(
+      admin,
+      null,
+      'PERMISSION_DENIED',
+      'erp-integration',
+      null,
+      { reason: 'appel sans droit d’administration' },
+      await callerCompany(admin, req),
+    );
     return json(req, 403, { error: 'Accès refusé.' });
   }
   const mode = parseIntegrationMode(Deno.env.get('SAP_INTEGRATION_MODE'));
@@ -221,7 +245,7 @@ Deno.serve(async (req) => {
   const handler = typeof body.action === 'string' ? ACTIONS[body.action] : undefined;
   if (!handler) return json(req, 400, { error: 'Action inconnue.' });
   try {
-    return await handler({ req, admin, actorId: caller.appUserId, mode, body });
+    return await handler({ req, admin, actorId: caller.appUserId, companyId: caller.companyId, mode, body });
   } catch (error) {
     console.error('erp-integration', error);
     if (error instanceof ErpError) return json(req, 409, { error: error.message });

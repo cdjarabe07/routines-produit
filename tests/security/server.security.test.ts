@@ -431,8 +431,8 @@ suite('API — journal d’audit, limitation de débit, CORS', () => {
   it('CORS : aucune origine étrangère n’est autorisée', async () => {
     const res = await callFunction('admin-users', {}, { origin: 'https://attaquant.example' });
     expect(res.headers.get('access-control-allow-origin')).toBeNull();
-    const ok = await callFunction('admin-users', {}, { origin: 'https://routines-app-mu.vercel.app' });
-    expect(ok.headers.get('access-control-allow-origin')).toBe('https://routines-app-mu.vercel.app');
+    const ok = await callFunction('admin-users', {}, { origin: 'https://routine-rose-five.vercel.app' });
+    expect(ok.headers.get('access-control-allow-origin')).toBe('https://routine-rose-five.vercel.app');
   });
 });
 
@@ -597,6 +597,7 @@ function minimalDataset() {
     'announcements',
     'notifications',
     'settings',
+    'routineTriggers',
   ];
   return Object.fromEntries(names.map((n) => [n, []]));
 }

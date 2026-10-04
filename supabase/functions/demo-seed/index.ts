@@ -2,9 +2,20 @@
 // - Premier chargement : uniquement avec le jeton d'amorçage (seule son empreinte SHA-256 figure ici).
 // - Ensuite : uniquement un administrateur connecté, et jamais si settings.environment = 'production'.
 // Le journal d'audit n'est jamais effacé.
-import { audit, callerWithPermission, corsHeaders, json, serviceClient, sha256Hex, temporaryPassword } from '../_shared/http.ts';
+// Plusieurs entreprises : seule l'entreprise « demo » est concernée ; les autres ne sont jamais lues ni modifiées.
+import {
+  audit,
+  callerCompany,
+  callerWithPermission,
+  corsHeaders,
+  json,
+  serviceClient,
+  sha256Hex,
+  temporaryPassword,
+} from '../_shared/http.ts';
 
-const BOOTSTRAP_TOKEN_SHA256 = 'a6ef5086bc9888a31ef731fb4db729420fadb72dc9dcdd5a93f8be095447837a';
+const BOOTSTRAP_TOKEN_SHA256 = '60505e81e20a044bbec11a68afdd381647a77c0c2d210a94d5859a316d745490';
+const COMPANY = 'demo';
 const MAX_BYTES = 8_000_000;
 const COLLECTIONS = [
   'users',
@@ -35,6 +46,7 @@ const COLLECTIONS = [
   'announcements',
   'notifications',
   'settings',
+  'routineTriggers',
 ];
 const ROLES = ['operator', 'hancho', 'line_leader', 'quality', 'manager', 'admin'];
 
@@ -60,10 +72,14 @@ Deno.serve(async (req) => {
         return json(req, 400, { error: 'Utilisateur invalide.' });
     }
 
-    const { data: settings } = await admin.from('settings').select('environment').maybeSingle();
+    const { data: settings } = await admin.from('settings').select('environment').eq('companyId', COMPANY).maybeSingle();
     if (settings?.environment === 'production') return json(req, 403, { error: 'Réinitialisation interdite en production.' });
 
-    const { count } = await admin.from('users').select('id', { count: 'exact', head: true }).not('authId', 'is', null);
+    const { count } = await admin
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('companyId', COMPANY)
+      .not('authId', 'is', null);
     const bootstrap = (count ?? 0) === 0;
     let actorId: string | null = null;
     if (bootstrap) {
@@ -71,22 +87,34 @@ Deno.serve(async (req) => {
       if (!token || (await sha256Hex(token)) !== BOOTSTRAP_TOKEN_SHA256) return json(req, 403, { error: 'Accès refusé.' });
     } else {
       const caller = await callerWithPermission(admin, req, 'settings.manage');
-      if (!caller) {
-        await audit(admin, null, 'PERMISSION_DENIED', 'demo-seed', null, { reason: 'reset sans droit administrateur' });
+      // Administrateur d'une autre entreprise : refusé (il ne peut pas réinitialiser la démonstration)
+      if (!caller || caller.companyId !== COMPANY) {
+        await audit(
+          admin,
+          null,
+          'PERMISSION_DENIED',
+          'demo-seed',
+          null,
+          { reason: 'reset sans droit administrateur' },
+          await callerCompany(admin, req),
+        );
         return json(req, 403, { error: 'Accès refusé.' });
       }
       actorId = caller.appUserId;
     }
 
     // Comptes d'authentification : conservés s'ils existent, créés sinon (mot de passe aléatoire renvoyé une seule fois)
-    const { data: existing, error: listError } = await admin.from('users').select('id, authId');
+    const { data: existing, error: listError } = await admin.from('users').select('id, authId').eq('companyId', COMPANY);
     if (listError) throw listError;
     const authById = new Map((existing ?? []).map((u) => [u.id as string, u.authId as string | null]));
     const passwords: Record<string, string> = {};
     // Comptes de démonstration déjà présents dans Auth mais pas encore liés (ex. chargement interrompu) : réutilisés
     const { data: authList, error: authListError } = await admin.auth.admin.listUsers({ perPage: 1000 });
     if (authListError) throw authListError;
-    const linked = new Set(authById.values());
+    // Comptes déjà liés à un profil, toutes entreprises confondues : jamais réutilisés
+    const { data: allLinked, error: linkedError } = await admin.from('users').select('authId').not('authId', 'is', null);
+    if (linkedError) throw linkedError;
+    const linked = new Set((allLinked ?? []).map((u) => u.authId as string));
     const unlinkedDemo = new Map(
       authList.users
         .filter((a) => a.app_metadata?.environment === 'demo' && a.email && !linked.has(a.id))

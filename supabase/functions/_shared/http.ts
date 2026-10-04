@@ -1,7 +1,7 @@
 // Utilitaires communs aux fonctions Edge : CORS restreint, réponses JSON sans détail interne, client service.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.57.4';
 
-const DEFAULT_ORIGINS = 'https://routines-app-mu.vercel.app,http://localhost:5173,http://localhost:4173';
+const DEFAULT_ORIGINS = 'https://routine-rose-five.vercel.app,http://localhost:5173,http://localhost:4173';
 const allowed = (Deno.env.get('ALLOWED_ORIGINS') ?? DEFAULT_ORIGINS).split(',').map((o) => o.trim());
 
 export function corsHeaders(req: Request): Record<string, string> {
@@ -31,16 +31,35 @@ export function serviceClient(): SupabaseClient {
   });
 }
 
-/** Utilisateur appelant (jeton de session) ayant la permission demandée ; null sinon. */
-export async function callerWithPermission(admin: SupabaseClient, req: Request, permission: string): Promise<{ appUserId: string } | null> {
+export interface Caller {
+  appUserId: string;
+  /** Entreprise de l'appelant : toute lecture ou écriture de la fonction s'y limite */
+  companyId: string;
+}
+
+/** Utilisateur appelant (jeton de session) ayant la permission demandée, avec son entreprise ; null sinon. */
+export async function callerWithPermission(admin: SupabaseClient, req: Request, permission: string): Promise<Caller | null> {
   const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   if (!token) return null;
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data.user) return null;
   const { data: appUserId } = await admin.rpc('auth_user_has_perm', { p_auth: data.user.id, p: permission });
-  return typeof appUserId === 'string' ? { appUserId } : null;
+  if (typeof appUserId !== 'string') return null;
+  const { data: companyId } = await admin.rpc('auth_user_company', { p_auth: data.user.id });
+  return typeof companyId === 'string' ? { appUserId, companyId } : null;
 }
 
+/** Entreprise d'un appelant connecté, même sans la permission demandée (refus journalisés dans son entreprise). */
+export async function callerCompany(admin: SupabaseClient, req: Request): Promise<string | null> {
+  const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  const { data, error } = await admin.auth.getUser(token);
+  if (error || !data.user) return null;
+  const { data: companyId } = await admin.rpc('auth_user_company', { p_auth: data.user.id });
+  return typeof companyId === 'string' ? companyId : null;
+}
+
+/** Événement du journal d'audit, rattaché à l'entreprise concernée (absente pour un appelant inconnu). */
 export async function audit(
   admin: SupabaseClient,
   actorId: string | null,
@@ -48,8 +67,9 @@ export async function audit(
   resource: string,
   resourceId: string | null,
   detail = {},
+  companyId: string | null = null,
 ) {
-  await admin.from('auditLog').insert({ actorId, event, resource, resourceId, detail });
+  await admin.from('auditLog').insert({ actorId, event, resource, resourceId, detail, companyId });
 }
 
 /** Mot de passe provisoire robuste (18 caractères, alphabet sans ambiguïté, tirage uniforme). */

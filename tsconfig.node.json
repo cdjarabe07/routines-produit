@@ -12,5 +12,5 @@
     "types": ["node"],
     "resolveJsonModule": true
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "vitest.security.config.ts", "e2e", "tests"]
+  "include": ["vite.config.ts", "playwright.config.ts", "vitest.security.config.ts", "vitest.tools.config.ts", "e2e", "tests"]
 }

@@ -2,7 +2,9 @@
 // - create : crée le compte d'authentification et le profil, renvoie un mot de passe provisoire une seule fois ;
 // - reset-password : génère un nouveau mot de passe provisoire (suite à une demande « mot de passe oublié »).
 // La modification du rôle, de l'équipe ou du statut passe par l'API (RLS + triggers + audit).
-import { audit, callerWithPermission, corsHeaders, json, serviceClient, temporaryPassword } from '../_shared/http.ts';
+// Tout se limite à l'entreprise de l'administrateur appelant : comptes créés dans son entreprise,
+// réinitialisation refusée pour un compte d'une autre entreprise.
+import { audit, callerCompany, callerWithPermission, corsHeaders, json, serviceClient, temporaryPassword } from '../_shared/http.ts';
 
 const ROLES = ['operator', 'hancho', 'line_leader', 'quality', 'manager', 'admin'];
 const SHIFTS = ['morning', 'afternoon', 'night'];
@@ -18,7 +20,15 @@ Deno.serve(async (req) => {
   try {
     const caller = await callerWithPermission(admin, req, 'user.manage');
     if (!caller) {
-      await audit(admin, null, 'PERMISSION_DENIED', 'admin-users', null, { reason: 'appel sans droit de gestion des utilisateurs' });
+      await audit(
+        admin,
+        null,
+        'PERMISSION_DENIED',
+        'admin-users',
+        null,
+        { reason: 'appel sans droit de gestion des utilisateurs' },
+        await callerCompany(admin, req),
+      );
       return json(req, 403, { error: 'Accès refusé.' });
     }
     const body = await req.json().catch(() => null);
@@ -45,28 +55,43 @@ Deno.serve(async (req) => {
       if (error || !created.user) return json(req, 409, { error: 'Création du compte d’authentification impossible.' });
       const { data: profile, error: profileError } = await admin
         .from('users')
-        .insert({ name, email, role, shift, zoneLabel: str(u.zoneLabel, 120), active: true, authId: created.user.id, ...refs })
+        .insert({
+          name,
+          email,
+          role,
+          shift,
+          zoneLabel: str(u.zoneLabel, 120),
+          active: true,
+          authId: created.user.id,
+          companyId: caller.companyId,
+          ...refs,
+        })
         .select()
         .single();
       if (profileError) {
         await admin.auth.admin.deleteUser(created.user.id);
         return json(req, 400, { error: 'Profil invalide (équipe, ligne ou poste inconnu).' });
       }
-      await audit(admin, caller.appUserId, 'USER_CREATED', 'users', profile.id, { role, email });
+      await audit(admin, caller.appUserId, 'USER_CREATED', 'users', profile.id, { role, email }, caller.companyId);
       return json(req, 200, { user: profile, temporaryPassword: password });
     }
 
     if (body.action === 'reset-password') {
       const userId = optId(body.userId);
       if (!userId) return json(req, 400, { error: 'Utilisateur manquant.' });
-      const { data: target } = await admin.from('users').select('id, authId, active').eq('id', userId).maybeSingle();
+      const { data: target } = await admin
+        .from('users')
+        .select('id, authId, active')
+        .eq('id', userId)
+        .eq('companyId', caller.companyId)
+        .maybeSingle();
       if (!target?.authId || !target.active) return json(req, 404, { error: 'Compte introuvable ou désactivé.' });
       const password = temporaryPassword();
       const { error } = await admin.auth.admin.updateUserById(target.authId, { password });
       if (error) return json(req, 500, { error: 'Réinitialisation impossible.' });
       // Toutes les sessions en cours du compte sont révoquées
       await admin.rpc('revoke_user_sessions', { p_auth: target.authId });
-      await audit(admin, caller.appUserId, 'USER_PASSWORD_RESET', 'users', target.id);
+      await audit(admin, caller.appUserId, 'USER_PASSWORD_RESET', 'users', target.id, {}, caller.companyId);
       return json(req, 200, { temporaryPassword: password });
     }
 
