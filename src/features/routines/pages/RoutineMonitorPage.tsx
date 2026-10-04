@@ -19,6 +19,7 @@ import {
   occurrencesBetween,
   type Occurrence,
   type OccurrenceState,
+  occurrencePath,
 } from '@/features/planning/model';
 import { lineOptions, teamOptions, useLookups, useSettings } from '@/features/shared/api';
 import { useNow } from '@/hooks/useNow';
@@ -207,7 +208,7 @@ export function RoutineMonitorPage() {
                   rows={visible}
                   columns={columns}
                   rowKey={(r) => r.key}
-                  rowLink={(r) => `/app/routines/${r.schedule.id}/${r.date}`}
+                  rowLink={(r) => occurrencePath(r)}
                   rowTone={(r) => (r.state === 'late' || r.state === 'missed' ? 'danger' : r.state === 'due' ? 'warning' : undefined)}
                   initialSort={{ id: 'time', direction: 'asc' }}
                   search={{

@@ -8,22 +8,23 @@ import { runSummary } from './model';
 
 /* Opérations d'exécution et de configuration des routines. */
 
-async function findRun(ds: DataSource, scheduleId: ID, date: DateKey) {
-  return (await ds.repo('routineRuns').list({ where: { scheduleId, date } }))[0];
+async function findRun(ds: DataSource, scheduleId: ID, date: DateKey, slot?: string) {
+  return (await ds.repo('routineRuns').list({ where: { scheduleId, date } })).find((r) => (r.slot ?? '') === (slot ?? ''));
 }
 
 /** Démarrer : crée l'exécution de l'occurrence (ou reprend celle qui existe). */
 export function useStartRoutine() {
   return useOperation(
-    async (ds, { schedule, date, user }: { schedule: Schedule; date: DateKey; user: User }): Promise<RoutineRun> => {
+    async (ds, { schedule, date, slot, user }: { schedule: Schedule; date: DateKey; slot?: string; user: User }): Promise<RoutineRun> => {
       if (date !== todayKey()) throw new ValidationError('Seules les routines du jour peuvent être démarrées.');
       if (!isAssignedTo(schedule, user)) throw new ValidationError('Cette routine ne vous est pas affectée.');
-      const existing = await findRun(ds, schedule.id, date);
+      const existing = await findRun(ds, schedule.id, date, slot);
       if (existing) return existing;
       return ds.repo('routineRuns').create({
         scheduleId: schedule.id,
         templateId: schedule.routineId,
         date,
+        ...(slot ? { slot } : {}),
         assigneeId: user.id,
         startedAt: new Date().toISOString(),
         results: {},

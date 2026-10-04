@@ -320,7 +320,17 @@ export interface DemoRoutine {
   ws?: string;
   tasks: DemoTask[];
   /** Planifications de la routine */
-  schedules: { id: string; recurrence: Recurrence; weekdays?: number[]; assignee?: string; team?: string; time?: string }[];
+  schedules: {
+    id: string;
+    recurrence: Recurrence;
+    weekdays?: number[];
+    assignee?: string;
+    team?: string;
+    time?: string;
+    /** Répétition dans la journée */
+    everyHours?: number;
+    endTime?: string;
+  }[];
 }
 
 const simple = (title: string, kb?: string): DemoTask => ({ title, kb, min: 3 });
@@ -464,6 +474,38 @@ export const DEMO_ROUTINES: DemoRoutine[] = [
       { title: 'Défauts de sertissage ou d’outillage signalés', min: 5, required: false },
     ],
     schedules: [{ id: 'sc-ha-crimp', recurrence: 'daily', assignee: 'u-yann' }],
+  },
+  {
+    id: 'rt-ha-crimp-hourly',
+    title: 'Contrôle fréquentiel de sertissage',
+    description: 'Mesure de hauteur de sertissage toutes les deux heures, pour détecter une dérive avant qu’elle ne produise des rebuts.',
+    time: '08:00',
+    durationMin: 5,
+    line: 'A',
+    ws: 'ws-p1',
+    tasks: [
+      {
+        title: 'Mesurer un échantillon',
+        min: 5,
+        required: true,
+        priority: 'high',
+        kb: 'kb-std-02',
+        checks: [
+          {
+            id: 'hauteur',
+            label: 'Hauteur de sertissage',
+            type: 'number',
+            unit: 'mm',
+            min: 1.42,
+            max: 1.52,
+            nominal: 1.47,
+            required: true,
+            autoAnomaly: 'major',
+          },
+        ],
+      },
+    ],
+    schedules: [{ id: 'sc-ha-crimp-hourly', recurrence: 'weekdays', team: 'team-a', everyHours: 2, endTime: '16:00' }],
   },
   {
     id: 'rt-ha-cut',

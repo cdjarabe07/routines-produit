@@ -1,3 +1,4 @@
+import { occurrencePath } from '@/features/planning/model';
 import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { CalendarClock, Siren } from 'lucide-react';
@@ -209,7 +210,7 @@ export function UserDashboardPage() {
                       items={done.map((o) => ({
                         id: o.key,
                         title: o.routine.title,
-                        to: `/app/routines/${o.schedule.id}/${o.date}`,
+                        to: occurrencePath(o),
                         meta: o.run?.completedAt ? `Terminée à ${formatTime(o.run.completedAt)}` : undefined,
                         aside: <Badge tone="success">Terminée</Badge>,
                       }))}

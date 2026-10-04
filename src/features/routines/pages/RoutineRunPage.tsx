@@ -22,8 +22,11 @@ import {
   assignmentLabel,
   findOccurrence,
   isAssignedTo,
+  isMultiSlot,
   occurrenceState,
   type Occurrence,
+  occurrencePath,
+  slotFromParam,
 } from '@/features/planning/model';
 import { useLookups, useSettings, type Lookups } from '@/features/shared/api';
 import { CheckResultToggle } from '@/features/shared/components/CheckResultToggle';
@@ -46,7 +49,8 @@ const TASK_STATE: Record<TaskState, { label: string; tone: 'neutral' | 'info' | 
 
 /** Exécution d'une routine planifiée : Démarrer → tâches et contrôles → Terminer (durée réelle enregistrée). */
 export function RoutineRunPage() {
-  const { scheduleId = '', date = todayKey() } = useParams();
+  const { scheduleId = '', date = todayKey(), slot: slotParam } = useParams();
+  const slot = slotFromParam(slotParam);
   const { queries, source, checklistById } = usePlanningData({ from: date, to: date });
   const lookup = useLookups();
   const { can } = useAuth();
@@ -55,7 +59,7 @@ export function RoutineRunPage() {
   return (
     <QueryBoundary queries={[...queries, ...lookup.queries]}>
       {() => {
-        const occurrence = findOccurrence(source!, scheduleId, date);
+        const occurrence = findOccurrence(source!, scheduleId, date, slot);
         if (!occurrence) {
           return (
             <EmptyState
@@ -204,7 +208,14 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
                 size="lg"
                 icon={<Play size={18} aria-hidden />}
                 loading={start.isPending}
-                onClick={() => start.mutate({ schedule, date, user })}
+                onClick={() =>
+                  start.mutate({
+                    schedule,
+                    date,
+                    slot: isMultiSlot(schedule) ? occurrence.time : undefined,
+                    user,
+                  })
+                }
               >
                 Démarrer
               </Button>
@@ -274,7 +285,7 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
               targetId={run.id}
               notifyUserIds={[run.assigneeId]}
               title={routine.title}
-              link={`/app/routines/${schedule.id}/${date}`}
+              link={occurrencePath(occurrence)}
               userName={lookups.userName}
             />
           </Panel>
@@ -579,7 +590,7 @@ function TaskCard({
             label={`Commenter « ${task.title} »`}
             notifyUserIds={[run.assigneeId]}
             title={`${title} — ${task.title}`}
-            link={`/app/routines/${run.scheduleId}/${run.date}`}
+            link={`/app/routines/${run.scheduleId}/${run.date}${run.slot ? `/${run.slot.replace(':', '')}` : ''}`}
             userName={userName}
           />
         </div>

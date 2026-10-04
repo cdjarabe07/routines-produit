@@ -8,13 +8,16 @@ import type { Recurrence, RoutineTemplate, Schedule } from '@/types/domain';
 import { formatLongDate, todayKey } from '@/utils/date';
 import { required } from '@/utils/validation';
 import { useSaveSchedule } from '../api';
-import { RECURRENCE_LABELS, WEEKDAY_SHORT, nextDates } from '../model';
+import { RECURRENCE_LABELS, WEEKDAY_SHORT, nextDates, slotsOf } from '../model';
 import styles from './ScheduleForm.module.css';
 
 interface Values {
   routineId: string;
   startDate: string;
   time: string;
+  /** '' = une seule fois dans la journée */
+  everyHours: string;
+  endTime: string;
   recurrence: Recurrence;
   weekdays: number[];
   endDate: string;
@@ -44,6 +47,8 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
       routineId: initialRoutine?.id ?? '',
       startDate: schedule?.startDate ?? todayKey(),
       time: schedule?.time ?? initialRoutine?.defaultTime ?? '08:00',
+      everyHours: schedule?.everyHours ? String(schedule.everyHours) : '',
+      endTime: schedule?.endTime ?? '',
       recurrence: schedule?.recurrence ?? 'weekdays',
       weekdays: schedule?.weekdays ?? [1, 2, 3, 4, 5],
       endDate: schedule?.endDate ?? '',
@@ -62,6 +67,7 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
       teamId: [(v, all) => (all.target === 'team' && !v ? 'Choisissez l’équipe' : null)],
       weekdays: [(v, all) => (all.recurrence === 'weekly' && v.length === 0 ? 'Choisissez au moins un jour' : null)],
       endDate: [(v, all) => (v && v < all.startDate ? 'Doit suivre la date de début' : null)],
+      endTime: [(v, all) => (all.everyHours && (!v || v <= all.time) ? 'Doit suivre l’heure de début' : null)],
     },
     onSubmit: async (v) => {
       await save.mutateAsync({
@@ -71,6 +77,8 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
           routineId: v.routineId,
           startDate: v.startDate,
           time: v.time,
+          everyHours: v.everyHours ? Number(v.everyHours) : undefined,
+          endTime: v.everyHours ? v.endTime : undefined,
           recurrence: v.recurrence,
           weekdays: v.recurrence === 'weekly' ? [...v.weekdays].sort() : [],
           endDate: v.recurrence === 'once' ? undefined : v.endDate || undefined,
@@ -93,6 +101,8 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
       startDate: values.startDate,
       endDate: values.endDate || undefined,
       time: values.time,
+      everyHours: values.everyHours ? Number(values.everyHours) : undefined,
+      endTime: values.endTime || undefined,
       recurrence: values.recurrence,
       weekdays: values.weekdays,
       status: 'active',
@@ -104,6 +114,11 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
     values.startDate > todayKey() ? values.startDate : todayKey(),
     5,
   );
+  const slots = slotsOf({
+    time: values.time,
+    everyHours: values.everyHours ? Number(values.everyHours) : undefined,
+    endTime: values.endTime || undefined,
+  });
   const stations = values.lineId ? lookups.workstations.filter((w) => w.lineId === values.lineId) : lookups.workstations;
 
   return (
@@ -149,6 +164,29 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
           onChange={(e) => set('time', e.target.value)}
           error={errors.time}
         />
+        <SelectField
+          label="Dans la journée"
+          options={[
+            { value: '', label: 'Une seule fois' },
+            ...[1, 2, 3, 4, 6, 8, 12].map((h) => ({ value: String(h), label: `Toutes les ${h} h` })),
+          ]}
+          value={values.everyHours}
+          hint="Pour les contrôles fréquents (détecteur de métaux, températures, contrôle horaire…)"
+          onChange={(e) => {
+            set('everyHours', e.target.value);
+            if (e.target.value && !values.endTime) set('endTime', values.time < '16:00' ? '16:00' : '23:00');
+          }}
+        />
+        {values.everyHours && (
+          <TextField
+            label="Jusqu’à (dernier créneau)"
+            type="time"
+            required
+            value={values.endTime}
+            onChange={(e) => set('endTime', e.target.value)}
+            error={errors.endTime}
+          />
+        )}
         <SelectField
           label="Répétition"
           options={(Object.keys(RECURRENCE_LABELS) as Recurrence[]).map((r) => ({ value: r, label: RECURRENCE_LABELS[r] }))}
@@ -268,7 +306,7 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
             <ul>
               {preview.map((d) => (
                 <li key={d}>
-                  {formatLongDate(d)} à {values.time}
+                  {formatLongDate(d)} à {slots.join(', ')}
                 </li>
               ))}
             </ul>

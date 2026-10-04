@@ -154,7 +154,7 @@ export interface RoutineTemplate extends BaseEntity {
   active: boolean;
 }
 
-export type Recurrence = 'once' | 'daily' | 'weekdays' | 'weekly';
+export type Recurrence = 'once' | 'daily' | 'weekdays' | 'weekly' | 'monthly';
 export type ScheduleStatus = 'active' | 'cancelled';
 
 /**
@@ -166,6 +166,9 @@ export interface Schedule extends BaseEntity {
   startDate: DateKey;
   endDate?: DateKey;
   time: TimeOfDay;
+  /** Répétition dans la journée : toutes les N heures à partir de « time », jusqu'à « endTime » inclus */
+  everyHours?: number;
+  endTime?: TimeOfDay;
   recurrence: Recurrence;
   /** Jours de la semaine pour « weekly » : 1 = lundi … 7 = dimanche */
   weekdays: number[];
@@ -211,6 +214,8 @@ export interface RoutineRun extends BaseEntity {
   scheduleId: ID;
   templateId: ID;
   date: DateKey;
+  /** Créneau de la journée (planification répétée dans la journée) ; absent = créneau unique */
+  slot?: TimeOfDay;
   /** Personne qui a démarré l'exécution */
   assigneeId: ID;
   startedAt: ISODateTime;

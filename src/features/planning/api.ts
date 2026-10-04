@@ -28,6 +28,11 @@ function validate(input: ScheduleInput) {
   if (!input.assigneeId && !input.teamId) throw new ValidationError('Affectez la routine à une personne ou à une équipe.');
   if (input.endDate && input.endDate < input.startDate) throw new ValidationError('La date de fin précède la date de début.');
   if (input.recurrence === 'weekly' && input.weekdays.length === 0) throw new ValidationError('Choisissez au moins un jour de la semaine.');
+  if (input.everyHours !== undefined) {
+    if (!Number.isInteger(input.everyHours) || input.everyHours < 1 || input.everyHours > 12)
+      throw new ValidationError('L’intervalle de répétition doit être compris entre 1 et 12 heures.');
+    if (!input.endTime || input.endTime <= input.time) throw new ValidationError('L’heure de fin doit suivre l’heure de début.');
+  }
 }
 
 /** Personnes concernées par une planification (affectée directement ou membres actifs de l'équipe). */

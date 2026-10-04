@@ -10,7 +10,19 @@ import { validationErrors } from './gemba/model';
 import { needsReorder, stockState } from './production/model';
 import { conformity, isConform } from './quality/model';
 import { checkKey, evaluateCheck, runSummary, taskChecks, taskProgress } from './routines/model';
-import { completedOnTime, countOccurrences, isAssignedTo, occurrenceState, occurrencesBetween, occursOn } from './planning/model';
+import {
+  completedOnTime,
+  countOccurrences,
+  describeRecurrence,
+  findOccurrence,
+  isAssignedTo,
+  occurrencePath,
+  occurrenceState,
+  occurrencesBetween,
+  occursOn,
+  slotFromParam,
+  slotsOf,
+} from './planning/model';
 import {
   abortRun,
   nextStep,
@@ -155,6 +167,48 @@ describe('planification', () => {
     expect(occursOn(schedule({ recurrence: 'once', startDate: '2026-09-29' }), '2026-09-30')).toBe(false);
     expect(occursOn(schedule({ endDate: '2026-09-28' }), '2026-09-29')).toBe(false);
     expect(occursOn(schedule({ status: 'cancelled' }), '2026-09-29')).toBe(false);
+  });
+
+  it('récurrence mensuelle : même jour du mois, dernier jour si le mois est plus court', () => {
+    const monthly = schedule({ recurrence: 'monthly', startDate: '2026-01-31' });
+    expect(occursOn(monthly, '2026-03-31')).toBe(true);
+    expect(occursOn(monthly, '2026-04-30')).toBe(true); // avril : 30 jours
+    expect(occursOn(monthly, '2026-02-28')).toBe(true); // 2026 non bissextile
+    expect(occursOn(monthly, '2026-02-27')).toBe(false);
+    expect(occursOn(schedule({ recurrence: 'monthly', startDate: '2026-09-15' }), '2026-10-15')).toBe(true);
+    expect(occursOn(schedule({ recurrence: 'monthly', startDate: '2026-09-15' }), '2026-10-16')).toBe(false);
+    expect(describeRecurrence(monthly)).toBe('Chaque mois, le 31');
+  });
+
+  it('créneaux répétés dans la journée', () => {
+    expect(slotsOf({ time: '08:00' })).toEqual(['08:00']);
+    expect(slotsOf({ time: '08:00', everyHours: 2, endTime: '16:00' })).toEqual(['08:00', '10:00', '12:00', '14:00', '16:00']);
+    expect(slotsOf({ time: '06:30', everyHours: 4, endTime: '13:00' })).toEqual(['06:30', '10:30']);
+    expect(slotsOf({ time: '00:00', everyHours: 1, endTime: '23:59' })).toHaveLength(24);
+    expect(describeRecurrence(schedule({ everyHours: 2, endTime: '16:00' }))).toBe(
+      'Du lundi au vendredi · toutes les 2 h de 08:00 à 16:00',
+    );
+  });
+
+  it('une occurrence et une exécution par créneau', () => {
+    const multi = schedule({ everyHours: 4, endTime: '16:00' });
+    const src = { schedules: [multi], routines: [template], runs: [run({}, { slot: '12:00' })] };
+    const list = occurrencesBetween(src, '2026-09-29', '2026-09-29');
+    expect(list.map((o) => o.time)).toEqual(['08:00', '12:00', '16:00']);
+    expect(list.map((o) => Boolean(o.run))).toEqual([false, true, false]);
+    expect(findOccurrence(src, 'sc', '2026-09-29', '12:00')?.run?.id).toBe('r');
+    expect(findOccurrence(src, 'sc', '2026-09-29', '13:00')).toBeNull();
+    expect(occurrencePath(list[1]!)).toBe('/app/routines/sc/2026-09-29/1200');
+    expect(occurrencePath({ schedule: schedule(), date: '2026-09-29', time: '08:00' })).toBe('/app/routines/sc/2026-09-29');
+    expect(slotFromParam('0730')).toBe('07:30');
+    expect(slotFromParam('7h30')).toBeUndefined();
+  });
+
+  it('créneaux répétés : en retard à mi-intervalle au plus tard', () => {
+    const o = { date: '2026-09-29', time: '08:00', run: undefined, schedule: schedule({ everyHours: 1, endTime: '16:00' }) };
+    expect(occurrenceState(o, '2026-09-29', at(8, 29), 120)).toBe('due');
+    expect(occurrenceState(o, '2026-09-29', at(8, 31), 120)).toBe('late');
+    expect(occurrenceState({ ...o, schedule: schedule() }, '2026-09-29', at(8, 31), 120)).toBe('due');
   });
 
   it('exclut les occurrences annulées et rattache l’exécution', () => {

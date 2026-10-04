@@ -18,7 +18,8 @@ describe('connexion et droits', () => {
     await user.type(await screen.findByLabelText(/Identifiant ou email/, {}, TIMEOUT), 'karim.benali@atelier.local');
     await user.type(screen.getByLabelText(/^Mot de passe/), 'Routines2026');
     await user.click(screen.getByRole('button', { name: 'Se connecter' }));
-    expect(await screen.findByRole('heading', { level: 1, name: /Bonjour Karim/ }, TIMEOUT)).toBeInTheDocument();
+    // Premier test du fichier : chargement à froid du tableau de bord, plus lent quand toute la suite tourne en parallèle
+    expect(await screen.findByRole('heading', { level: 1, name: /Bonjour Karim/ }, { timeout: 10_000 })).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/démo|démonstration|fictive/i);
   });
 

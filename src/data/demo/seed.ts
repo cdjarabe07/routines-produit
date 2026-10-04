@@ -32,7 +32,7 @@ import type {
   Workstation,
 } from '@/types/domain';
 import type { Dataset } from '@/services/data/types';
-import { occursOn } from '@/features/planning/model';
+import { isMultiSlot, occursOn, slotsOf } from '@/features/planning/model';
 import { checkKey, evaluateCheck } from '@/features/routines/model';
 import { addDays, atTime, isoWeekday, toDateKey } from '@/utils/date';
 import {
@@ -232,6 +232,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
           routineId: r.id,
           startDate: addDays(today, -HISTORY_DAYS),
           time: s.time ?? r.time,
+          ...(s.everyHours ? { everyHours: s.everyHours, endTime: s.endTime } : {}),
           recurrence: s.recurrence,
           weekdays: s.weekdays ?? [],
           assigneeId: s.assignee,
@@ -283,70 +284,74 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     const day = addDays(today, -d);
     for (const s of schedules) {
       if (!occursOn(s, day)) continue;
-      const routine = templateById.get(s.routineId)!;
-      const due = new Date(atTime(day, s.time)).getTime();
-      let complete: boolean;
-      if (d === 0) {
-        // Aujourd'hui : rien avant l'heure prévue + 25 min ; quelques occurrences laissées à faire
-        if (nowMs - due < 25 * 60_000 || LEFT_TODO_TODAY.has(s.id)) continue;
-        complete = s.id !== LEFT_IN_PROGRESS_TODAY;
-      } else {
-        if (chance(0.07)) continue; // non réalisée
-        complete = !chance(0.1);
-      }
-      const executors = s.teamId ? TEAM_EXECUTORS[s.teamId] : undefined;
-      const by = s.assigneeId ?? (executors ? (chance(0.8) ? executors[0] : executors[1]) : 'u-karim');
-      let cursor = Math.floor(rnd() * 15);
-      const startedAt = at(day, s.time, cursor);
-      const results: Record<string, ItemResult> = {};
-      routine.tasks.forEach((task, ti) => {
-        if (!complete && ti >= Math.ceil(routine.tasks.length / 2)) return;
-        if (!task.required && chance(0.3)) return;
-        const checks = [...(task.checklistId ? (checklistById.get(task.checklistId)?.items ?? []) : []), ...task.checks];
-        const step = Math.max(1, Math.round((task.estimatedMin ?? 4) / Math.max(1, checks.length)));
-        if (checks.length === 0) {
-          cursor += step + Math.floor(rnd() * 3);
-          const status: CheckResult = chance(0.04) ? 'ko' : 'ok';
-          results[task.id] = {
-            status,
-            at: at(day, s.time, cursor),
-            by,
-            comment: status === 'ko' ? 'Écart constaté, traité avec l’équipe' : undefined,
-          };
-          return;
+      const multi = isMultiSlot(s);
+      for (const time of slotsOf(s)) {
+        const routine = templateById.get(s.routineId)!;
+        const due = new Date(atTime(day, time)).getTime();
+        let complete: boolean;
+        if (d === 0) {
+          // Aujourd'hui : rien avant l'heure prévue + 25 min ; quelques occurrences laissées à faire
+          if (nowMs - due < 25 * 60_000 || LEFT_TODO_TODAY.has(s.id)) continue;
+          complete = s.id !== LEFT_IN_PROGRESS_TODAY;
+        } else {
+          if (chance(0.07)) continue; // non réalisée
+          complete = !chance(0.1);
         }
-        for (const item of checks) {
-          cursor += step;
-          const value = valueFor(item);
-          const status = evaluateCheck(item, value);
-          results[checkKey(task.id, item.id)] = {
-            status,
-            value: item.type === 'conformity' ? undefined : value,
-            // Historique cohérent avec les règles : commentaire exigé sur non-conformité
-            comment: status === 'ko' && item.commentOnFail ? 'Écart constaté, pièce isolée et chef d’équipe prévenu' : undefined,
-            at: at(day, s.time, cursor),
-            by,
-          };
-        }
-      });
-      if (Object.keys(results).length === 0) continue;
-      const completedAt = complete ? at(day, s.time, cursor + 1) : undefined;
-      routineRuns.push(
-        stamp(
-          {
-            id: nextId('run'),
-            scheduleId: s.id,
-            templateId: routine.id,
-            date: day,
-            assigneeId: by,
+        const executors = s.teamId ? TEAM_EXECUTORS[s.teamId] : undefined;
+        const by = s.assigneeId ?? (executors ? (chance(0.8) ? executors[0] : executors[1]) : 'u-karim');
+        let cursor = Math.floor(rnd() * 15);
+        const startedAt = at(day, time, cursor);
+        const results: Record<string, ItemResult> = {};
+        routine.tasks.forEach((task, ti) => {
+          if (!complete && ti >= Math.ceil(routine.tasks.length / 2)) return;
+          if (!task.required && chance(0.3)) return;
+          const checks = [...(task.checklistId ? (checklistById.get(task.checklistId)?.items ?? []) : []), ...task.checks];
+          const step = Math.max(1, Math.round((task.estimatedMin ?? 4) / Math.max(1, checks.length)));
+          if (checks.length === 0) {
+            cursor += step + Math.floor(rnd() * 3);
+            const status: CheckResult = chance(0.04) ? 'ko' : 'ok';
+            results[task.id] = {
+              status,
+              at: at(day, time, cursor),
+              by,
+              comment: status === 'ko' ? 'Écart constaté, traité avec l’équipe' : undefined,
+            };
+            return;
+          }
+          for (const item of checks) {
+            cursor += step;
+            const value = valueFor(item);
+            const status = evaluateCheck(item, value);
+            results[checkKey(task.id, item.id)] = {
+              status,
+              value: item.type === 'conformity' ? undefined : value,
+              // Historique cohérent avec les règles : commentaire exigé sur non-conformité
+              comment: status === 'ko' && item.commentOnFail ? 'Écart constaté, pièce isolée et chef d’équipe prévenu' : undefined,
+              at: at(day, time, cursor),
+              by,
+            };
+          }
+        });
+        if (Object.keys(results).length === 0) continue;
+        const completedAt = complete ? at(day, time, cursor + 1) : undefined;
+        routineRuns.push(
+          stamp(
+            {
+              id: nextId('run'),
+              scheduleId: s.id,
+              templateId: routine.id,
+              date: day,
+              assigneeId: by,
+              startedAt,
+              results,
+              completedAt,
+              completedBy: complete ? by : undefined,
+              ...(multi ? { slot: time } : {}),
+            },
             startedAt,
-            results,
-            completedAt,
-            completedBy: complete ? by : undefined,
-          },
-          startedAt,
-        ),
-      );
+          ),
+        );
+      }
     }
   }
 

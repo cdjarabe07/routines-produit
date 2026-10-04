@@ -14,7 +14,14 @@ import { isOpenAlert } from '@/features/andon/model';
 import { MEETING_STATUS } from '@/features/meetings/model';
 import { useMyNotifications } from '@/features/notifications/api';
 import { usePlanningData } from '@/features/planning/api';
-import { OCCURRENCE_STATE, assignmentLabel, countOccurrences, occurrenceState, occurrencesBetween } from '@/features/planning/model';
+import {
+  OCCURRENCE_STATE,
+  assignmentLabel,
+  countOccurrences,
+  occurrenceState,
+  occurrencesBetween,
+  occurrencePath,
+} from '@/features/planning/model';
 import { DEFINITIONS } from '@/features/shared/definitions';
 import { EVENT_TYPE } from '@/features/shared/labels';
 import { useLookups, useSettings } from '@/features/shared/api';
@@ -153,7 +160,7 @@ export function AdminDashboardPage() {
                         title: `${o.time} · ${o.routine.title}`,
                         meta: assignmentLabel(o.schedule, lookups!.userName, lookups!.teamName),
                         aside: <Badge tone={OCCURRENCE_STATE.late.tone}>{OCCURRENCE_STATE.late.label}</Badge>,
-                        to: `/app/routines/${o.schedule.id}/${o.date}`,
+                        to: occurrencePath(o),
                         tone: 'danger' as const,
                       }))}
                       empty="Aucune routine en retard."

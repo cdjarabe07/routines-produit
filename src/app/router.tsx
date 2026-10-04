@@ -112,6 +112,7 @@ export const appRoutes: RouteObject[] = [
         { path: 'planning', element: guarded(P.MyPlanning) },
         { path: 'routines', element: guarded(P.MyRoutines, 'routine.execute', 'vos routines') },
         { path: 'routines/:scheduleId/:date', element: guarded(P.RoutineRun, 'space.app', 'cette routine') },
+        { path: 'routines/:scheduleId/:date/:slot', element: guarded(P.RoutineRun, 'space.app', 'cette routine') },
         { path: 'reunions', element: guarded(P.MyMeetings, 'meeting.view', 'vos réunions') },
         { path: 'actions', element: guarded(P.Actions, 'action.update', 'vos actions') },
         { path: 'sequences', element: guarded(P.Sequences, 'sequence.run', 'les séquences guidées') },

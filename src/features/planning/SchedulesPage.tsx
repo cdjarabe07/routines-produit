@@ -18,7 +18,15 @@ import { addDays, enumerateDays, formatDate, formatLongDate, startOfWeek, todayK
 import { cx } from '@/utils/cx';
 import { useCancelSchedule, usePlanningData, useRestoreSchedule, useSkipOccurrence } from './api';
 import { ScheduleForm } from './components/ScheduleForm';
-import { OCCURRENCE_STATE, assignmentLabel, describeRecurrence, nextDates, occurrenceState, occurrencesBetween } from './model';
+import {
+  OCCURRENCE_STATE,
+  assignmentLabel,
+  describeRecurrence,
+  nextDates,
+  occurrenceState,
+  occurrencesBetween,
+  occurrencePath,
+} from './model';
 import styles from './SchedulesPage.module.css';
 
 /** Planification : quelle routine, quand, par qui. Vue liste des planifications et vue semaine des occurrences. */
@@ -220,7 +228,7 @@ export function SchedulesPage() {
                         return (
                           <li key={o.key} className={cx(styles.occurrence, styles[state])}>
                             <span className={styles.time}>{o.time}</span>
-                            <Link to={`/app/routines/${o.schedule.id}/${o.date}`} className={styles.title}>
+                            <Link to={occurrencePath(o)} className={styles.title}>
                               {o.routine.title}
                             </Link>
                             <span className={styles.meta}>{assignmentLabel(o.schedule, lookups!.userName, lookups!.teamName)}</span>

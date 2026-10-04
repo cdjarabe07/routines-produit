@@ -9,6 +9,7 @@ import {
   type Occurrence,
   type OccurrenceSource,
   type OccurrenceState,
+  occurrencePath,
 } from '@/features/planning/model';
 import { EVENT_TYPE } from '@/features/shared/labels';
 import type { Action, DateKey, Meeting, User } from '@/types/domain';
@@ -83,7 +84,7 @@ export function buildPlanning(args: {
       title: o.routine.title,
       detail: `${o.routine.durationMin} min · ${o.routine.tasks.length} tâche(s)`,
       state: OCCURRENCE_STATE[o.state],
-      to: `/app/routines/${o.schedule.id}/${o.date}`,
+      to: occurrencePath(o),
     })),
     ...meetingsForUser(meetings, user)
       .filter((m) => m.date >= from && m.date <= to)

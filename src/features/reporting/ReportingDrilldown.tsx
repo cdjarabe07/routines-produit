@@ -3,7 +3,7 @@ import { ItemList } from '@/components/data-display/ItemList';
 import { Badge } from '@/components/ui/Badge';
 import { Drawer } from '@/components/ui/Overlay';
 import { ANDON_STATUS, ANDON_TYPE } from '@/features/andon/model';
-import { OCCURRENCE_STATE, assignmentLabel } from '@/features/planning/model';
+import { OCCURRENCE_STATE, assignmentLabel, occurrencePath } from '@/features/planning/model';
 import { runSummary } from '@/features/routines/model';
 import type { Lookups } from '@/features/shared/api';
 import { ANOMALY_STATUS, SEVERITY } from '@/features/shared/labels';
@@ -66,7 +66,7 @@ export function ReportingDrilldown({ selection, result, lookups, routineTitle, p
                     .filter(Boolean)
                     .join(' · '),
                   aside: <Badge tone={OCCURRENCE_STATE[o.state].tone}>{OCCURRENCE_STATE[o.state].label}</Badge>,
-                  to: `/app/routines/${o.schedule.id}/${o.date}`,
+                  to: occurrencePath(o),
                   tone: o.state === 'late' || o.state === 'missed' ? ('danger' as const) : undefined,
                 };
               })}

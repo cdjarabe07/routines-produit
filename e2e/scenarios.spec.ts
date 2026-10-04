@@ -301,3 +301,17 @@ test('contrôles enrichis : anomalie automatique, commentaire exigé, saisie de 
   await page.getByPlaceholder('Saisir ou scanner').press('Enter');
   await expect(page.getByText('LT-48213', { exact: true })).toBeVisible();
 });
+
+test('contrôle répété dans la journée : une exécution par créneau', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Jeu de démonstration daté au mardi matin : vérifié en mode démo');
+  await page.clock.install({ time: new Date('2026-10-06T08:05:00Z') });
+  await signIn(page, 'u-nadia');
+  await page.goto('/app/#/app/routines/sc-ha-crimp-hourly/2026-10-06/1000');
+  await page.reload();
+  await page.getByRole('button', { name: 'Démarrer' }).first().click();
+  await expect(page.getByText('Hauteur de sertissage').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Démarrer' })).toHaveCount(0);
+  // Le créneau suivant reste à démarrer : son exécution est distincte
+  await page.goto('/app/#/app/routines/sc-ha-crimp-hourly/2026-10-06/1200');
+  await expect(page.getByRole('button', { name: 'Démarrer' }).first()).toBeVisible();
+});

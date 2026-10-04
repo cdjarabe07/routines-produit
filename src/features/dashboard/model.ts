@@ -17,7 +17,7 @@ import type { PolicyResource } from '@/services/auth/policies';
 import { isOverdue, isDueToday, isOpenAction } from '@/features/actions/model';
 import { ANDON_TYPE, isEscalated, isOpenAlert } from '@/features/andon/model';
 import { isOpenAnomaly } from '@/features/anomalies/model';
-import { countOccurrences, isAssignedTo, occurrenceState, type Occurrence } from '@/features/planning/model';
+import { countOccurrences, isAssignedTo, occurrenceState, type Occurrence, occurrencePath } from '@/features/planning/model';
 import { needsReorder } from '@/features/production/model';
 import { checksOn, conformity } from '@/features/quality/model';
 import { dateKeyOf, formatLongDate, formatMinutes, formatTime, minutesBetween, minutesOfDay, timeToMinutes } from '@/utils/date';
@@ -108,7 +108,7 @@ export function buildPriorities(d: CockpitData): Priority[] {
           level: state === 'late' ? 'high' : 'normal',
           title: `Ma routine ${o.time} — ${o.routine.title}`,
           meta: state === 'in_progress' ? 'En cours' : state === 'late' ? 'En retard' : 'À faire maintenant',
-          to: `/app/routines/${o.schedule.id}/${o.date}`,
+          to: occurrencePath(o),
         });
       }
     }
