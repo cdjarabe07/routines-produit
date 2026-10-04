@@ -10,3 +10,6 @@ shots
 .vercel
 .env*
 !.env.example
+
+# Cache local de l’outil Supabase (référence du projet lié)
+supabase/.temp/
