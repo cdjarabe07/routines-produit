@@ -1,5 +1,6 @@
 import type {
   Action,
+  RunPhoto,
   Announcement,
   AndonAlert,
   Anomaly,
@@ -62,6 +63,7 @@ export interface CollectionMap {
   announcements: Announcement;
   notifications: AppNotification;
   settings: AppSettings;
+  runPhotos: RunPhoto;
 }
 
 export type CollectionName = keyof CollectionMap;
@@ -95,6 +97,7 @@ export const COLLECTIONS: CollectionName[] = [
   'announcements',
   'notifications',
   'settings',
+  'runPhotos',
 ];
 
 export type NewEntity<T extends BaseEntity> = Omit<T, 'id' | 'createdAt' | 'updatedAt'> & { id?: ID };

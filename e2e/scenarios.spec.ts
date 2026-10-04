@@ -278,3 +278,26 @@ test('référentiels : une étape renommée et un rôle rebaptisé apparaissent 
   await page.goto('/app/#/admin/utilisateurs');
   await expect(page.getByRole('table').getByText('Animateur').first()).toBeVisible();
 });
+
+test('contrôles enrichis : anomalie automatique, commentaire exigé, saisie de lot', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Jeu de démonstration daté au mardi matin : vérifié en mode démo');
+  await page.clock.install({ time: new Date('2026-10-06T07:35:00Z') });
+  await signIn(page, 'u-nadia');
+  await page.goto('/app/#/app/routines');
+  await page.reload();
+  await page
+    .getByRole('link', { name: /Contrôle début de poste/ })
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Démarrer' }).first().click();
+  const outil = page.getByRole('group', { name: 'Résultat : Outil conforme à la référence du terminal' });
+  await outil.getByRole('button', { name: /^Non conforme$/ }).click();
+  await expect(page.getByRole('link', { name: 'Anomalie liée' }).first()).toBeVisible();
+  await expect(page.getByText('Commentaire obligatoire (non conforme)')).toBeVisible();
+  await page.getByLabel(/Commentaire \(obligatoire\)/).fill('Outil usé, remplacé');
+  await page.getByRole('button', { name: 'Enregistrer le commentaire' }).click();
+  await expect(page.getByText('Commentaire obligatoire (non conforme)')).toHaveCount(0);
+  await page.getByPlaceholder('Saisir ou scanner').fill('LT-48213');
+  await page.getByPlaceholder('Saisir ou scanner').press('Enter');
+  await expect(page.getByText('LT-48213', { exact: true })).toBeVisible();
+});

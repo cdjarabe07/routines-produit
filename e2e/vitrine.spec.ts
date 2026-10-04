@@ -10,7 +10,8 @@ test('la vitrine mène à la démo, où l’on entre en un clic avec un rôle', 
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Les routines terrain');
   await expect(page).toHaveTitle(/Routine/);
   await page.getByRole('link', { name: 'Essayer la démo' }).first().click();
-  await expect(page.getByRole('heading', { name: 'Découvrir la démo' })).toBeVisible();
+  // Premier chargement de l’application : tout son code est téléchargé
+  await expect(page.getByRole('heading', { name: 'Découvrir la démo' })).toBeVisible({ timeout: 15_000 });
   await page.getByRole('button', { name: /Manager/ }).click();
   // « Bonjour » ou « Bonsoir » selon l’heure de l’atelier
   await expect(page.getByRole('heading', { level: 1, name: /(Bonjour|Bonsoir) Xavier/ })).toBeVisible({ timeout: 15_000 });

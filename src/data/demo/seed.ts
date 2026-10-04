@@ -166,6 +166,9 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     min: c.min,
     max: c.max,
     options: c.options,
+    photo: c.photo,
+    commentOnFail: c.commentOnFail,
+    autoAnomaly: c.autoAnomaly,
   });
   const nominal = new Map<string, number>();
   for (const c of DEMO_CHECKLISTS.flatMap((l) => l.items)) if (c.nominal !== undefined) nominal.set(c.id, c.nominal);
@@ -267,6 +270,8 @@ export function buildDemoData(now: Date = new Date()): Dataset {
       }
       case 'select':
         return item.options?.[0] ?? '';
+      case 'lot':
+        return `LT-${Math.floor(rnd() * 90000 + 10000)}`;
       default:
         return item.id === 'ref' ? pick(['FX-PORTE-AVD-12', 'FX-PORTE-ARG-08', 'FX-MOTEUR-1.5-A']) : pick(['Indice C', 'Indice D']);
     }
@@ -317,6 +322,8 @@ export function buildDemoData(now: Date = new Date()): Dataset {
           results[checkKey(task.id, item.id)] = {
             status,
             value: item.type === 'conformity' ? undefined : value,
+            // Historique cohérent avec les règles : commentaire exigé sur non-conformité
+            comment: status === 'ko' && item.commentOnFail ? 'Écart constaté, pièce isolée et chef d’équipe prévenu' : undefined,
             at: at(day, s.time, cursor),
             by,
           };
@@ -1050,5 +1057,6 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     announcements,
     notifications,
     settings,
+    runPhotos: [],
   };
 }

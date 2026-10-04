@@ -2,11 +2,15 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Checkbox, SelectField, TextField } from '@/components/ui/Field';
 import { CHECK_TYPE_LABELS } from '@/features/routines/model';
-import type { ChecklistItem, CheckType } from '@/types/domain';
+import type { ChecklistItem, CheckType, Severity } from '@/types/domain';
+import { SEVERITY } from '@/features/shared/labels';
 import { createId } from '@/utils/id';
 import styles from './ChecklistItemsEditor.module.css';
 
 export const blankCheck = (): ChecklistItem => ({ id: createId(), label: '', type: 'conformity', required: true });
+
+/** Types de contrôle qui peuvent être non conformes (commentaire exigé, anomalie automatique) */
+export const canFail = (type: CheckType) => type === 'conformity' || type === 'yes_no' || type === 'number';
 
 /** Déplace un élément d'une liste (réordonnancement au clavier ou au doigt, sans glisser-déposer). */
 export function move<T>(list: T[], index: number, delta: -1 | 1): T[] {
@@ -31,6 +35,9 @@ export function cleanChecks(items: ChecklistItem[]): ChecklistItem[] {
       max: i.type === 'number' && Number.isFinite(i.max) ? i.max : undefined,
       options: i.type === 'select' ? (i.options ?? []).map((o) => o.trim()).filter(Boolean) : undefined,
       knowledgeId: i.knowledgeId,
+      photo: i.photo,
+      commentOnFail: canFail(i.type) && i.commentOnFail ? true : undefined,
+      autoAnomaly: canFail(i.type) ? i.autoAnomaly : undefined,
     }));
 }
 
@@ -47,7 +54,7 @@ export function checksError(items: ChecklistItem[]): string | null {
 
 const numberOrUndefined = (v: string) => (v.trim() === '' ? undefined : Number(v.replace(',', '.')));
 
-/** Éditeur de contrôles typés : conformité, oui/non, valeur numérique (bornes), texte, choix, commentaire. */
+/** Éditeur de contrôles typés : conformité, oui/non, valeur numérique (bornes), texte, choix, commentaire, lot. */
 export function ChecklistItemsEditor({
   items,
   onChange,
@@ -138,6 +145,41 @@ export function ChecklistItemsEditor({
                     onChange={(e) => update(i, { options: e.target.value.split(';') })}
                     className={styles.choices}
                   />
+                )}
+              </div>
+              <div className={styles.options}>
+                <SelectField
+                  label="Photo"
+                  options={[
+                    { value: '', label: 'Aucune' },
+                    { value: 'optional', label: 'Facultative' },
+                    { value: 'required', label: 'Obligatoire' },
+                  ]}
+                  value={item.photo ?? ''}
+                  onChange={(e) => update(i, { photo: (e.target.value || undefined) as ChecklistItem['photo'] })}
+                  className={styles.small}
+                />
+                {canFail(item.type) && (
+                  <>
+                    <SelectField
+                      label="Si non conforme"
+                      options={[
+                        { value: '', label: 'Pas d’anomalie automatique' },
+                        ...(Object.keys(SEVERITY) as Severity[]).map((s) => ({
+                          value: s,
+                          label: `Anomalie ${SEVERITY[s].label.toLowerCase()}`,
+                        })),
+                      ]}
+                      value={item.autoAnomaly ?? ''}
+                      onChange={(e) => update(i, { autoAnomaly: (e.target.value || undefined) as Severity | undefined })}
+                      className={styles.choices}
+                    />
+                    <Checkbox
+                      label="Commentaire obligatoire si non conforme"
+                      checked={Boolean(item.commentOnFail)}
+                      onChange={(e) => update(i, { commentOnFail: e.target.checked })}
+                    />
+                  </>
                 )}
               </div>
             </li>

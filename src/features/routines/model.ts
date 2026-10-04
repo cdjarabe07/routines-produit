@@ -22,6 +22,7 @@ export const CHECK_TYPE_LABELS: Record<CheckType, string> = {
   text: 'Texte court',
   select: 'Choix dans une liste',
   comment: 'Commentaire',
+  lot: 'Lot ou numéro de série',
 };
 
 /** Clé de résultat d'un contrôle dans une tâche. */
@@ -58,6 +59,17 @@ export function evaluateCheck(item: ChecklistItem, value: CheckValue): CheckResu
   }
 }
 
+/** Ce qui manque à un contrôle saisi pour être complet (photo exigée, commentaire sur non-conformité) ; null s'il est complet. */
+export function checkMissing(item: ChecklistItem, result?: ItemResult): string | null {
+  if (!result) return null;
+  if (item.photo === 'required' && !result.photoId) return 'Photo obligatoire';
+  if (item.commentOnFail && result.status === 'ko' && !result.comment?.trim()) return 'Commentaire obligatoire (non conforme)';
+  return null;
+}
+
+/** Contrôle saisi et complet */
+export const isCheckComplete = (item: ChecklistItem, result?: ItemResult) => Boolean(result) && checkMissing(item, result) === null;
+
 /** Texte lisible d'une valeur saisie. */
 export function formatCheckValue(item: ChecklistItem, result: ItemResult): string {
   if (item.type === 'conformity') return result.status === 'ok' ? 'Conforme' : result.status === 'ko' ? 'Non conforme' : 'Non applicable';
@@ -87,7 +99,11 @@ export function taskProgress(task: RoutineTask, checks: ChecklistItem[], run?: R
   }
   const answered = checks.filter((c) => results[checkKey(task.id, c.id)]);
   const ko = answered.filter((c) => results[checkKey(task.id, c.id)]?.status === 'ko').length;
-  const requiredMissing = checks.some((c) => c.required && !results[checkKey(task.id, c.id)]);
+  // Un contrôle obligatoire doit être saisi et complet ; un contrôle facultatif saisi doit être complet
+  const requiredMissing = checks.some((c) => {
+    const r = results[checkKey(task.id, c.id)];
+    return (c.required || r) && !isCheckComplete(c, r);
+  });
   const validated = Boolean(results[task.id]);
   const state: TaskState = validated || (!requiredMissing && answered.length > 0) ? 'done' : answered.length > 0 ? 'partial' : 'todo';
   return { state, answered: answered.length, total: checks.length, ko: ko + (results[task.id]?.status === 'ko' ? 1 : 0) };

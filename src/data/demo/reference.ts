@@ -256,6 +256,9 @@ export interface DemoCheck {
   options?: string[];
   /** Valeur nominale (génération de l'historique des contrôles numériques) */
   nominal?: number;
+  photo?: 'optional' | 'required';
+  commentOnFail?: boolean;
+  autoAnomaly?: 'minor' | 'major' | 'critical';
 }
 
 export const DEMO_CHECKLISTS: { id: string; name: string; description: string; items: DemoCheck[] }[] = [
@@ -346,7 +349,15 @@ export const DEMO_ROUTINES: DemoRoutine[] = [
         priority: 'high',
         kb: 'kb-std-02',
         checks: [
-          { id: 'outil', label: 'Outil conforme à la référence du terminal', type: 'conformity', required: true },
+          {
+            id: 'outil',
+            label: 'Outil conforme à la référence du terminal',
+            type: 'conformity',
+            required: true,
+            commentOnFail: true,
+            autoAnomaly: 'major',
+          },
+          { id: 'lot', label: 'Lot de terminaux chargé', type: 'lot', required: true },
           {
             id: 'essai',
             label: 'Hauteur de sertissage de la pièce d’essai',
@@ -356,6 +367,8 @@ export const DEMO_ROUTINES: DemoRoutine[] = [
             max: 1.52,
             nominal: 1.47,
             required: true,
+            photo: 'optional',
+            autoAnomaly: 'major',
           },
         ],
       },

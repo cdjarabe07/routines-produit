@@ -86,7 +86,7 @@ export interface Leave extends BaseEntity {
 /* ---------- Checklists ---------- */
 
 /** Types de contrôle (docs/implementation-plan.md §2). */
-export type CheckType = 'conformity' | 'yes_no' | 'number' | 'text' | 'select' | 'comment';
+export type CheckType = 'conformity' | 'yes_no' | 'number' | 'text' | 'select' | 'comment' | 'lot';
 
 export interface ChecklistItem {
   id: ID;
@@ -101,6 +101,12 @@ export interface ChecklistItem {
   max?: number;
   help?: string;
   knowledgeId?: ID;
+  /** Photo jointe au contrôle : proposée ou exigée */
+  photo?: 'optional' | 'required';
+  /** Commentaire exigé quand le contrôle est non conforme */
+  commentOnFail?: boolean;
+  /** Anomalie créée automatiquement, avec cette gravité, quand le contrôle est non conforme */
+  autoAnomaly?: Severity;
 }
 
 /** Checklist réutilisable : une tâche de routine peut y faire référence. */
@@ -186,6 +192,18 @@ export interface ItemResult {
   at: ISODateTime;
   by: ID;
   anomalyId?: ID;
+  /** Photo jointe (collection runPhotos : une photo pèse trop pour le résultat lui-même) */
+  photoId?: ID;
+}
+
+/** Photo prise lors d'un contrôle de routine */
+export interface RunPhoto extends BaseEntity {
+  runId: ID;
+  /** Clé du résultat (tâche/contrôle) */
+  key: string;
+  /** Image JPEG ré-encodée par l'application */
+  photo: string;
+  takenBy: ID;
 }
 
 /** Exécution d'une occurrence planifiée. */

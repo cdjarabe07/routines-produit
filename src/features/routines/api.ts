@@ -118,3 +118,12 @@ export function useSetTemplateActive() {
     },
   );
 }
+
+/** Photo jointe à un contrôle : stockée à part (taille), puis référencée dans le résultat. */
+export function useAddRunPhoto() {
+  return useOperation(
+    async (ds, { run, key, photo, user }: { run: RoutineRun; key: string; photo: string; user: User }) =>
+      ds.repo('runPhotos').create({ runId: run.id, key, photo, takenBy: user.id }),
+    { invalidates: ['runPhotos'] },
+  );
+}

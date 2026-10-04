@@ -125,6 +125,10 @@ export function CheckInput({ item, result, disabled, onSave }: Props) {
               disabled={disabled}
               onChange={(e) => setDraft(e.target.value)}
               className={styles.text}
+              // Lot : une douchette de lecture saisit le code comme un clavier puis valide (Entrée)
+              placeholder={item.type === 'lot' ? 'Saisir ou scanner' : undefined}
+              autoComplete={item.type === 'lot' ? 'off' : undefined}
+              spellCheck={item.type === 'lot' ? false : undefined}
             />
           )}
           <Button type="submit" size="sm" disabled={disabled || !draft.trim() || draft.trim() === result?.value}>

@@ -11,6 +11,10 @@ import { Modal } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
 import { Progress } from '@/components/ui/Progress';
 import { AnomalyForm } from '@/features/anomalies/components/AnomalyForm';
+import { useCreateAnomaly } from '@/features/anomalies/api';
+import { PhotoInput } from '@/components/ui/PhotoInput';
+import { TextAreaField } from '@/components/ui/Field';
+import { useCollection } from '@/hooks/useData';
 import { KnowledgeQuickView } from '@/features/knowledge/components/KnowledgeQuickView';
 import { usePlanningData } from '@/features/planning/api';
 import {
@@ -27,11 +31,11 @@ import { CommentThread } from '@/features/shared/components/CommentThread';
 import { PRIORITY } from '@/features/shared/labels';
 import { useNow } from '@/hooks/useNow';
 import { ROLE_LABELS } from '@/services/auth/permissions';
-import type { Checklist, ChecklistItem, CheckResult, CheckValue, ID, ItemResult, RoutineRun, RoutineTask } from '@/types/domain';
+import type { Checklist, ChecklistItem, CheckResult, CheckValue, ID, ItemResult, RoutineRun, RoutineTask, RunPhoto } from '@/types/domain';
 import { formatDuration, formatLongDate, formatTime, todayKey } from '@/utils/date';
-import { useCompleteRoutine, useRecordResult, useStartRoutine } from '../api';
+import { useAddRunPhoto, useCompleteRoutine, useRecordResult, useStartRoutine } from '../api';
 import { CheckInput } from '../components/CheckInput';
-import { checkKey, estimatedMinutes, formatCheckValue, runSummary, taskChecks, taskProgress, type TaskState } from '../model';
+import { checkKey, checkMissing, estimatedMinutes, formatCheckValue, runSummary, taskChecks, taskProgress, type TaskState } from '../model';
 import styles from './RoutineRunPage.module.css';
 
 const TASK_STATE: Record<TaskState, { label: string; tone: 'neutral' | 'info' | 'success' }> = {
@@ -86,6 +90,8 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
   const start = useStartRoutine();
   const record = useRecordResult();
   const complete = useCompleteRoutine();
+  const addPhoto = useAddRunPhoto();
+  const createAnomaly = useCreateAnomaly();
   const [knowledgeId, setKnowledgeId] = useState<string | null>(null);
   const [anomalyFor, setAnomalyFor] = useState<{ task: RoutineTask; item?: ChecklistItem } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -101,6 +107,38 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
   const overTime = run && !run.completedAt && elapsedMs > plannedMin * 60_000;
 
   const save = (key: string, result: Omit<ItemResult, 'at' | 'by'> | null) => record.mutateAsync({ run: run!, key, result, user });
+  const photosQuery = useCollection('runPhotos', { where: { runId: run?.id ?? '__aucune__' } });
+  const photos = new Map((run ? (photosQuery.data ?? []) : []).map((ph) => [ph.id, ph]));
+
+  // Contrôle non conforme avec anomalie automatique : déclarée au nom de la personne qui saisit
+  const autoAnomaly = async (task: RoutineTask, item: ChecklistItem, key: string, result: Omit<ItemResult, 'at' | 'by'>) => {
+    if (!run || !item.autoAnomaly || result.anomalyId || !can('anomaly.create')) return;
+    const value = formatCheckValue(item, { ...result, at: '', by: '' });
+    const anomaly = await createAnomaly.mutateAsync({
+      input: {
+        description: `${routine.title} — ${task.title} : ${item.label}${item.type === 'conformity' ? ' non conforme' : ` (${value})`}${result.comment ? `. ${result.comment}` : ''}`,
+        category: categoryOr(item.type === 'number' ? 'quality' : 'standard'),
+        severity: item.autoAnomaly,
+        workstationId: schedule.workstationId ?? routine.workstationId,
+        origin: { type: 'routine', id: run.id },
+      },
+      reporter: user,
+    });
+    await save(key, { ...result, anomalyId: anomaly.id });
+  };
+
+  const attachPhoto = async (key: string, photo: string) => {
+    const current = run?.results[key];
+    if (!run || !current) return;
+    const created = await addPhoto.mutateAsync({ run, key, photo, user });
+    await save(key, {
+      status: current.status,
+      value: current.value,
+      comment: current.comment,
+      anomalyId: current.anomalyId,
+      photoId: created.id,
+    });
+  };
 
   const where = [
     lookups.lineName(schedule.lineId ?? routine.lineId),
@@ -224,6 +262,9 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
               onDeclare={(item) => setAnomalyFor({ task, item })}
               canDeclare={can('anomaly.create')}
               title={routine.title}
+              photos={photos}
+              onAutoAnomaly={(item, key, result) => autoAnomaly(task, item, key, result)}
+              onAttachPhoto={attachPhoto}
             />
           ))}
 
@@ -345,6 +386,9 @@ interface TaskCardProps {
   onDeclare: (item?: ChecklistItem) => void;
   canDeclare: boolean;
   title: string;
+  photos: Map<ID, RunPhoto>;
+  onAutoAnomaly: (item: ChecklistItem, key: string, result: Omit<ItemResult, 'at' | 'by'>) => Promise<void>;
+  onAttachPhoto: (key: string, photo: string) => Promise<void>;
 }
 
 function TaskCard({
@@ -360,13 +404,27 @@ function TaskCard({
   onDeclare,
   canDeclare,
   title,
+  photos,
+  onAutoAnomaly,
+  onAttachPhoto,
 }: TaskCardProps) {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const progress = taskProgress(task, checks, run);
   const taskResult = run.results[task.id];
 
-  const saveCheck = (key: string, status: CheckResult, value?: CheckValue) =>
-    onSave(key, { status, value, anomalyId: status === 'ko' ? run.results[key]?.anomalyId : undefined });
+  // La photo et le commentaire déjà saisis sont conservés quand la valeur change
+  const saveCheck = async (item: ChecklistItem, key: string, status: CheckResult, value?: CheckValue) => {
+    const prev = run.results[key];
+    const result = {
+      status,
+      value,
+      comment: prev?.comment,
+      photoId: prev?.photoId,
+      anomalyId: status === 'ko' ? prev?.anomalyId : undefined,
+    };
+    await onSave(key, result);
+    if (status === 'ko') await onAutoAnomaly(item, key, result);
+  };
 
   return (
     <Panel
@@ -472,7 +530,7 @@ function TaskCard({
                     item={item}
                     result={result}
                     disabled={!editable || busyKey === key}
-                    onSave={(status, value) => void saveCheck(key, status, value)}
+                    onSave={(status, value) => void saveCheck(item, key, status, value)}
                   />
                 </div>
                 <ResultFollowUp
@@ -481,6 +539,14 @@ function TaskCard({
                   canDeclare={canDeclare}
                   onDeclare={() => onDeclare(item)}
                   onUndo={() => void onSave(key, null)}
+                />
+                <CheckExtras
+                  item={item}
+                  result={result}
+                  photo={result?.photoId ? photos.get(result.photoId) : undefined}
+                  editable={editable}
+                  onPhoto={(photo) => onAttachPhoto(key, photo)}
+                  onComment={(comment) => (result ? onSave(key, { ...result, comment }) : Promise.resolve())}
                 />
               </li>
             );
@@ -555,6 +621,71 @@ function ResultFollowUp({
         <button type="button" className={styles.undo} onClick={onUndo}>
           <RotateCcw size={12} aria-hidden /> Annuler la saisie
         </button>
+      )}
+    </div>
+  );
+}
+
+/** Compléments d'un contrôle saisi : photo, commentaire sur non-conformité, ce qui manque encore. */
+function CheckExtras({
+  item,
+  result,
+  photo,
+  editable,
+  onPhoto,
+  onComment,
+}: {
+  item: ChecklistItem;
+  result?: ItemResult;
+  photo?: RunPhoto;
+  editable: boolean;
+  onPhoto: (photo: string) => Promise<void>;
+  onComment: (comment: string) => Promise<unknown>;
+}) {
+  const [draft, setDraft] = useState(result?.comment ?? '');
+  if (!result) return null;
+  const missing = checkMissing(item, result);
+  const askComment = result.status === 'ko' && (item.commentOnFail || Boolean(result.comment));
+  if (!item.photo && !askComment && !missing) return null;
+  return (
+    <div className={styles.extras}>
+      {item.photo &&
+        (photo ? (
+          <img className={styles.checkPhoto} src={photo.photo} alt={`Photo du contrôle « ${item.label} »`} />
+        ) : (
+          editable && (
+            <PhotoInput
+              label={item.photo === 'required' ? 'Photo obligatoire' : 'Photo (facultative)'}
+              onChange={(dataUrl) => dataUrl && void onPhoto(dataUrl)}
+            />
+          )
+        ))}
+      {askComment && (
+        <form
+          className={styles.extraComment}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (draft.trim()) void onComment(draft.trim());
+          }}
+        >
+          <TextAreaField
+            label={item.commentOnFail ? 'Commentaire (obligatoire) : constat et action immédiate' : 'Commentaire'}
+            rows={2}
+            value={draft}
+            disabled={!editable}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          {editable && (
+            <Button type="submit" size="sm" disabled={!draft.trim() || draft.trim() === (result.comment ?? '')}>
+              Enregistrer le commentaire
+            </Button>
+          )}
+        </form>
+      )}
+      {missing && (
+        <p className={styles.missing} role="status">
+          <TriangleAlert size={14} aria-hidden /> {missing}
+        </p>
       )}
     </div>
   );
