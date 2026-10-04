@@ -45,4 +45,4 @@ create trigger settings_freeze before update on public.settings for each row exe
 -- Lien de notification : chemin interne uniquement (refuse « //hote » et « /\hote », interprétés comme un autre site)
 alter table public.notifications drop constraint if exists notifications_link_check;
 alter table public.notifications add constraint notifications_link_check
-  check (link is null or (link ~ '^/($|[^/\])' and char_length(link) <= 300));
+  check (link is null or (link ~ '^/($|[^/\\])' and char_length(link) <= 300));
