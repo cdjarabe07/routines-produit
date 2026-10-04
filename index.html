@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#fafafb" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <title>Routine — standards, alertes et actions de l’atelier</title>
+    <title>Routine — les contrôles de l’atelier, faits et prouvés</title>
     <meta
       name="description"
-      content="Routine digitalise les routines terrain, les alertes Andon et les actions correctives des équipes de production. Pour toute industrie manufacturière. Démo gratuite, sans inscription."
+      content="Routine planifie les contrôles et routines terrain de vos équipes de production, les fait exécuter au poste avec preuve, et transforme chaque écart en action suivie. Modèles prêts pour l’automobile, la plasturgie, l’usinage, l’agroalimentaire et l’électronique. Démo gratuite, sans inscription."
     />
-    <meta property="og:title" content="Routine — standards, alertes et actions de l’atelier" />
+    <meta property="og:title" content="Routine — les contrôles de l’atelier, faits et prouvés" />
     <meta
       property="og:description"
-      content="Les routines terrain de votre usine, faites, prouvées et suivies. Démo gratuite, sans inscription."
+      content="Routines terrain, Andon et actions correctives, avec les exigences de votre secteur intégrées. Démo gratuite, sans inscription."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="./vitrine/supervision.jpg" />
+    <meta property="og:image" content="./vitrine/supervision-automotive.jpg" />
   </head>
   <body>
     <a class="skip" href="#contenu">Aller au contenu</a>
@@ -28,248 +28,352 @@
         </a>
         <nav class="nav" aria-label="Sections">
           <a href="#fonctions">Fonctions</a>
-          <a href="#roles">Pour qui</a>
-          <a href="#methode">Méthode</a>
+          <a href="#secteurs">Secteurs</a>
+          <a href="#demarrer">Démarrer</a>
           <a href="#securite">Sécurité</a>
+          <a href="#faq">Questions</a>
         </nav>
-        <a class="button button-primary button-small" href="./app/">Essayer la démo</a>
+        <a class="button button-primary button-small" href="./app/" data-demo-link>Essayer la démo</a>
       </div>
     </header>
 
     <main id="contenu">
+      <!-- ---------- Ouverture ---------- -->
       <section class="hero">
         <div class="wrap hero-inner">
           <div class="hero-text">
-            <p class="eyebrow">Pour toute industrie manufacturière</p>
-            <h1>Les routines terrain de votre usine, faites, prouvées et suivies.</h1>
+            <p class="eyebrow">Routines terrain · Andon · Actions correctives</p>
+            <h1>Les contrôles de votre atelier, faits à l’heure et prouvés.</h1>
             <p class="lead">
-              Routine rassemble les standards de travail, les alertes Andon et les actions correctives de vos équipes de production. Chacun
-              sait quoi faire, chaque problème remonte en minutes, et rien ne se perd entre deux équipes.
+              Routine planifie les contrôles de chaque poste, les fait exécuter avec preuve — mesure, tolérance, photo, lot — et transforme
+              chaque écart en action suivie jusqu’au bout. Avec les exigences de votre secteur déjà intégrées.
             </p>
             <div class="hero-actions">
-              <a class="button button-primary" href="./app/">Essayer la démo</a>
-              <a class="button button-secondary" href="#fonctions">Voir les fonctions</a>
+              <a class="button button-primary" href="./app/?secteur=automotive" data-demo-link>Essayer la démo de mon secteur</a>
+              <a class="button button-secondary" href="#fonctions">Voir comment ça marche</a>
               <a class="button button-secondary" data-contact hidden>Demander une présentation</a>
             </div>
-            <p class="hero-note">Démo gratuite, sans inscription : vous choisissez un rôle et entrez dans un atelier fictif.</p>
+            <p class="hero-note">Gratuit, sans inscription. La démo fonctionne dans votre navigateur : aucune donnée n’est envoyée.</p>
           </div>
-          <figure class="hero-shot">
-            <img
-              src="./vitrine/supervision.jpg"
-              width="1440"
-              height="900"
-              alt="Vue d’ensemble de la supervision : état des lignes, indicateurs du jour et actions à traiter"
-            />
-          </figure>
+
+          <div class="hero-demo">
+            <div class="sector-switch" role="tablist" aria-label="Secteur de la démo">
+              <button type="button" role="tab" data-sector="automotive" aria-selected="true">Automobile</button>
+              <button type="button" role="tab" data-sector="plastics" aria-selected="false" tabindex="-1">Plasturgie</button>
+              <button type="button" role="tab" data-sector="machining" aria-selected="false" tabindex="-1">Usinage</button>
+              <button type="button" role="tab" data-sector="food" aria-selected="false" tabindex="-1">Agroalimentaire</button>
+              <button type="button" role="tab" data-sector="electronics" aria-selected="false" tabindex="-1">Électronique</button>
+              <button type="button" role="tab" data-sector="generic" aria-selected="false" tabindex="-1">Autre</button>
+            </div>
+            <figure class="screen">
+              <div class="screen-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+              <img
+                data-hero-shot
+                src="./vitrine/supervision-automotive.jpg"
+                width="1440"
+                height="900"
+                alt="Vue d’ensemble de la supervision d’un atelier automobile : état des lignes, indicateurs du jour et actions à traiter"
+              />
+            </figure>
+            <div class="proof" aria-live="polite">
+              <p class="proof-label">Contrôle enregistré</p>
+              <p class="proof-check" data-proof-check>Détrompeurs vérifiés avec les pièces témoins</p>
+              <p class="proof-result"><span class="ok" data-proof-value>Conforme</span> <span data-proof-meta>· Yann D. · 06:22</span></p>
+              <p class="proof-ref" data-proof-ref>IATF 16949 §10.2.4</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="section" aria-labelledby="benefices">
+      <!-- ---------- Constat ---------- -->
+      <section class="section" aria-labelledby="constat-titre">
         <div class="wrap">
-          <h2 id="benefices" class="section-title">Ce qui change dans l’atelier</h2>
-          <div class="grid grid-3">
+          <h2 id="constat-titre" class="section-title">Sur papier, les standards existent. Sur le terrain, ils glissent.</h2>
+          <div class="grid grid-3 contrast">
             <article class="card">
-              <h3>Des standards réellement tenus</h3>
-              <p>
-                Les routines (5S, démarrage poste, audits, contrôles) sont planifiées pour chaque personne ou équipe, exécutées avec leur
-                checklist, et prouvées : qui, quand, avec quel résultat.
+              <p class="before">« Le contrôle de démarrage a-t-il été fait ? »</p>
+              <p class="after">
+                Chaque routine a une heure, une personne et un état : à faire, en retard, en cours, terminée. Le retard se voit avant qu’il ne
+                devienne un défaut.
               </p>
             </article>
             <article class="card">
-              <h3>Des problèmes remontés en minutes</h3>
-              <p>
-                Un opérateur déclenche un Andon depuis son poste. La bonne personne est prévenue, le temps de réaction est chronométré et
-                l’alerte reste visible jusqu’à sa résolution.
+              <p class="before">« Le problème de la nuit, personne ne l’a repris. »</p>
+              <p class="after">
+                L’Andon reste ouvert jusqu’à sa résolution, la passation de consignes est lue et accusée, chaque anomalie a un responsable.
               </p>
             </article>
             <article class="card">
-              <h3>Des actions suivies jusqu’au bout</h3>
-              <p>
-                Chaque anomalie, Andon ou observation de Gemba Walk devient une action avec un responsable et une échéance. Les retards et
-                les blocages sautent aux yeux.
+              <p class="before">« Le relevé était hors tolérance, mais on a continué. »</p>
+              <p class="after">
+                La mesure est comparée à la tolérance dès la saisie. Hors tolérance : commentaire exigé, anomalie créée automatiquement, action
+                à suivre.
               </p>
             </article>
           </div>
         </div>
       </section>
 
+      <!-- ---------- Fonctions ---------- -->
       <section class="section section-muted" id="fonctions" aria-labelledby="fonctions-titre">
         <div class="wrap">
-          <h2 id="fonctions-titre" class="section-title">Fonctions</h2>
-          <p class="section-lead">
-            Tout ce que vos équipes de production utilisent au quotidien, au même endroit. Les modules inutiles se désactivent en un clic.
-          </p>
-          <div class="grid grid-4">
-            <article class="feature">
-              <h3>Routines et checklists</h3>
-              <p>Standards de travail, tâches obligatoires, mesures et contrôles, photos.</p>
-            </article>
-            <article class="feature">
-              <h3>Planification</h3>
-              <p>Routines affectées à une personne ou une équipe, quotidiennes, hebdomadaires ou ponctuelles.</p>
-            </article>
-            <article class="feature">
-              <h3>Andon</h3>
-              <p>Alerte au poste, prise en charge, escalade automatique, tableau d’atelier en plein écran.</p>
-            </article>
-            <article class="feature">
-              <h3>Anomalies et actions</h3>
-              <p>Signalement avec photo et gravité, actions correctives, responsables, échéances.</p>
-            </article>
-            <article class="feature">
-              <h3>Gemba Walk</h3>
-              <p>Tournées terrain guidées ; les observations à traiter deviennent des actions.</p>
-            </article>
-            <article class="feature">
-              <h3>Contrôles qualité</h3>
-              <p>Mesures en ligne comparées aux tolérances, conformité du jour.</p>
-            </article>
-            <article class="feature">
-              <h3>Agenda et réunions</h3>
-              <p>Calendrier jour, semaine, mois ; points quotidiens, ordre du jour, compte-rendu.</p>
-            </article>
-            <article class="feature">
-              <h3>Pilotage</h3>
-              <p>Tableaux de bord par rôle, reporting, carte du processus avec les chiffres du jour.</p>
-            </article>
-          </div>
-          <div class="shots">
-            <figure>
-              <img src="./vitrine/agenda.jpg" width="1440" height="900" loading="lazy" alt="Agenda de l’atelier en vue semaine" />
-              <figcaption>Agenda de l’atelier, vue semaine</figcaption>
-            </figure>
-            <figure>
+          <h2 id="fonctions-titre" class="section-title">Ce que Routine fait, concrètement</h2>
+
+          <div class="feature-row">
+            <div class="feature-text">
+              <h3>Le bon contrôle, au bon moment</h3>
+              <p>Chaque routine se planifie au rythme qu’exige le terrain :</p>
+              <ul class="ticks">
+                <li>à chaque prise de poste, chaque semaine ou chaque mois ;</li>
+                <li>toutes les N heures dans la journée, comme un test de détecteur de métaux ;</li>
+                <li>sur événement : démarrage d’un ordre de fabrication, changement de moule, d’outil ou de produit.</li>
+              </ul>
+              <p>Chacun retrouve ses routines du jour sur son téléphone, sa tablette ou son poste, dans l’ordre où il doit les faire.</p>
+            </div>
+            <figure class="feature-shot phone">
               <img
-                src="./vitrine/actions.jpg"
+                src="./vitrine/operateur.jpg"
+                width="780"
+                height="1688"
+                loading="lazy"
+                alt="Routines du jour d’une opératrice sur téléphone : routine en retard à démarrer, puis routines terminées"
+              />
+            </figure>
+          </div>
+
+          <div class="feature-row reverse">
+            <div class="feature-text">
+              <h3>Une preuve à chaque contrôle</h3>
+              <p>Un contrôle n’est pas une case cochée : c’est une valeur, une heure et une personne.</p>
+              <ul class="ticks">
+                <li>mesures comparées aux tolérances, conformes ou non dès la saisie ;</li>
+                <li>photo jointe, lot saisi ou scanné, commentaire exigé si non conforme ;</li>
+                <li>anomalie créée automatiquement, avec la gravité prévue, quand un contrôle sort des limites.</li>
+              </ul>
+            </div>
+            <figure class="feature-shot screen">
+              <div class="screen-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+              <img
+                src="./vitrine/routine.jpg"
                 width="1440"
                 height="900"
                 loading="lazy"
-                alt="Suivi des actions correctives avec priorités et échéances"
+                alt="Routine de cuisson et refroidissement terminée : température à cœur et durée de refroidissement avec leurs tolérances"
               />
-              <figcaption>Actions correctives : priorités, responsables, retards</figcaption>
+            </figure>
+          </div>
+
+          <div class="feature-row">
+            <div class="feature-text">
+              <h3>Les problèmes traités, pas seulement signalés</h3>
+              <ul class="ticks">
+                <li>Andon déclenché au poste, prise en charge chronométrée, escalade si personne ne répond ;</li>
+                <li>anomalies avec photo et gravité, depuis un QR code de poste, une routine ou un Andon ;</li>
+                <li>actions correctives avec responsable, suppléant et échéance ; les retards sautent aux yeux.</li>
+              </ul>
+            </div>
+            <figure class="feature-shot screen">
+              <div class="screen-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+              <img
+                src="./vitrine/andon.jpg"
+                width="1440"
+                height="900"
+                loading="lazy"
+                alt="Tableau Andon d’un atelier d’injection : alertes en attente et en cours de traitement"
+              />
+            </figure>
+          </div>
+
+          <div class="feature-grid">
+            <article class="feature">
+              <h3>Audits par couches</h3>
+              <p>
+                Le même audit planifié au niveau terrain, encadrement et direction. Questions tournantes : quelques questions tirées à tour de
+                rôle, toutes finissent par être posées.
+              </p>
+            </article>
+            <article class="feature">
+              <h3>Gemba Walk</h3>
+              <p>Tournées terrain guidées ; chaque observation à traiter devient une action.</p>
+            </article>
+            <article class="feature">
+              <h3>Réunions et passations</h3>
+              <p>Brief de début de poste, ordre du jour, compte rendu, consignes entre équipes accusées de réception.</p>
+            </article>
+            <article class="feature">
+              <h3>Pilotage</h3>
+              <p>Tableau de bord par rôle, conformité des routines et de la qualité, reporting sur la période, carte du processus.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- Secteurs ---------- -->
+      <section class="section" id="secteurs" aria-labelledby="secteurs-titre">
+        <div class="wrap">
+          <h2 id="secteurs-titre" class="section-title">Construit sur les exigences de votre secteur</h2>
+          <p class="section-lead">
+            Chaque modèle reprend les contrôles qu’exigent les référentiels de votre secteur, avec leurs références. Les valeurs propres à
+            votre usine — tolérances, fréquences, tailles de témoins — sont signalées « à adapter » : vous les ajustez avant de démarrer.
+          </p>
+          <div class="sector-switch sector-switch-lg" role="tablist" aria-label="Secteur">
+            <button type="button" role="tab" data-sector="automotive" aria-selected="true" aria-controls="panel-sector">Automobile</button>
+            <button type="button" role="tab" data-sector="plastics" aria-selected="false" tabindex="-1" aria-controls="panel-sector">Plasturgie</button>
+            <button type="button" role="tab" data-sector="machining" aria-selected="false" tabindex="-1" aria-controls="panel-sector">Usinage</button>
+            <button type="button" role="tab" data-sector="food" aria-selected="false" tabindex="-1" aria-controls="panel-sector">Agroalimentaire</button>
+            <button type="button" role="tab" data-sector="electronics" aria-selected="false" tabindex="-1" aria-controls="panel-sector">Électronique</button>
+            <button type="button" role="tab" data-sector="generic" aria-selected="false" tabindex="-1" aria-controls="panel-sector">Autre industrie</button>
+          </div>
+          <div id="panel-sector" class="sector-panel" role="tabpanel" tabindex="0">
+            <div class="sector-head">
+              <h3 data-sector-title>Automobile et équipementiers</h3>
+              <a class="button button-primary" href="./app/?secteur=automotive" data-demo-link data-sector-demo>Ouvrir la démo de ce secteur</a>
+            </div>
+            <ul class="requirements" data-sector-list>
+              <li><strong>Détrompeurs vérifiés en début de poste</strong>, par défaillance simulée avec des pièces témoins<span class="ref">IATF 16949 §10.2.4</span></li>
+              <li><strong>Audit par couches</strong> : niveau 1 chaque jour, niveau 2 chaque semaine, niveau 3 chaque mois<span class="ref">AIAG CQI-8</span></li>
+              <li><strong>Premier article</strong> déclenché au démarrage de chaque ordre de fabrication<span class="ref">Pratique du secteur</span></li>
+              <li><strong>5S et maintenance autonome</strong> : nettoyer pour inspecter, lubrifier, resserrer<span class="ref">TPM</span></li>
+            </ul>
+          </div>
+          <p class="footnote">Pharmacie et cosmétique : sur demande (signature électronique et double vérification en préparation).</p>
+        </div>
+      </section>
+
+      <!-- ---------- Démarrer ---------- -->
+      <section class="section section-muted" id="demarrer" aria-labelledby="demarrer-titre">
+        <div class="wrap">
+          <h2 id="demarrer-titre" class="section-title">Démarrer avec le modèle de votre secteur</h2>
+          <div class="start">
+            <ol class="steps">
+              <li>
+                <strong>Choisir le modèle</strong>
+                <span>Automobile, plasturgie, usinage, agroalimentaire, électronique, ou une base générique.</span>
+              </li>
+              <li>
+                <strong>Garder ce qui sert, adapter les valeurs</strong>
+                <span>Vous cochez les routines et checklists à reprendre et saisissez vos tolérances. Vocabulaire, étapes et rôles suivent.</span>
+              </li>
+              <li>
+                <strong>Planifier et créer les comptes</strong>
+                <span>Votre administrateur affecte les routines aux personnes ou aux équipes et crée les comptes. Pas d’inscription publique.</span>
+              </li>
+            </ol>
+            <figure class="feature-shot screen">
+              <div class="screen-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+              <img
+                src="./vitrine/modele.jpg"
+                width="1440"
+                height="900"
+                loading="lazy"
+                alt="Choix et personnalisation du modèle de secteur : routines à créer et valeurs d’exemple à adapter"
+              />
             </figure>
           </div>
         </div>
       </section>
 
+      <!-- ---------- Rôles ---------- -->
       <section class="section" id="roles" aria-labelledby="roles-titre">
         <div class="wrap">
-          <h2 id="roles-titre" class="section-title">Pour qui</h2>
-          <p class="section-lead">Chaque rôle voit ce qui le concerne, avec les droits qui lui correspondent.</p>
-          <div class="roles">
-            <div class="grid grid-2">
-              <article class="card">
-                <h3>Opérateur</h3>
-                <p>
-                  Ses routines du jour au poste, sur téléphone ou tablette. Un bouton pour déclencher un Andon ou signaler une anomalie.
-                </p>
-              </article>
-              <article class="card">
-                <h3>Chef d’équipe</h3>
-                <p>Son équipe, les alertes à prendre en charge, les routines en retard, la passation de consignes entre équipes.</p>
-              </article>
-              <article class="card">
-                <h3>Responsable de production</h3>
-                <p>L’état de l’atelier en temps réel, les actions correctives, la qualité, le reporting et les réunions.</p>
-              </article>
-              <article class="card">
-                <h3>Administrateur</h3>
-                <p>Routines, checklists, planification, utilisateurs, équipes, postes et modules activés pour le site.</p>
-              </article>
-            </div>
-            <figure class="phone">
-              <img
-                src="./vitrine/operateur.jpg"
-                width="390"
-                height="844"
-                loading="lazy"
-                alt="Tableau de bord d’un opérateur sur téléphone"
-              />
-            </figure>
+          <h2 id="roles-titre" class="section-title">Chacun voit ce qui le concerne</h2>
+          <div class="grid grid-5 roles">
+            <article class="role">
+              <h3>Opérateur</h3>
+              <p>Ses routines du jour, un bouton pour l’Andon, une anomalie signalée en trois gestes.</p>
+            </article>
+            <article class="role">
+              <h3>Chef d’équipe</h3>
+              <p>Son équipe, les alertes à prendre en charge, les routines en retard, la passation.</p>
+            </article>
+            <article class="role">
+              <h3>Qualité</h3>
+              <p>Contrôles et mesures, anomalies, actions correctives, audits et Gemba.</p>
+            </article>
+            <article class="role">
+              <h3>Responsable</h3>
+              <p>L’état de l’atelier en temps réel, le reporting et les réunions.</p>
+            </article>
+            <article class="role">
+              <h3>Administrateur</h3>
+              <p>Modèle de secteur, routines, planification, comptes, postes et modules.</p>
+            </article>
           </div>
         </div>
       </section>
 
-      <section class="section section-muted" id="methode" aria-labelledby="methode-titre">
+      <!-- ---------- Sécurité ---------- -->
+      <section class="section section-muted" id="securite" aria-labelledby="securite-titre">
         <div class="wrap">
-          <h2 id="methode-titre" class="section-title">Une méthode, pas seulement un outil</h2>
-          <p class="section-lead">Routine suit la boucle d’amélioration continue de l’atelier.</p>
-          <ol class="steps">
-            <li><strong>Configurer</strong><span>les standards : routines et checklists.</span></li>
-            <li><strong>Planifier</strong><span>qui fait quoi, et quand.</span></li>
-            <li><strong>Exécuter</strong><span>au poste, avec preuve.</span></li>
-            <li><strong>Détecter</strong><span>Andon, anomalies, contrôles qualité.</span></li>
-            <li><strong>Corriger</strong><span>actions avec responsable et échéance.</span></li>
-            <li><strong>Piloter</strong><span>et faire évoluer les standards.</span></li>
-          </ol>
-          <h3 class="subtitle">Essayez la démo de votre secteur</h3>
-          <p class="section-lead">
-            Chaque démo reprend le vocabulaire, les postes et les routines types du secteur. Votre entreprise démarre avec le même modèle,
-            puis l’adapte à ses propres standards ; les modules non utilisés se masquent.
-          </p>
-          <div class="grid grid-3 sector-grid">
-            <a class="card sector-card" href="./app/?secteur=automotive">
-              <h4>Automobile et équipementiers</h4>
-              <p>Audits par couches, détrompeurs, premier article. Exemple : un atelier de câblage.</p>
-              <span class="sector-link">Ouvrir la démo →</span>
-            </a>
-            <a class="card sector-card" href="./app/?secteur=plastics">
-              <h4>Plasturgie</h4>
-              <p>Démarrage presse, changement de moule, contrôle horaire des pièces.</p>
-              <span class="sector-link">Ouvrir la démo →</span>
-            </a>
-            <a class="card sector-card" href="./app/?secteur=machining">
-              <h4>Usinage et mécanique</h4>
-              <p>Prise de poste machine, premier article après réglage, suivi des outils.</p>
-              <span class="sector-link">Ouvrir la démo →</span>
-            </a>
-            <a class="card sector-card" href="./app/?secteur=food">
-              <h4>Agroalimentaire</h4>
-              <p>Hygiène avant démarrage, détecteur de métaux, températures, allergènes.</p>
-              <span class="sector-link">Ouvrir la démo →</span>
-            </a>
-            <a class="card sector-card" href="./app/?secteur=electronics">
-              <h4>Électronique</h4>
-              <p>Contrôle ESD, composants sensibles à l’humidité, audits de ligne CMS.</p>
-              <span class="sector-link">Ouvrir la démo →</span>
-            </a>
-            <a class="card sector-card" href="./app/?secteur=generic">
-              <h4>Autre industrie</h4>
-              <p>Une base neutre : démarrage de poste, 5S, audits par couches.</p>
-              <span class="sector-link">Ouvrir la démo →</span>
-            </a>
-          </div>
-          <p class="section-lead">Pharmacie et cosmétique : sur demande (signature électronique et double vérification en préparation).</p>
-        </div>
-      </section>
-
-      <section class="section" id="securite" aria-labelledby="securite-titre">
-        <div class="wrap">
-          <h2 id="securite-titre" class="section-title">Sécurité et données</h2>
-          <div class="grid grid-3">
+          <h2 id="securite-titre" class="section-title">Vos données restent les vôtres</h2>
+          <div class="grid grid-4">
             <article class="card">
-              <h3>Droits par rôle</h3>
-              <p>Chaque action est vérifiée par le serveur selon le rôle et le périmètre (site, ligne, équipe) de la personne.</p>
+              <h3>Séparées par entreprise</h3>
+              <p>Chaque entreprise ne voit que ses données. Le serveur l’impose, et des tests automatisés le vérifient à chaque version.</p>
             </article>
             <article class="card">
-              <h3>Traçabilité</h3>
+              <h3>Droits vérifiés par le serveur</h3>
+              <p>Chaque action est contrôlée selon le rôle et le périmètre de la personne : site, ligne ou équipe.</p>
+            </article>
+            <article class="card">
+              <h3>Tout est tracé</h3>
               <p>Connexions, modifications sensibles et refus d’accès sont inscrits dans un journal d’audit non modifiable.</p>
             </article>
             <article class="card">
-              <h3>Hébergement en Europe</h3>
-              <p>Données hébergées dans un centre de données à Paris, comptes créés uniquement par votre administrateur.</p>
+              <h3>Hébergé à Paris</h3>
+              <p>Données hébergées dans l’Union européenne, dans un centre de données situé à Paris.</p>
             </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- Questions ---------- -->
+      <section class="section" id="faq" aria-labelledby="faq-titre">
+        <div class="wrap faq-wrap">
+          <h2 id="faq-titre" class="section-title">Questions fréquentes</h2>
+          <div class="faq">
+            <details>
+              <summary>Faut-il installer quelque chose ?</summary>
+              <p>Non. Routine s’utilise dans un navigateur, sur ordinateur, tablette ou téléphone.</p>
+            </details>
+            <details>
+              <summary>Peut-on adapter les routines à nos propres standards ?</summary>
+              <p>
+                Oui. Le modèle de secteur n’est qu’un point de départ : routines, checklists, tolérances, vocabulaire, étapes de fabrication et
+                noms des rôles se modifient, et les modules inutiles se masquent.
+              </p>
+            </details>
+            <details>
+              <summary>D’où viennent les contrôles proposés dans les modèles ?</summary>
+              <p>
+                Des référentiels et textes de chaque secteur : IATF 16949 et AIAG CQI-8 pour l’automobile, BRCGS, règlement (UE) 1169/2011 et
+                arrêté du 21 décembre 2009 pour l’agroalimentaire, ANSI/ESD S20.20 et J-STD-033 pour l’électronique, ainsi que les pratiques
+                professionnelles de la plasturgie et de l’usinage. La référence figure dans chaque routine.
+              </p>
+            </details>
+            <details>
+              <summary>Mon secteur n’est pas dans la liste.</summary>
+              <p>Le modèle générique fournit une base commune — démarrage de poste, 5S, maintenance autonome, audits par couches — que vous complétez.</p>
+            </details>
+            <details>
+              <summary>Que deviennent les données saisies dans la démo ?</summary>
+              <p>Elles restent dans votre navigateur et ne sont envoyées nulle part. Vous pouvez réinitialiser la démo à tout moment.</p>
+            </details>
+            <details>
+              <summary>Routine se connecte-t-il à notre ERP ?</summary>
+              <p>Une intégration avec l’ERP (SAP) est préparée côté serveur ; le raccordement se fait au cas par cas, avec votre équipe informatique.</p>
+            </details>
           </div>
         </div>
       </section>
 
       <section class="cta">
         <div class="wrap cta-inner">
-          <h2>Voyez Routine en situation</h2>
-          <p>Entrez dans l’atelier de démonstration comme opérateur, chef d’équipe, manager ou administrateur.</p>
+          <h2>Voyez votre atelier dans Routine</h2>
+          <p>Choisissez votre secteur, entrez comme opérateur, chef d’équipe, responsable ou administrateur, et parcourez une journée en cours.</p>
           <div class="hero-actions">
-            <a class="button button-primary" href="./app/">Essayer la démo</a>
-            <a class="button button-secondary" data-contact hidden>Demander une présentation</a>
+            <a class="button button-light" href="./app/?secteur=automotive" data-demo-link>Essayer la démo de mon secteur</a>
+            <a class="button button-outline-light" data-contact hidden>Demander une présentation</a>
           </div>
         </div>
       </section>

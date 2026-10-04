@@ -1,4 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router';
+import { SITE_HOME } from '@/app/siteHome';
 import { useModules } from '@/app/modules';
 import { accessibleSpaces, SPACES, visibleGroups, type SpaceId } from '@/app/navigation';
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -8,7 +9,7 @@ import styles from './SideNav.module.css';
 
 /** Sélecteur d'espace (si plusieurs) et menu de l'espace courant, filtré par permission. */
 export function SideNav({ space, onNavigate }: { space: SpaceId; onNavigate?: () => void }) {
-  const { can } = useAuth();
+  const { can, service } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { pathEnabled } = useModules();
@@ -67,6 +68,11 @@ export function SideNav({ space, onNavigate }: { space: SpaceId; onNavigate?: ()
           </ul>
         </div>
       ))}
+      {service.mode === 'demo' && (
+        <div className={styles.demoExit}>
+          <a href={SITE_HOME}>← Retour à la présentation</a>
+        </div>
+      )}
     </nav>
   );
 }

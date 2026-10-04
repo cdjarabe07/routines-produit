@@ -108,3 +108,25 @@
   font-weight: var(--weight-semibold);
   box-shadow: var(--shadow-sm);
 }
+
+/* Démo publique : retour à la présentation, toujours visible en bas du menu */
+.demoExit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-sidebar-hover);
+  font-size: var(--text-sm);
+  color: var(--color-sidebar-muted);
+}
+.demoExit a {
+  color: var(--color-sidebar-text-strong);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+.demoExit a:hover,
+.demoExit a:focus-visible {
+  text-decoration: underline;
+}

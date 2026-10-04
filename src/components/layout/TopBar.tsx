@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { Bell, CircleHelp, KeyRound, LogOut, Menu as MenuIcon, Siren, TriangleAlert } from 'lucide-react';
+import { Bell, CircleHelp, House, KeyRound, LogOut, Menu as MenuIcon, Siren, TriangleAlert } from 'lucide-react';
 import { helpFor } from '@/app/help';
+import { SITE_HOME } from '@/app/siteHome';
 import { Can, useAuth } from '@/app/providers/AuthProvider';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Menu } from '@/components/ui/Menu';
@@ -88,6 +89,15 @@ export function TopBar({ onOpenNav }: { onOpenNav: () => void }) {
           items={[
             ...(service.changePassword
               ? [{ label: 'Changer le mot de passe', icon: <KeyRound size={16} aria-hidden />, onSelect: () => setPasswordOpen(true) }]
+              : []),
+            ...(service.mode === 'demo'
+              ? [
+                  {
+                    label: 'Retour à la présentation',
+                    icon: <House size={16} aria-hidden />,
+                    onSelect: () => window.location.assign(SITE_HOME),
+                  },
+                ]
               : []),
             {
               label: 'Se déconnecter',

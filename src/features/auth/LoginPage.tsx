@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SITE_HOME } from '@/app/siteHome';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthProvider';
@@ -68,6 +69,11 @@ export function LoginPage() {
             <p className={styles.subtitle}>Standards, alertes et actions de l’atelier</p>
           </div>
         </header>
+        {service.mode === 'demo' && (
+          <a className={styles.back} href={SITE_HOME}>
+            ← Retour à la présentation de Routine
+          </a>
+        )}
         {service.mode === 'demo' && view === 'signin' && <DemoProfiles target={target} />}
         {view === 'signin' ? (
           <SignInForm target={target} onForgot={() => switchView('reset')} />
