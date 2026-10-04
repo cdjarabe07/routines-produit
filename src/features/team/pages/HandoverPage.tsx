@@ -1,3 +1,4 @@
+import { shiftOptions } from '@/app/catalog';
 import { useAuth, useCurrentUser } from '@/app/providers/AuthProvider';
 import { EmptyState, QueryBoundary } from '@/components/feedback/States';
 import { Columns, PageHeader } from '@/components/layout/PageHeader';
@@ -5,7 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { FormActions, FormGrid, SelectField, TextAreaField } from '@/components/ui/Field';
 import { Panel } from '@/components/ui/Panel';
-import { SHIFT, options } from '@/features/shared/labels';
+import { SHIFT } from '@/features/shared/labels';
 import { useLookups, workstationOptions, type Lookups } from '@/features/shared/api';
 import { useCollection } from '@/hooks/useData';
 import { useForm } from '@/hooks/useForm';
@@ -109,7 +110,7 @@ function HandoverForm({ lookups }: { lookups: Lookups }) {
       <FormGrid>
         <SelectField
           label="Équipe qui transmet"
-          options={options(SHIFT)}
+          options={shiftOptions('long', values.fromShift || null)}
           value={values.fromShift}
           onChange={(e) => {
             const s = e.target.value as Shift;
@@ -119,7 +120,7 @@ function HandoverForm({ lookups }: { lookups: Lookups }) {
         />
         <SelectField
           label="Équipe qui reçoit"
-          options={options(SHIFT)}
+          options={shiftOptions('long', values.toShift || null)}
           value={values.toShift}
           onChange={(e) => set('toShift', e.target.value as Shift)}
         />

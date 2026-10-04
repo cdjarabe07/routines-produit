@@ -81,25 +81,18 @@ export const SHIFT: Record<Shift, string> = {
 
 export const SHIFT_SHORT: Record<Shift, string> = { morning: 'Matin', afternoon: 'Après-midi', night: 'Nuit' };
 
+/* Étapes de fabrication et catégories d'anomalie : remplacées au démarrage par le catalogue du site
+   (src/app/catalog.ts). Valeurs initiales = valeurs par défaut du catalogue. */
 export const PRODUCTION_STAGE: Record<ProductionStage, string> = {
-  cutting: 'Coupe',
-  crimping: 'Sertissage',
+  preparation: 'Préparation',
+  fabrication: 'Fabrication',
   assembly: 'Assemblage',
-  taping: 'Rubanage',
-  electrical_test: 'Test électrique',
   inspection: 'Contrôle',
+  packaging: 'Conditionnement',
   shipping: 'Expédition',
 };
 
-export const PRODUCTION_STAGES: ProductionStage[] = [
-  'cutting',
-  'crimping',
-  'assembly',
-  'taping',
-  'electrical_test',
-  'inspection',
-  'shipping',
-];
+export const PRODUCTION_STAGES: ProductionStage[] = ['preparation', 'fabrication', 'assembly', 'inspection', 'packaging', 'shipping'];
 
 export const PRODUCTION_STATUS: Record<ProductionStatus, { label: string; tone: Tone }> = {
   planned: { label: 'Planifié', tone: 'neutral' },

@@ -5,7 +5,7 @@ import { useOperation } from '@/hooks/useData';
 import { DEFAULT_SETTINGS } from '@/features/shared/api';
 import { toUserMessage, ValidationError } from '@/services/errors';
 import type { NewEntity } from '@/services/data/types';
-import type { AppSettings, ID, Team, User, Workstation } from '@/types/domain';
+import type { AppSettings, Catalog, ID, Team, User, Workstation } from '@/types/domain';
 
 export function useSaveUser() {
   return useOperation(
@@ -115,6 +115,19 @@ export function useSaveModules() {
         : ds.repo('settings').create({ id: 'app', ...DEFAULT_SETTINGS, disabledModules });
     },
     { invalidates: ['settings'], success: 'Modules enregistrés.' },
+  );
+}
+
+/** Référentiels du site (étapes, catégories, motifs, vocabulaire) */
+export function useSaveCatalog() {
+  return useOperation(
+    async (ds, catalog: Catalog) => {
+      const existing = (await ds.repo('settings').list())[0];
+      return existing
+        ? ds.repo('settings').update(existing.id, { catalog })
+        : ds.repo('settings').create({ id: 'app', ...DEFAULT_SETTINGS, catalog });
+    },
+    { invalidates: ['settings'], success: 'Référentiels enregistrés.' },
   );
 }
 

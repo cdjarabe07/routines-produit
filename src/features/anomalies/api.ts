@@ -1,8 +1,8 @@
+import { anomalyCategoryLabel } from '@/app/catalog';
 import { useOperation } from '@/hooks/useData';
 import { notify } from '@/features/notifications/api';
 import type { DataSource, NewEntity } from '@/services/data/types';
 import type { Anomaly, AnomalyStatus, ID, User } from '@/types/domain';
-import { ANOMALY_CATEGORY } from '@/features/shared/labels';
 import { truncate } from '@/utils/format';
 
 export type AnomalyInput = Pick<Anomaly, 'description' | 'category' | 'severity' | 'workstationId' | 'photo' | 'origin'>;
@@ -18,7 +18,7 @@ export async function createAnomaly(ds: DataSource, input: AnomalyInput, reporte
       leaders.map((u) => u.id),
       {
         kind: 'anomaly_reported',
-        title: `Anomalie critique (${ANOMALY_CATEGORY[input.category]}) : ${truncate(input.description, 70)}`,
+        title: `Anomalie critique (${anomalyCategoryLabel(input.category)}) : ${truncate(input.description, 70)}`,
         link: `/anomalies/${anomaly.id}`,
       },
       reporter.id,

@@ -10,7 +10,7 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { FormActions, FormGrid, SelectField, TextField } from '@/components/ui/Field';
 import { Drawer, Modal } from '@/components/ui/Overlay';
 import { Tabs } from '@/components/ui/Tabs';
-import { PRODUCTION_STAGE, options } from '@/features/shared/labels';
+import { PRODUCTION_STAGE, PRODUCTION_STAGES, options } from '@/features/shared/labels';
 import { useLookups, userOptions, type Lookups } from '@/features/shared/api';
 import { useCollection } from '@/hooks/useData';
 import { useForm } from '@/hooks/useForm';
@@ -259,7 +259,7 @@ function OrderForm({ lookups, onDone }: { lookups: Lookups; onDone: () => void }
       harnessRef: '',
       lineId: lookups.lines[0]?.id ?? '',
       quantityPlanned: '',
-      stage: 'cutting' as ProductionStage,
+      stage: (PRODUCTION_STAGES[0] ?? '') as ProductionStage,
       ownerId: '',
       dueDate: addDays(todayKey(), 1),
     },

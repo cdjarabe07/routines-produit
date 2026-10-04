@@ -262,3 +262,19 @@ test('sections : les écrans regroupés se parcourent par onglets', async ({ pag
     page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('link', { name: 'Agenda et réunions' }),
   ).toHaveClass(/active/);
 });
+
+test('référentiels : une étape renommée et un rôle rebaptisé apparaissent partout', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Modifie les paramètres du site : vérifié en mode démo uniquement');
+  await signIn(page, 'u-admin');
+  await page.goto('/app/#/admin/referentiels');
+  await page.reload();
+  await page.getByLabel('Nom (étape 2)').fill('Sertissage automatique');
+  await page.getByLabel('Chef d’équipe', { exact: true }).fill('Animateur');
+  await page.locator('#poste-night').uncheck();
+  await page.getByRole('button', { name: 'Enregistrer les référentiels' }).click();
+  await expect(page.getByText('Référentiels enregistrés.')).toBeVisible();
+  await page.goto('/app/#/manager/production');
+  await expect(page.getByRole('heading', { name: 'Sertissage automatique' })).toBeVisible();
+  await page.goto('/app/#/admin/utilisateurs');
+  await expect(page.getByRole('table').getByText('Animateur').first()).toBeVisible();
+});

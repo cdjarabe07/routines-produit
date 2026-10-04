@@ -1,3 +1,4 @@
+import { anomalyCategoryLabel } from '@/app/catalog';
 import { ItemList } from '@/components/data-display/ItemList';
 import { Badge } from '@/components/ui/Badge';
 import { Drawer } from '@/components/ui/Overlay';
@@ -5,7 +6,7 @@ import { ANDON_STATUS, ANDON_TYPE } from '@/features/andon/model';
 import { OCCURRENCE_STATE, assignmentLabel } from '@/features/planning/model';
 import { runSummary } from '@/features/routines/model';
 import type { Lookups } from '@/features/shared/api';
-import { ANOMALY_CATEGORY, ANOMALY_STATUS, SEVERITY } from '@/features/shared/labels';
+import { ANOMALY_STATUS, SEVERITY } from '@/features/shared/labels';
 import { formatDate, formatLongDate, formatTime } from '@/utils/date';
 import type { Drilldown, DrilldownResult } from './model';
 import styles from './ReportingPage.module.css';
@@ -25,7 +26,7 @@ export function ReportingDrilldown({ selection, result, lookups, routineTitle, p
     selection.kind === 'day'
       ? `Détail du ${formatLongDate(selection.date)}`
       : selection.kind === 'category'
-        ? `Anomalies « ${ANOMALY_CATEGORY[selection.category]} » — ${periodLabel}`
+        ? `Anomalies « ${anomalyCategoryLabel(selection.category)} » — ${periodLabel}`
         : selection.kind === 'station'
           ? `${lookups.workstationName(selection.workstationId)} — ${periodLabel}`
           : `${routineTitle ?? 'Routine'} — ${periodLabel}`;

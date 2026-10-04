@@ -1,3 +1,4 @@
+import { categoryOr } from '@/app/catalog';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { BookOpen, CheckCircle2, Clock, MessageSquare, Play, RotateCcw, TriangleAlert } from 'lucide-react';
@@ -313,7 +314,7 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
             origin={{ type: 'routine', id: run.id }}
             initial={{
               description: `${routine.title} — ${anomalyFor.task.title}${anomalyFor.item ? ` : ${anomalyFor.item.label}` : ''}`,
-              category: 'standard',
+              category: categoryOr('standard'),
               workstationId: schedule.workstationId ?? routine.workstationId,
             }}
             onCancel={() => setAnomalyFor(null)}

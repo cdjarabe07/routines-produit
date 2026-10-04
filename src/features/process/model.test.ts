@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { applyCatalog, resolveCatalog } from '@/app/catalog';
 import type { Permission } from '@/services/auth/permissions';
 import type { Action, AndonAlert, Line, ProductionOrder, Workstation } from '@/types/domain';
 import { productionFlow, stageOfStation, workMetrics } from './model';
@@ -25,6 +26,22 @@ const order = (p: Partial<ProductionOrder>): ProductionOrder =>
   }) as ProductionOrder;
 
 describe('Carte du processus — flux de fabrication', () => {
+  // Catalogue d'un atelier de câblage : le flux suit les étapes du site
+  beforeAll(() =>
+    applyCatalog(
+      resolveCatalog({
+        productionStages: [
+          { key: 'cutting', label: 'Coupe' },
+          { key: 'crimping', label: 'Sertissage' },
+          { key: 'assembly', label: 'Assemblage' },
+          { key: 'taping', label: 'Rubanage' },
+          { key: 'electrical_test', label: 'Test électrique' },
+        ],
+      }),
+    ),
+  );
+  afterAll(() => applyCatalog(resolveCatalog()));
+
   it('reconnaît l’étape d’un poste par son procédé', () => {
     expect(stageOfStation({ process: 'Sertissage' })).toBe('crimping');
     expect(stageOfStation({ process: ' test électrique ' })).toBe('electrical_test');

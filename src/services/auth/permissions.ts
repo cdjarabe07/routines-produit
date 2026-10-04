@@ -138,9 +138,9 @@ export function roleCan(role: Role, permission: Permission): boolean {
 
 export const ROLE_LABELS: Record<Role, string> = {
   operator: 'Opérateur',
-  hancho: 'Hancho',
-  line_leader: 'Line Leader',
-  quality: 'Qualité (LQC)',
+  hancho: 'Chef d’équipe',
+  line_leader: 'Responsable de ligne',
+  quality: 'Qualité',
   manager: 'Manager',
   admin: 'Administrateur',
 };

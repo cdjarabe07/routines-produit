@@ -1,3 +1,4 @@
+import { stageLabel } from '@/app/catalog';
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ArrowDown, ArrowRight, RotateCcw } from 'lucide-react';
@@ -10,7 +11,6 @@ import { useAuth } from '@/app/providers/AuthProvider';
 import { usePlanningData } from '@/features/planning/api';
 import { occurrencesBetween } from '@/features/planning/model';
 import { STATION_STATE } from '@/features/plant/model';
-import { PRODUCTION_STAGE } from '@/features/shared/labels';
 import { useLookups, useSettings } from '@/features/shared/api';
 import { useCollection } from '@/hooks/useData';
 import { useNow } from '@/hooks/useNow';
@@ -213,7 +213,7 @@ function FlowMap() {
                     return (
                       <li key={s.station.id} className={styles.step}>
                         <div className={cx(styles.station, styles[s.view.state])}>
-                          <span className={styles.stationStage}>{s.stage ? PRODUCTION_STAGE[s.stage] : s.station.process}</span>
+                          <span className={styles.stationStage}>{s.stage ? stageLabel(s.stage) : s.station.process}</span>
                           <span className={styles.stationName}>
                             {s.station.code} · {s.station.name}
                           </span>

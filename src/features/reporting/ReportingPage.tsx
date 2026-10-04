@@ -1,3 +1,4 @@
+import { anomalyCategoryLabel } from '@/app/catalog';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { Download } from 'lucide-react';
@@ -10,7 +11,6 @@ import { Kpi, KpiStrip } from '@/components/ui/Kpi';
 import { Panel } from '@/components/ui/Panel';
 import { Tabs } from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
-import { ANOMALY_CATEGORY } from '@/features/shared/labels';
 import { DEFINITIONS } from '@/features/shared/definitions';
 import { useLookups, useSettings } from '@/features/shared/api';
 import { usePlanningData } from '@/features/planning/api';
@@ -384,7 +384,7 @@ export function ReportingPage() {
                     {report.byCategory.length ? (
                       <RankedBars
                         title="Anomalies par catégorie"
-                        items={report.byCategory.map(([c, n]) => ({ key: c, label: ANOMALY_CATEGORY[c], value: n }))}
+                        items={report.byCategory.map(([c, n]) => ({ key: c, label: anomalyCategoryLabel(c), value: n }))}
                         onSelect={(key) => select('categorie', key)}
                         selected={selection?.kind === 'category' ? selection.category : null}
                       />

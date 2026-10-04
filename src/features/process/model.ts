@@ -91,11 +91,11 @@ export function workMetrics(d: WorkData): Record<string, Metric[]> {
 
 /* ---------- Flux de fabrication ---------- */
 
-const STAGE_BY_LABEL = new Map(PRODUCTION_STAGES.map((s) => [PRODUCTION_STAGE[s].toLowerCase(), s]));
-
-/** Étape de fabrication d'un poste, d'après son procédé (ex. « Sertissage ») ; null si inconnu */
+/** Étape de fabrication d'un poste, d'après son procédé (ex. « Assemblage ») ; null si inconnu.
+    Calculée à chaque appel : les étapes viennent du catalogue du site, modifiable. */
 export function stageOfStation(station: Pick<Workstation, 'process'>): ProductionStage | null {
-  return STAGE_BY_LABEL.get(station.process.trim().toLowerCase()) ?? null;
+  const process = station.process.trim().toLowerCase();
+  return PRODUCTION_STAGES.find((s) => PRODUCTION_STAGE[s]?.toLowerCase() === process) ?? null;
 }
 
 export interface FlowStation {

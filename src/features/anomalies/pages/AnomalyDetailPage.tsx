@@ -1,3 +1,4 @@
+import { anomalyCategoryLabel } from '@/app/catalog';
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { Plus } from 'lucide-react';
@@ -70,7 +71,7 @@ function AnomalyDetail({ anomaly, linked, lookups }: { anomaly: Anomaly; linked:
           <>
             <Badge tone={ANOMALY_STATUS[anomaly.status].tone}>{ANOMALY_STATUS[anomaly.status].label}</Badge>
             <Badge tone={SEVERITY[anomaly.severity].tone}>{SEVERITY[anomaly.severity].label}</Badge>
-            <Badge>{ANOMALY_CATEGORY[anomaly.category]}</Badge>
+            <Badge>{anomalyCategoryLabel(anomaly.category)}</Badge>
           </>
         }
         actions={

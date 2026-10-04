@@ -1,3 +1,4 @@
+import { shiftOptions } from '@/app/catalog';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { DataTable, type Column } from '@/components/data-display/DataTable';
@@ -9,7 +10,7 @@ import { Checkbox, FormActions, FormGrid, SelectField, TextField } from '@/compo
 import { Drawer } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
 import { lineOptions, userOptions, useLookups, type Lookups } from '@/features/shared/api';
-import { SHIFT_SHORT, options } from '@/features/shared/labels';
+import { SHIFT_SHORT } from '@/features/shared/labels';
 import { useCollection } from '@/hooks/useData';
 import { useForm } from '@/hooks/useForm';
 import { ROLE_LABELS } from '@/services/auth/permissions';
@@ -157,7 +158,7 @@ function TeamForm({ team, lookups, onDone }: { team?: Team; lookups: Lookups; on
         <SelectField
           label="Quart"
           placeholder="Plusieurs quarts"
-          options={options(SHIFT_SHORT)}
+          options={shiftOptions('short', values.shift || null)}
           value={values.shift}
           onChange={(e) => set('shift', e.target.value as Shift | '')}
         />

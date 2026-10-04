@@ -237,7 +237,8 @@ export interface Comment extends BaseEntity {
 
 /* ---------- Anomalies ---------- */
 
-export type AnomalyCategory = 'safety' | 'quality' | '5s' | 'standard' | 'performance' | 'equipment' | 'material' | 'other';
+/** Catégorie d’anomalie : clé du catalogue du site (src/app/catalog.ts) */
+export type AnomalyCategory = string;
 export type Severity = 'minor' | 'major' | 'critical';
 export type AnomalyStatus = 'open' | 'in_progress' | 'closed';
 export type AnomalyOrigin = 'manual' | 'qr' | 'routine' | 'quality' | 'andon' | 'gemba';
@@ -325,7 +326,8 @@ export interface SequenceRun extends BaseEntity {
 
 /* ---------- Production ---------- */
 
-export type ProductionStage = 'cutting' | 'crimping' | 'assembly' | 'taping' | 'electrical_test' | 'inspection' | 'shipping';
+/** Étape de fabrication : clé du catalogue du site (src/app/catalog.ts) */
+export type ProductionStage = string;
 export type ProductionStatus = 'planned' | 'in_progress' | 'blocked' | 'done';
 
 export interface ProductionOrder extends BaseEntity {
@@ -507,4 +509,30 @@ export interface AppSettings extends BaseEntity {
   environment?: 'demo' | 'production';
   /** Modules masqués par l'administrateur (src/app/modules.ts) ; vide = tout est actif. */
   disabledModules?: string[];
+  /** Référentiels du site (étapes, catégories, motifs, vocabulaire) ; absents = valeurs par défaut */
+  catalog?: Partial<Catalog>;
+}
+
+export interface CatalogEntry {
+  key: string;
+  label: string;
+}
+
+export interface ShiftSetting {
+  label: string;
+  short: string;
+  active: boolean;
+}
+
+/** Référentiels propres à chaque site : la terminologie et les listes de choix de son secteur. */
+export interface Catalog {
+  /** Étapes de fabrication, dans l’ordre du flux */
+  productionStages: CatalogEntry[];
+  anomalyCategories: CatalogEntry[];
+  /** Motifs proposés lors du déclenchement d’un Andon, par type */
+  andonPresets: Record<AndonType, string[]>;
+  /** Nom affiché de chaque rôle (les droits ne changent pas) */
+  roleLabels: Record<Role, string>;
+  /** Postes horaires : nom, nom court, utilisé ou non sur le site */
+  shifts: Record<Shift, ShiftSetting>;
 }

@@ -1,9 +1,10 @@
+import { stageLabel } from '@/app/catalog';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { IconButton } from '@/components/ui/Button';
 import { Menu } from '@/components/ui/Menu';
 import { Progress } from '@/components/ui/Progress';
-import { PRODUCTION_STAGE, PRODUCTION_STAGES, PRODUCTION_STATUS } from '@/features/shared/labels';
+import { PRODUCTION_STAGES, PRODUCTION_STATUS } from '@/features/shared/labels';
 import type { Lookups } from '@/features/shared/api';
 import type { DateKey, ProductionOrder } from '@/types/domain';
 import { formatDate } from '@/utils/date';
@@ -30,9 +31,9 @@ export function OrderBoard({ orders, lookups, today, editable, onMove, onBlock, 
       {PRODUCTION_STAGES.map((stage) => {
         const column = orders.filter((o) => o.stage === stage);
         return (
-          <section key={stage} className={styles.column} aria-label={`Étape ${PRODUCTION_STAGE[stage]}`}>
+          <section key={stage} className={styles.column} aria-label={`Étape ${stageLabel(stage)}`}>
             <header className={styles.columnHead}>
-              <h2>{PRODUCTION_STAGE[stage]}</h2>
+              <h2>{stageLabel(stage)}</h2>
               <span className={styles.count}>{column.length}</span>
             </header>
             {column.length === 0 ? (
@@ -77,14 +78,14 @@ export function OrderBoard({ orders, lookups, today, editable, onMove, onBlock, 
                         <div className={styles.cardActions}>
                           <IconButton
                             variant="secondary"
-                            label={prev ? `Revenir à ${PRODUCTION_STAGE[prev]}` : 'Première étape'}
+                            label={prev ? `Revenir à ${stageLabel(prev)}` : 'Première étape'}
                             icon={<ChevronLeft size={16} />}
                             disabled={!prev}
                             onClick={() => prev && onMove(o, prev)}
                           />
                           <IconButton
                             variant="secondary"
-                            label={next ? `Passer à ${PRODUCTION_STAGE[next]}` : 'Dernière étape'}
+                            label={next ? `Passer à ${stageLabel(next)}` : 'Dernière étape'}
                             icon={<ChevronRight size={16} />}
                             disabled={!next || o.status === 'blocked'}
                             onClick={() => next && onMove(o, next)}

@@ -1000,6 +1000,24 @@ export function buildDemoData(now: Date = new Date()): Dataset {
       andonEscalationMinutes: 10,
       routineLateToleranceMinutes: 120,
       disabledModules: [],
+      // Exemple de catalogue d'un site : un atelier de câblage (étapes et motifs propres au secteur)
+      catalog: {
+        productionStages: [
+          { key: 'cutting', label: 'Coupe' },
+          { key: 'crimping', label: 'Sertissage' },
+          { key: 'assembly', label: 'Assemblage' },
+          { key: 'taping', label: 'Rubanage' },
+          { key: 'electrical_test', label: 'Test électrique' },
+          { key: 'inspection', label: 'Contrôle' },
+          { key: 'shipping', label: 'Expédition' },
+        ],
+        andonPresets: {
+          quality: ['Connecteur mal serti', 'Défaut de rubanage', 'Longueur hors tolérance', 'Contact plié ou manquant'],
+          equipment: ['Presse de sertissage à l’arrêt', 'Testeur de continuité en panne', 'Machine de coupe bloquée', 'Bruit anormal'],
+          material: ['Rupture de terminaux', 'Connecteurs manquants', 'Consommable épuisé', 'Mauvaise référence livrée'],
+          safety: ['Situation dangereuse', 'Blessure légère', 'Protection machine absente'],
+        },
+      },
     }),
   ];
 

@@ -1,3 +1,4 @@
+import { categoryOr } from '@/app/catalog';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { Plus } from 'lucide-react';
@@ -210,7 +211,7 @@ export function QualityPage() {
             workstations={lookups.workstations}
             origin={{ type: 'quality', id: outOfTolerance.id }}
             initial={{
-              category: 'quality',
+              category: categoryOr('quality'),
               severity: 'major',
               workstationId: outOfTolerance.workstationId,
               description: `${outOfTolerance.characteristic} hors tolérance : ${outOfTolerance.value} ${outOfTolerance.unit} (tolérance ${outOfTolerance.min}–${outOfTolerance.max} ${outOfTolerance.unit})`,

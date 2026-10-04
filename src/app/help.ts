@@ -141,7 +141,9 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
         '« À traiter maintenant » classe les priorités ; chaque ligne ouvre l’écran concerné.',
         'Le rapport du jour se génère à partir des données saisies et peut être copié.',
       ],
-      tips: ['Vous voyez votre périmètre : votre équipe (Hancho), votre ligne (Line Leader) ou tout l’atelier (Manager, Qualité).'],
+      tips: [
+        'Vous voyez votre périmètre : votre équipe (chef d’équipe), votre ligne (responsable de ligne) ou tout l’atelier (manager, qualité).',
+      ],
       related: [{ label: 'Carte du processus', to: '/processus' }],
     },
   },
@@ -395,6 +397,26 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
     },
   },
   {
+    match: /^\/admin\/referentiels/,
+    topic: {
+      title: 'Référentiels',
+      purpose:
+        'Adapter Routine à votre secteur : étapes de fabrication, catégories d’anomalie, motifs d’Andon, nom des rôles et postes horaires.',
+      steps: [
+        'Renommez, ajoutez ou réordonnez les étapes de fabrication dans l’ordre de votre flux.',
+        'Ajustez les catégories d’anomalie et les motifs proposés lors d’un Andon (un motif par ligne).',
+        'Donnez à chaque rôle le nom utilisé sur votre site, et indiquez les postes horaires utilisés.',
+        'Enregistrez : tous les écrans affichent aussitôt les nouveaux libellés.',
+      ],
+      tips: [
+        'Renommer conserve les données : un ordre de fabrication ou une anomalie reste rattaché à son étape ou sa catégorie.',
+        'Une étape ou une catégorie encore utilisée ne peut pas être retirée.',
+        'Le nom d’un rôle change l’affichage, pas les droits.',
+      ],
+      related: [{ label: 'Paramètres et modules', to: '/admin/parametres' }],
+    },
+  },
+  {
     match: /^\/admin\/journal/,
     topic: {
       title: 'Journal d’audit',
@@ -576,8 +598,12 @@ export const hasSpecificHelp = (pathname: string) => TOPICS.some((t) => t.match.
 /** Lexique : les termes de l'atelier utilisés dans l'application */
 export const GLOSSARY: { term: string; definition: string }[] = [
   { term: 'Andon', definition: 'Alerte déclenchée au poste pour signaler un problème et obtenir une intervention rapide.' },
-  { term: 'Hancho', definition: 'Chef d’équipe de proximité, responsable de son équipe sur le terrain.' },
-  { term: 'Line Leader', definition: 'Responsable d’une ligne de production et des équipes qui y travaillent.' },
+  {
+    term: 'Chef d’équipe',
+    definition:
+      'Animateur de proximité, responsable de son équipe sur le terrain (appelé « Hancho » dans le Lean). Le nom affiché se règle dans les référentiels.',
+  },
+  { term: 'Responsable de ligne', definition: 'Responsable d’une ligne de production et des équipes qui y travaillent (« Line Leader »).' },
   { term: 'LQC', definition: 'Contrôle qualité de ligne : mesures au poste et suivi de la conformité.' },
   { term: 'Gemba Walk', definition: 'Visite terrain structurée de l’encadrement, pour observer et améliorer.' },
   { term: '5S', definition: 'Méthode d’organisation du poste : trier, ranger, nettoyer, standardiser, maintenir.' },

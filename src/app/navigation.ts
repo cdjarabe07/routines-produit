@@ -217,6 +217,10 @@ export const SECTIONS: SectionTab[][] = [
     { path: '/manager/atelier', label: 'Plan de l’atelier', permission: 'production.view' },
   ],
   [
+    { path: '/admin/parametres', label: 'Paramètres', permission: 'settings.manage' },
+    { path: '/admin/referentiels', label: 'Référentiels', permission: 'settings.manage' },
+  ],
+  [
     { path: '/admin/journal', label: 'Journal d’audit', permission: 'settings.manage' },
     { path: '/admin/erreurs', label: 'Erreurs', permission: 'settings.manage' },
     { path: '/admin/usage', label: 'Utilisation', permission: 'settings.manage' },

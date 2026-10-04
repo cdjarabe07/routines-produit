@@ -1,3 +1,4 @@
+import { anomalyCategoryLabel } from '@/app/catalog';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Camera, Plus } from 'lucide-react';
@@ -76,8 +77,8 @@ export function AnomaliesPage() {
       id: 'category',
       header: 'Catégorie',
       mobile: 'meta',
-      cell: (a) => ANOMALY_CATEGORY[a.category],
-      sortValue: (a) => ANOMALY_CATEGORY[a.category],
+      cell: (a) => anomalyCategoryLabel(a.category),
+      sortValue: (a) => anomalyCategoryLabel(a.category),
     },
     {
       id: 'ws',
@@ -147,7 +148,7 @@ export function AnomaliesPage() {
               rowTone={(a) => (isOpenAnomaly(a) && a.severity === 'critical' ? 'danger' : undefined)}
               search={{
                 placeholder: 'Rechercher dans les descriptions…',
-                text: (a) => `${a.description} ${ANOMALY_CATEGORY[a.category]} ${lookups?.workstationName(a.workstationId)}`,
+                text: (a) => `${a.description} ${anomalyCategoryLabel(a.category)} ${lookups?.workstationName(a.workstationId)}`,
               }}
               toolbar={
                 <>

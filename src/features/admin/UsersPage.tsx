@@ -1,3 +1,4 @@
+import { shiftOptions } from '@/app/catalog';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Plus } from 'lucide-react';
@@ -12,7 +13,7 @@ import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Checkbox, FormActions, FormGrid, SelectField, TextField } from '@/components/ui/Field';
 import { Drawer } from '@/components/ui/Overlay';
 import { Panel } from '@/components/ui/Panel';
-import { SHIFT_SHORT, options } from '@/features/shared/labels';
+import { SHIFT_SHORT } from '@/features/shared/labels';
 import { lineOptions, teamOptions, useLookups, workstationOptions, type Lookups } from '@/features/shared/api';
 import { useForm } from '@/hooks/useForm';
 import { PROFILE_LABELS, ROLE_LABELS, ROLE_ORDER, ROLE_PROFILE } from '@/services/auth/permissions';
@@ -272,7 +273,7 @@ function UserForm({ user, lookups, onDone }: { user?: User; lookups: Lookups; on
         />
         <SelectField
           label="Quart"
-          options={options(SHIFT_SHORT)}
+          options={shiftOptions('short', values.shift || null)}
           value={values.shift}
           onChange={(e) => set('shift', e.target.value as Shift)}
           disabled={Boolean(team?.shift)}
