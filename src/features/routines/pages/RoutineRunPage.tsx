@@ -22,7 +22,7 @@ import {
   assignmentLabel,
   findOccurrence,
   isAssignedTo,
-  isMultiSlot,
+  occurrenceSlot,
   occurrenceState,
   type Occurrence,
   occurrencePath,
@@ -161,7 +161,8 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
           <>
             <Badge tone={OCCURRENCE_STATE[state].tone}>{OCCURRENCE_STATE[state].label}</Badge>
             <span className={styles.metaText}>
-              {formatLongDate(date)} · {schedule.time} · {plannedMin} min prévues
+              {formatLongDate(date)} · {occurrence.time} · {plannedMin} min prévues
+              {occurrence.trigger && ` · Déclenchée : ${occurrence.trigger.reason}`}
               {where && ` · ${where}`} · {assignmentLabel(schedule, lookups.userName, lookups.teamName)}
             </span>
           </>
@@ -212,7 +213,7 @@ function RunView({ occurrence, assigned, checklists, lookups }: RunViewProps) {
                   start.mutate({
                     schedule,
                     date,
-                    slot: isMultiSlot(schedule) ? occurrence.time : undefined,
+                    slot: occurrenceSlot(occurrence),
                     user,
                   })
                 }

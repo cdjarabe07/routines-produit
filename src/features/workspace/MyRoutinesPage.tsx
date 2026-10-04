@@ -5,7 +5,10 @@ import { EmptyState, QueryBoundary } from '@/components/feedback/States';
 import { PageHeader, Stack } from '@/components/layout/PageHeader';
 import { Kpi, KpiStrip } from '@/components/ui/Kpi';
 import { Tabs } from '@/components/ui/Tabs';
+import { Panel } from '@/components/ui/Panel';
 import { usePlanningData } from '@/features/planning/api';
+import { TriggerButton } from '@/features/planning/components/TriggerButton';
+import { describeRecurrence, isAssignedTo } from '@/features/planning/model';
 import { useLookups, useSettings } from '@/features/shared/api';
 import { useNow } from '@/hooks/useNow';
 import { addDays, formatLongDate, todayKey } from '@/utils/date';
@@ -53,6 +56,11 @@ export function MyRoutinesPage() {
     done: all.filter((o) => o.state === 'done').sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time)),
   };
   const todays = groups.today;
+  // Routines sur événement affectées : déclenchées depuis cette page (changement de série, d'outil…)
+  const onDemand = (planning.source?.schedules ?? []).filter(
+    (s) => s.status === 'active' && s.recurrence === 'on_demand' && isAssignedTo(s, user),
+  );
+  const routineTitle = (id: string) => planning.source?.routines.find((r) => r.id === id)?.title ?? 'Routine';
   const count = (s: MyOccurrence['state']) => todays.filter((o) => o.state === s).length;
 
   const EMPTY: Record<View, string> = {
@@ -86,6 +94,25 @@ export function MyRoutinesPage() {
                 tone={todays.length > 0 && count('done') === todays.length ? 'success' : 'neutral'}
               />
             </KpiStrip>
+
+            {onDemand.length > 0 && (
+              <Panel
+                title="Sur événement"
+                description="À déclencher lors d’un changement de série, d’outil, de lot… La routine s’ajoute alors à aujourd’hui."
+              >
+                <ul className={styles.onDemand}>
+                  {onDemand.map((s) => (
+                    <li key={s.id}>
+                      <span>
+                        <strong>{routineTitle(s.routineId)}</strong>
+                        <span className={styles.onDemandMeta}>{describeRecurrence(s)}</span>
+                      </span>
+                      <TriggerButton schedule={s} title={routineTitle(s.routineId)} />
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            )}
 
             <Tabs
               label="Vue"

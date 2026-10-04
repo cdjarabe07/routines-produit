@@ -1,20 +1,34 @@
+import { useCurrentUser } from '@/app/providers/AuthProvider';
+import { triggerOrderStart } from '@/features/planning/api';
 import { useOperation } from '@/hooks/useData';
 import { ValidationError } from '@/services/errors';
 import type { EntityPatch, NewEntity } from '@/services/data/types';
 import type { ID, MaterialStock, ProductionOrder, StockMovementReason } from '@/types/domain';
 
+/** Passage « en cours » d'un OF : déclenche les routines prévues au démarrage (libération de ligne…). */
 export function useUpdateOrder() {
+  const user = useCurrentUser();
   return useOperation(
-    (ds, { id, patch }: { id: ID; patch: EntityPatch<ProductionOrder> }) => ds.repo('productionOrders').update(id, patch),
-    { invalidates: ['productionOrders'], success: 'Ordre de fabrication mis à jour.' },
+    async (ds, { id, patch }: { id: ID; patch: EntityPatch<ProductionOrder> }) => {
+      const before = await ds.repo('productionOrders').get(id);
+      const order = await ds.repo('productionOrders').update(id, patch);
+      if (order.status === 'in_progress' && before.status !== 'in_progress') await triggerOrderStart(ds, order, user.id);
+      return order;
+    },
+    { invalidates: ['productionOrders', 'routineTriggers', 'notifications'], success: 'Ordre de fabrication mis à jour.' },
   );
 }
 
 export function useCreateOrder() {
-  return useOperation((ds, input: NewEntity<ProductionOrder>) => ds.repo('productionOrders').create(input), {
-    invalidates: ['productionOrders'],
-    success: 'Ordre de fabrication créé.',
-  });
+  const user = useCurrentUser();
+  return useOperation(
+    async (ds, input: NewEntity<ProductionOrder>) => {
+      const order = await ds.repo('productionOrders').create(input);
+      if (order.status === 'in_progress') await triggerOrderStart(ds, order, user.id);
+      return order;
+    },
+    { invalidates: ['productionOrders', 'routineTriggers', 'notifications'], success: 'Ordre de fabrication créé.' },
+  );
 }
 
 /** Mouvement de stock tracé : la quantité ne passe jamais sous zéro. */

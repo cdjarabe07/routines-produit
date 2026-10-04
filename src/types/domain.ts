@@ -154,7 +154,10 @@ export interface RoutineTemplate extends BaseEntity {
   active: boolean;
 }
 
-export type Recurrence = 'once' | 'daily' | 'weekdays' | 'weekly' | 'monthly';
+/** on_demand : aucune occurrence au calendrier, chaque déclenchement (événement) en crée une */
+export type Recurrence = 'once' | 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'on_demand';
+/** Déclenchement automatique d'une planification à la demande */
+export type ScheduleTrigger = 'order_start';
 export type ScheduleStatus = 'active' | 'cancelled';
 
 /**
@@ -170,6 +173,8 @@ export interface Schedule extends BaseEntity {
   everyHours?: number;
   endTime?: TimeOfDay;
   recurrence: Recurrence;
+  /** Planification à la demande : déclenchée automatiquement par cet événement (sinon manuellement) */
+  triggerOn?: ScheduleTrigger;
   /** Jours de la semaine pour « weekly » : 1 = lundi … 7 = dimanche */
   weekdays: number[];
   /** Affectation : une personne, ou une équipe (tous ses membres voient la routine) */
@@ -210,6 +215,18 @@ export interface RunPhoto extends BaseEntity {
 }
 
 /** Exécution d'une occurrence planifiée. */
+/** Déclenchement d'une planification à la demande : une occurrence au créneau (heure) du déclenchement */
+export interface RoutineTrigger extends BaseEntity {
+  scheduleId: ID;
+  date: DateKey;
+  slot: TimeOfDay;
+  reason: string;
+  /** Ordre de fabrication à l'origine du déclenchement */
+  orderId?: ID;
+  /** Absent pour un déclenchement automatique hors session (ERP) */
+  triggeredBy?: ID;
+}
+
 export interface RoutineRun extends BaseEntity {
   scheduleId: ID;
   templateId: ID;

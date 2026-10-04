@@ -4,7 +4,7 @@ import { useAuth, useCurrentUser } from '@/app/providers/AuthProvider';
 import { Badge } from '@/components/ui/Badge';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Progress } from '@/components/ui/Progress';
-import { OCCURRENCE_STATE, isMultiSlot, occurrencePath } from '@/features/planning/model';
+import { OCCURRENCE_STATE, occurrencePath, occurrenceSlot } from '@/features/planning/model';
 import { useStartRoutine } from '@/features/routines/api';
 import { runSummary } from '@/features/routines/model';
 import type { Checklist, ID } from '@/types/domain';
@@ -66,7 +66,7 @@ export function OccurrenceCard({ occurrence: o, checklists, zone, emphasis }: Pr
             loading={start.isPending}
             aria-label={`Démarrer ${o.routine.title}`}
             onClick={async () => {
-              await start.mutateAsync({ schedule: o.schedule, date: o.date, slot: isMultiSlot(o.schedule) ? o.time : undefined, user });
+              await start.mutateAsync({ schedule: o.schedule, date: o.date, slot: occurrenceSlot(o), user });
               navigate(to);
             }}
           >

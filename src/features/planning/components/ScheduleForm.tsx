@@ -4,11 +4,11 @@ import { Checkbox, FormActions, FormGrid, SelectField, TextAreaField, TextField 
 import { Tabs } from '@/components/ui/Tabs';
 import { lineOptions, teamOptions, userOptions, workstationOptions, type Lookups } from '@/features/shared/api';
 import { useForm } from '@/hooks/useForm';
-import type { Recurrence, RoutineTemplate, Schedule } from '@/types/domain';
+import type { Recurrence, RoutineTemplate, Schedule, ScheduleTrigger } from '@/types/domain';
 import { formatLongDate, todayKey } from '@/utils/date';
 import { required } from '@/utils/validation';
 import { useSaveSchedule } from '../api';
-import { RECURRENCE_LABELS, WEEKDAY_SHORT, nextDates, slotsOf } from '../model';
+import { RECURRENCE_LABELS, TRIGGER_LABELS, WEEKDAY_SHORT, nextDates, slotsOf } from '../model';
 import styles from './ScheduleForm.module.css';
 
 interface Values {
@@ -19,6 +19,8 @@ interface Values {
   everyHours: string;
   endTime: string;
   recurrence: Recurrence;
+  /** Planification sur événement : '' = déclenchement manuel */
+  triggerOn: '' | ScheduleTrigger;
   weekdays: number[];
   endDate: string;
   target: 'person' | 'team';
@@ -50,6 +52,7 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
       everyHours: schedule?.everyHours ? String(schedule.everyHours) : '',
       endTime: schedule?.endTime ?? '',
       recurrence: schedule?.recurrence ?? 'weekdays',
+      triggerOn: schedule?.triggerOn ?? '',
       weekdays: schedule?.weekdays ?? [1, 2, 3, 4, 5],
       endDate: schedule?.endDate ?? '',
       target: schedule?.teamId ? 'team' : 'person',
@@ -67,9 +70,12 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
       teamId: [(v, all) => (all.target === 'team' && !v ? 'Choisissez l’équipe' : null)],
       weekdays: [(v, all) => (all.recurrence === 'weekly' && v.length === 0 ? 'Choisissez au moins un jour' : null)],
       endDate: [(v, all) => (v && v < all.startDate ? 'Doit suivre la date de début' : null)],
-      endTime: [(v, all) => (all.everyHours && (!v || v <= all.time) ? 'Doit suivre l’heure de début' : null)],
+      endTime: [
+        (v, all) => (all.everyHours && all.recurrence !== 'on_demand' && (!v || v <= all.time) ? 'Doit suivre l’heure de début' : null),
+      ],
     },
     onSubmit: async (v) => {
+      const repeated = Boolean(v.everyHours) && v.recurrence !== 'on_demand';
       await save.mutateAsync({
         id: schedule?.id,
         actor: me,
@@ -77,9 +83,10 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
           routineId: v.routineId,
           startDate: v.startDate,
           time: v.time,
-          everyHours: v.everyHours ? Number(v.everyHours) : undefined,
-          endTime: v.everyHours ? v.endTime : undefined,
+          everyHours: repeated ? Number(v.everyHours) : undefined,
+          endTime: repeated ? v.endTime : undefined,
           recurrence: v.recurrence,
+          triggerOn: v.recurrence === 'on_demand' && v.triggerOn ? v.triggerOn : undefined,
           weekdays: v.recurrence === 'weekly' ? [...v.weekdays].sort() : [],
           endDate: v.recurrence === 'once' ? undefined : v.endDate || undefined,
           assigneeId: v.target === 'person' ? v.assigneeId : undefined,
@@ -119,6 +126,7 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
     everyHours: values.everyHours ? Number(values.everyHours) : undefined,
     endTime: values.endTime || undefined,
   });
+  const onDemand = values.recurrence === 'on_demand';
   const stations = values.lineId ? lookups.workstations.filter((w) => w.lineId === values.lineId) : lookups.workstations;
 
   return (
@@ -156,28 +164,32 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
           onChange={(e) => set('startDate', e.target.value)}
           error={errors.startDate}
         />
-        <TextField
-          label="Heure"
-          type="time"
-          required
-          value={values.time}
-          onChange={(e) => set('time', e.target.value)}
-          error={errors.time}
-        />
-        <SelectField
-          label="Dans la journée"
-          options={[
-            { value: '', label: 'Une seule fois' },
-            ...[1, 2, 3, 4, 6, 8, 12].map((h) => ({ value: String(h), label: `Toutes les ${h} h` })),
-          ]}
-          value={values.everyHours}
-          hint="Pour les contrôles fréquents (détecteur de métaux, températures, contrôle horaire…)"
-          onChange={(e) => {
-            set('everyHours', e.target.value);
-            if (e.target.value && !values.endTime) set('endTime', values.time < '16:00' ? '16:00' : '23:00');
-          }}
-        />
-        {values.everyHours && (
+        {!onDemand && (
+          <TextField
+            label="Heure"
+            type="time"
+            required
+            value={values.time}
+            onChange={(e) => set('time', e.target.value)}
+            error={errors.time}
+          />
+        )}
+        {!onDemand && (
+          <SelectField
+            label="Dans la journée"
+            options={[
+              { value: '', label: 'Une seule fois' },
+              ...[1, 2, 3, 4, 6, 8, 12].map((h) => ({ value: String(h), label: `Toutes les ${h} h` })),
+            ]}
+            value={values.everyHours}
+            hint="Pour les contrôles fréquents (détecteur de métaux, températures, contrôle horaire…)"
+            onChange={(e) => {
+              set('everyHours', e.target.value);
+              if (e.target.value && !values.endTime) set('endTime', values.time < '16:00' ? '16:00' : '23:00');
+            }}
+          />
+        )}
+        {values.everyHours && !onDemand && (
           <TextField
             label="Jusqu’à (dernier créneau)"
             type="time"
@@ -193,6 +205,18 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
           value={values.recurrence}
           onChange={(e) => set('recurrence', e.target.value as Recurrence)}
         />
+        {onDemand && (
+          <SelectField
+            label="Déclenchement"
+            options={[
+              { value: '', label: 'Manuel (bouton « Déclencher »)' },
+              ...(Object.keys(TRIGGER_LABELS) as ScheduleTrigger[]).map((t) => ({ value: t, label: TRIGGER_LABELS[t] })),
+            ]}
+            value={values.triggerOn}
+            hint="Exemples : libération de ligne, premier article après changement de série. Le déclenchement manuel reste toujours possible."
+            onChange={(e) => set('triggerOn', e.target.value as Values['triggerOn'])}
+          />
+        )}
         {values.recurrence !== 'once' && (
           <TextField
             label="Jusqu’au (facultatif)"
@@ -302,7 +326,15 @@ export function ScheduleForm({ schedule, routines, initialRoutineId, lookups, on
       {routine && (
         <div className={styles.preview} aria-live="polite">
           <strong>Prochaines occurrences</strong>
-          {preview.length ? (
+          {onDemand ? (
+            <p>
+              Une occurrence est créée à chaque déclenchement
+              {values.triggerOn
+                ? ` (${TRIGGER_LABELS[values.triggerOn].toLowerCase()}${values.lineId ? ' de la zone choisie' : ''}, ou manuellement)`
+                : ''}
+              .
+            </p>
+          ) : preview.length ? (
             <ul>
               {preview.map((d) => (
                 <li key={d}>

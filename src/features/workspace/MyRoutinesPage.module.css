@@ -15,3 +15,26 @@
   flex-direction: column;
   gap: var(--space-2);
 }
+.onDemand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.onDemand li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.onDemand li > span {
+  display: flex;
+  flex-direction: column;
+}
+.onDemandMeta {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

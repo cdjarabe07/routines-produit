@@ -23,6 +23,7 @@ import type {
   ProductionOrder,
   QualityCheck,
   RoutineRun,
+  RoutineTrigger,
   RoutineTask,
   RoutineTemplate,
   Schedule,
@@ -32,7 +33,7 @@ import type {
   Workstation,
 } from '@/types/domain';
 import type { Dataset } from '@/services/data/types';
-import { isMultiSlot, occursOn, slotsOf } from '@/features/planning/model';
+import { occursOn, slotsOf, usesSlot } from '@/features/planning/model';
 import { checkKey, evaluateCheck } from '@/features/routines/model';
 import { addDays, atTime, isoWeekday, toDateKey } from '@/utils/date';
 import {
@@ -233,6 +234,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
           startDate: addDays(today, -HISTORY_DAYS),
           time: s.time ?? r.time,
           ...(s.everyHours ? { everyHours: s.everyHours, endTime: s.endTime } : {}),
+          ...(s.triggerOn ? { triggerOn: s.triggerOn } : {}),
           recurrence: s.recurrence,
           weekdays: s.weekdays ?? [],
           assigneeId: s.assignee,
@@ -255,7 +257,7 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     'team-lqc': ['u-aicha', 'u-tom'],
   };
   /** Occurrences du jour laissées à faire, et une laissée en cours, pour que chaque profil ait du travail en attente. */
-  const LEFT_TODO_TODAY = new Set(['sc-op-start-a', 'sc-ll-audit', 'sc-q-conn']);
+  const LEFT_TODO_TODAY = new Set(['sc-op-start-a', 'sc-ll-audit', 'sc-q-conn', 'sc-ll-clearance']);
   const LEFT_IN_PROGRESS_TODAY = 'sc-ll-safety';
 
   const valueFor = (item: ChecklistItem): CheckValue => {
@@ -278,14 +280,43 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     }
   };
 
+  /* Déclenchements des planifications sur événement : environ un jour ouvré sur deux, plus un ce matin laissé à faire */
+  const routineTriggers: RoutineTrigger[] = [];
+  for (const s of schedules.filter((x) => x.recurrence === 'on_demand')) {
+    for (let d = HISTORY_DAYS - 1; d >= 0; d--) {
+      const day = addDays(today, -d);
+      if (isoWeekday(day) > 5) continue;
+      const slot = d === 0 ? '07:40' : `${String(8 + Math.floor(rnd() * 7)).padStart(2, '0')}:${pick(['00', '15', '30', '45'])}`;
+      if (d === 0 ? nowMs < new Date(atTime(day, slot)).getTime() : !chance(0.5)) continue;
+      const order = pick(['OF-2638', 'OF-2639', 'OF-2640', 'OF-2641', 'OF-2642']);
+      routineTriggers.push(
+        stamp(
+          {
+            id: nextId('trg'),
+            scheduleId: s.id,
+            date: day,
+            slot,
+            reason: d === 0 ? 'Démarrage OF OF-2642' : chance(0.7) ? `Démarrage OF ${order}` : 'Changement d’outil ou de moule',
+            triggeredBy: 'u-karim',
+          },
+          at(day, slot),
+        ),
+      );
+    }
+  }
+  const triggersByDay = new Map<string, string[]>();
+  for (const t of routineTriggers)
+    triggersByDay.set(`${t.scheduleId}~${t.date}`, [...(triggersByDay.get(`${t.scheduleId}~${t.date}`) ?? []), t.slot]);
+
   const routineRuns: RoutineRun[] = [];
   const templateById = new Map(routineTemplates.map((t) => [t.id, t]));
   for (let d = HISTORY_DAYS - 1; d >= 0; d--) {
     const day = addDays(today, -d);
     for (const s of schedules) {
-      if (!occursOn(s, day)) continue;
-      const multi = isMultiSlot(s);
-      for (const time of slotsOf(s)) {
+      const onDemand = s.recurrence === 'on_demand';
+      if (!onDemand && !occursOn(s, day)) continue;
+      const multi = usesSlot(s);
+      for (const time of onDemand ? (triggersByDay.get(`${s.id}~${day}`) ?? []) : slotsOf(s)) {
         const routine = templateById.get(s.routineId)!;
         const due = new Date(atTime(day, time)).getTime();
         let complete: boolean;
@@ -1063,5 +1094,6 @@ export function buildDemoData(now: Date = new Date()): Dataset {
     notifications,
     settings,
     runPhotos: [],
+    routineTriggers,
   };
 }

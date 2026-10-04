@@ -315,3 +315,25 @@ test('contrôle répété dans la journée : une exécution par créneau', async
   await page.goto('/app/#/app/routines/sc-ha-crimp-hourly/2026-10-06/1200');
   await expect(page.getByRole('button', { name: 'Démarrer' }).first()).toBeVisible();
 });
+
+test('routine sur événement : déclenchée par l’opératrice, puis exécutée', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Jeu de démonstration daté au mardi matin : vérifié en mode démo');
+  await page.clock.install({ time: new Date('2026-10-06T08:05:00Z') });
+  await signIn(page, 'u-nadia');
+  await page.goto('/app/#/app/routines');
+  await page.reload();
+  const title = 'Libération de ligne (changement de série)';
+  await page.getByRole('button', { name: `Déclencher ${title}` }).click();
+  const dialog = page.getByRole('dialog', { name: `Déclencher « ${title} »` });
+  await dialog.getByLabel('Motif').selectOption('Nouveau lot matière');
+  await dialog.getByRole('button', { name: 'Déclencher' }).click();
+  await expect(page.getByText('Routine déclenchée.')).toBeVisible();
+  // Le déclenchement du matin (démarrage d'OF) et le nouveau : deux occurrences aujourd'hui
+  await expect(page.getByRole('button', { name: `Démarrer ${title}` })).toHaveCount(2);
+  await page
+    .getByRole('button', { name: `Démarrer ${title}` })
+    .last()
+    .click();
+  await expect(page.getByText('Déclenchée : Nouveau lot matière')).toBeVisible();
+  await expect(page.getByText('Composants et faisceaux de la série précédente retirés').first()).toBeVisible();
+});

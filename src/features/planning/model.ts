@@ -1,5 +1,16 @@
 import type { Tone } from '@/components/ui/Badge';
-import type { DateKey, ID, Recurrence, RoutineRun, RoutineTemplate, Schedule, TimeOfDay, User } from '@/types/domain';
+import type {
+  DateKey,
+  ID,
+  Recurrence,
+  RoutineRun,
+  RoutineTemplate,
+  RoutineTrigger,
+  Schedule,
+  ScheduleTrigger,
+  TimeOfDay,
+  User,
+} from '@/types/domain';
 import { addDays, dateKeyOf, enumerateDays, isoWeekday, minutesOfDay, timeToMinutes } from '@/utils/date';
 
 /* Planification → occurrences.
@@ -12,14 +23,30 @@ export const RECURRENCE_LABELS: Record<Recurrence, string> = {
   weekdays: 'Du lundi au vendredi',
   weekly: 'Certains jours de la semaine',
   monthly: 'Chaque mois',
+  on_demand: 'Sur événement (à la demande)',
 };
+
+export const TRIGGER_LABELS: Record<ScheduleTrigger, string> = {
+  order_start: 'Au démarrage d’un ordre de fabrication',
+};
+
+/** Motifs proposés pour un déclenchement manuel */
+export const TRIGGER_REASONS = [
+  'Changement de série',
+  'Changement d’outil ou de moule',
+  'Nouveau lot matière',
+  'Redémarrage après arrêt',
+  'Après maintenance',
+];
 
 export const WEEKDAY_SHORT = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
 
 export function describeRecurrence(
-  s: Pick<Schedule, 'recurrence' | 'weekdays' | 'startDate' | 'endDate'> & Partial<Pick<Schedule, 'time' | 'everyHours' | 'endTime'>>,
+  s: Pick<Schedule, 'recurrence' | 'weekdays' | 'startDate' | 'endDate'> &
+    Partial<Pick<Schedule, 'time' | 'everyHours' | 'endTime' | 'triggerOn'>>,
 ): string {
   let base: string;
+  if (s.recurrence === 'on_demand') return s.triggerOn ? `Sur événement · ${TRIGGER_LABELS[s.triggerOn].toLowerCase()}` : 'Sur événement';
   if (s.recurrence === 'weekly') {
     const days = [...s.weekdays].sort().map((d) => WEEKDAY_SHORT[d - 1]);
     base = days.length ? `Chaque ${days.join(', ')}` : 'Aucun jour choisi';
@@ -45,14 +72,19 @@ export function slotsOf(s: Pick<Schedule, 'time' | 'everyHours' | 'endTime'>): T
 /** Planification répétée dans la journée */
 export const isMultiSlot = (s: Pick<Schedule, 'time' | 'everyHours' | 'endTime'>) => slotsOf(s).length > 1;
 
-/** Adresse d'une occurrence (le créneau n'apparaît que pour une planification répétée dans la journée) */
-export function occurrencePath(o: {
-  schedule: Pick<Schedule, 'id' | 'time' | 'everyHours' | 'endTime'>;
-  date: DateKey;
-  time: TimeOfDay;
-}): string {
+type SlotSchedule = Pick<Schedule, 'time' | 'everyHours' | 'endTime'> & Partial<Pick<Schedule, 'recurrence'>>;
+
+/** Chaque occurrence a son créneau : planification répétée dans la journée ou déclenchée par événement */
+export const usesSlot = (s: SlotSchedule) => s.recurrence === 'on_demand' || isMultiSlot(s);
+
+/** Créneau à enregistrer sur l'exécution d'une occurrence (absent pour une planification à créneau unique) */
+export const occurrenceSlot = (o: { schedule: SlotSchedule; time: TimeOfDay }): TimeOfDay | undefined =>
+  usesSlot(o.schedule) ? o.time : undefined;
+
+/** Adresse d'une occurrence (le créneau n'apparaît que lorsqu'il distingue les occurrences d'une même journée) */
+export function occurrencePath(o: { schedule: SlotSchedule & Pick<Schedule, 'id'>; date: DateKey; time: TimeOfDay }): string {
   const base = `/app/routines/${o.schedule.id}/${o.date}`;
-  return isMultiSlot(o.schedule) ? `${base}/${o.time.replace(':', '')}` : base;
+  return usesSlot(o.schedule) ? `${base}/${o.time.replace(':', '')}` : base;
 }
 
 /** Créneau lu dans l'adresse (« 0730 » → « 07:30 ») */
@@ -77,6 +109,8 @@ export function occursOn(s: Schedule, date: DateKey): boolean {
       const lastDay = Number(addDays(`${addDays(date.slice(0, 8) + '28', 4).slice(0, 8)}01`, -1).slice(8));
       return Number(date.slice(8)) === Math.min(day, lastDay);
     }
+    case 'on_demand':
+      return false;
   }
 }
 
@@ -94,12 +128,16 @@ export interface Occurrence {
   date: DateKey;
   time: TimeOfDay;
   run?: RoutineRun;
+  /** Déclenchement à l'origine de l'occurrence (planification sur événement) */
+  trigger?: RoutineTrigger;
 }
 
 export interface OccurrenceSource {
   schedules: Schedule[];
   routines: RoutineTemplate[];
   runs: RoutineRun[];
+  /** Déclenchements des planifications sur événement (de la période chargée) */
+  triggers?: RoutineTrigger[];
 }
 
 /** Occurrences d'une période, triées par date puis heure. Les occurrences annulées sont exclues. */
@@ -108,6 +146,14 @@ export function occurrencesBetween(src: OccurrenceSource, from: DateKey, to: Dat
   const runByKey = new Map(src.runs.map((r) => [occurrenceKey(r.scheduleId, r.date, r.slot), r]));
   const schedules = src.schedules.filter((s) => routineById.has(s.routineId) && (!filter || filter(s)));
   const out: Occurrence[] = [];
+  // Occurrences déclenchées : une par déclenchement, à son créneau
+  const scheduleById = new Map(schedules.map((s) => [s.id, s]));
+  for (const t of src.triggers ?? []) {
+    const s = scheduleById.get(t.scheduleId);
+    if (!s || s.recurrence !== 'on_demand' || t.date < from || t.date > to || s.skippedDates.includes(t.date)) continue;
+    const key = occurrenceKey(s.id, t.date, t.slot);
+    out.push({ key, schedule: s, routine: routineById.get(s.routineId)!, date: t.date, time: t.slot, run: runByKey.get(key), trigger: t });
+  }
   for (const date of enumerateDays(from, to)) {
     for (const s of schedules) {
       if (!occursOn(s, date) || s.skippedDates.includes(date)) continue;

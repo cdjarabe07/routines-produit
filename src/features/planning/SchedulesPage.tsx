@@ -18,6 +18,7 @@ import { addDays, enumerateDays, formatDate, formatLongDate, startOfWeek, todayK
 import { cx } from '@/utils/cx';
 import { useCancelSchedule, usePlanningData, useRestoreSchedule, useSkipOccurrence } from './api';
 import { ScheduleForm } from './components/ScheduleForm';
+import { TriggerButton } from './components/TriggerButton';
 import {
   OCCURRENCE_STATE,
   assignmentLabel,
@@ -72,7 +73,13 @@ export function SchedulesPage() {
       cell: (s) => routineById.get(s.routineId)?.title ?? 'Routine supprimée',
       sortValue: (s) => routineById.get(s.routineId)?.title ?? '',
     },
-    { id: 'when', header: 'Quand', mobile: 'meta', cell: (s) => `${describeRecurrence(s)} à ${s.time}`, sortValue: (s) => s.time },
+    {
+      id: 'when',
+      header: 'Quand',
+      mobile: 'meta',
+      cell: (s) => (s.recurrence === 'on_demand' || s.everyHours ? describeRecurrence(s) : `${describeRecurrence(s)} à ${s.time}`),
+      sortValue: (s) => s.time,
+    },
     {
       id: 'who',
       header: 'Affectée à',
@@ -104,6 +111,7 @@ export function SchedulesPage() {
       header: 'Prochaine',
       mobile: 'aside',
       cell: (s) => {
+        if (s.recurrence === 'on_demand') return <Badge>Sur événement</Badge>;
         const next = nextDates(s, today, 1)[0];
         return next ? next === today ? <Badge tone="info">Aujourd’hui</Badge> : formatDate(next) : <Badge>Terminée</Badge>;
       },
@@ -116,6 +124,7 @@ export function SchedulesPage() {
       cell: (s) =>
         s.status === 'active' ? (
           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+            {s.recurrence === 'on_demand' && <TriggerButton schedule={s} title={routineById.get(s.routineId)?.title ?? 'la routine'} />}
             <Button size="sm" onClick={() => setParam({ modifier: s.id })}>
               Modifier
             </Button>

@@ -330,6 +330,8 @@ export interface DemoRoutine {
     /** Répétition dans la journée */
     everyHours?: number;
     endTime?: string;
+    /** Planification sur événement déclenchée automatiquement */
+    triggerOn?: 'order_start';
   }[];
 }
 
@@ -506,6 +508,43 @@ export const DEMO_ROUTINES: DemoRoutine[] = [
       },
     ],
     schedules: [{ id: 'sc-ha-crimp-hourly', recurrence: 'weekdays', team: 'team-a', everyHours: 2, endTime: '16:00' }],
+  },
+  {
+    id: 'rt-ll-clearance',
+    title: 'Libération de ligne (changement de série)',
+    description: 'À chaque démarrage d’ordre de fabrication : la ligne est vidée de la série précédente avant de produire la suivante.',
+    time: '08:00',
+    durationMin: 10,
+    line: 'A',
+    tasks: [
+      {
+        title: 'Vider la ligne',
+        min: 5,
+        required: true,
+        priority: 'high',
+        checks: [
+          {
+            id: 'vide',
+            label: 'Composants et faisceaux de la série précédente retirés',
+            type: 'conformity',
+            required: true,
+            commentOnFail: true,
+          },
+          { id: 'docs', label: 'Documents de la série précédente retirés', type: 'yes_no', required: true },
+        ],
+      },
+      {
+        title: 'Préparer la nouvelle série',
+        min: 5,
+        required: true,
+        priority: 'high',
+        checks: [
+          { id: 'ref', label: 'Référence affichée au poste', type: 'text', required: true },
+          { id: 'lot', label: 'Lot de connecteurs approvisionné', type: 'lot', required: true },
+        ],
+      },
+    ],
+    schedules: [{ id: 'sc-ll-clearance', recurrence: 'on_demand', team: 'team-a', triggerOn: 'order_start' }],
   },
   {
     id: 'rt-ha-cut',

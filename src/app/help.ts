@@ -275,10 +275,15 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
       title: 'Planification',
       purpose: 'Affecter les routines à une personne ou à une équipe, avec une récurrence.',
       steps: [
-        'Créez une planification : routine, personne ou équipe, heure, récurrence (une fois, jours ouvrés, jours choisis…).',
+        'Créez une planification : routine, personne ou équipe, heure, récurrence (une fois, jours ouvrés, jours choisis, chaque mois…).',
+        'Pour un contrôle fréquent, choisissez « Dans la journée » : toutes les N heures jusqu’au dernier créneau.',
+        'Pour une routine liée à un événement (libération de ligne, premier article), choisissez « Sur événement » : elle est déclenchée par le bouton « Déclencher » ou au démarrage d’un ordre de fabrication.',
         'La vue Semaine montre chaque occurrence et son état ; vous pouvez sauter une date ou annuler une planification.',
       ],
-      tips: ['Les personnes concernées sont notifiées de chaque nouvelle planification.'],
+      tips: [
+        'Les personnes concernées sont notifiées de chaque nouvelle planification et de chaque déclenchement.',
+        'Le motif du déclenchement (changement de série, nouveau lot…) est affiché sur l’exécution.',
+      ],
     },
   },
   {
