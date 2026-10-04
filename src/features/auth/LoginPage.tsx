@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Field';
 import { SPACES, spaceOfPath } from '@/app/navigation';
 import { homePath, roleCan } from '@/services/auth/permissions';
+import { DEMO_PROFILES, demoCredentials } from '@/services/auth/mock/accounts';
 import type { User } from '@/types/domain';
 import { toUserMessage } from '@/services/errors';
 import styles from './LoginPage.module.css';
@@ -60,13 +61,14 @@ export function LoginPage() {
       <div className={styles.card}>
         <header className={styles.header}>
           <span className={styles.mark} aria-hidden>
-            RA
+            R
           </span>
           <div>
-            <p className={styles.product}>Routines atelier</p>
-            <p className={styles.subtitle}>Digitalisation des routines de travail</p>
+            <p className={styles.product}>Routine</p>
+            <p className={styles.subtitle}>Standards, alertes et actions de l’atelier</p>
           </div>
         </header>
+        {service.mode === 'demo' && view === 'signin' && <DemoProfiles target={target} />}
         {view === 'signin' ? (
           <SignInForm target={target} onForgot={() => switchView('reset')} />
         ) : (
@@ -221,5 +223,51 @@ function ResetForm({ onBack }: { onBack: () => void }) {
         Retour à la connexion
       </button>
     </form>
+  );
+}
+
+/** Démo publique : entrée en un clic avec un profil fictif (aucun mot de passe à saisir). */
+function DemoProfiles({ target }: { target: string | null }) {
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
+  const [pending, setPending] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const enter = async (alias: string) => {
+    setPending(alias);
+    setError(null);
+    try {
+      const signedIn = await signIn(demoCredentials(alias));
+      navigate(destination(target, signedIn), { replace: true });
+    } catch (err) {
+      setError(toUserMessage(err));
+      setPending(null);
+    }
+  };
+
+  return (
+    <section className={styles.demo} aria-labelledby="demo-title">
+      <h2 id="demo-title" className={styles.title}>
+        Découvrir la démo
+      </h2>
+      <p className={styles.text}>Choisissez un rôle : vous entrez dans un atelier fictif. Les données restent dans votre navigateur.</p>
+      {error && (
+        <p className={styles.formError} role="alert">
+          {error}
+        </p>
+      )}
+      <ul className={styles.profiles}>
+        {DEMO_PROFILES.map((p) => (
+          <li key={p.alias}>
+            <button type="button" className={styles.profile} onClick={() => void enter(p.alias)} disabled={pending !== null}>
+              <span className={styles.profileRole}>{p.role}</span>
+              <span className={styles.profileText}>{p.description}</span>
+              <span className={styles.profilePerson}>{pending === p.alias ? 'Connexion…' : p.person}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p className={styles.separator}>ou connectez-vous avec un compte</p>
+    </section>
   );
 }

@@ -265,7 +265,7 @@ function OrderForm({ lookups, onDone }: { lookups: Lookups; onDone: () => void }
     },
     rules: {
       reference: [required('Référence de l’OF obligatoire')],
-      harnessRef: [required('Référence faisceau obligatoire')],
+      harnessRef: [required('Référence produit obligatoire')],
       lineId: [required()],
       quantityPlanned: [required('Quantité obligatoire'), numberRange(1, 100000)],
       dueDate: [required()],
@@ -298,7 +298,7 @@ function OrderForm({ lookups, onDone }: { lookups: Lookups; onDone: () => void }
           placeholder="OF-2660"
         />
         <TextField
-          label="Référence faisceau"
+          label="Référence produit"
           required
           value={values.harnessRef}
           onChange={(e) => set('harnessRef', e.target.value)}

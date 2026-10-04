@@ -76,7 +76,7 @@ export function AnomalyForm({
           value={values.description}
           onChange={(e) => set('description', e.target.value)}
           error={errors.description}
-          placeholder="Ex. : connecteur mal positionné sur le faisceau en sortie de poste"
+          placeholder="Ex. : pièce mal positionnée en sortie de poste"
         />
         <SelectField
           label="Catégorie"

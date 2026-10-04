@@ -73,7 +73,7 @@ const today = () => {
 };
 
 async function visit(page: Page, route: string) {
-  await page.goto(`/#${route.replace('TODAY', today())}`);
+  await page.goto(`/app/#${route.replace('TODAY', today())}`);
   await page.reload();
   await expect(page.locator('main#contenu')).toBeVisible();
   await expect(page.getByRole('status', { name: /Chargement/ })).toHaveCount(0, { timeout: 10_000 });
@@ -128,11 +128,11 @@ test('parcours Andon : déclencher, prendre en charge, résoudre', async ({ page
   const dialog = page.getByRole('dialog', { name: 'Déclencher un Andon' });
   await dialog.getByRole('button', { name: /^P3/ }).click();
   await dialog.getByRole('button', { name: 'Matière' }).click();
-  await dialog.getByRole('button', { name: 'Ruban épuisé' }).click();
+  await dialog.getByRole('button', { name: 'Consommable épuisé' }).click();
   await dialog.getByRole('button', { name: 'Déclencher' }).click();
   await expect(dialog).toBeHidden();
 
-  const tile = page.getByRole('listitem').filter({ hasText: 'Ruban épuisé' });
+  const tile = page.getByRole('listitem').filter({ hasText: 'Consommable épuisé' });
   await expect(tile).toContainText('Nouveau');
   await tile.getByRole('button', { name: 'Je prends en charge' }).click();
   await expect(tile).toContainText('Karim Benali intervient');
@@ -142,7 +142,7 @@ test('parcours Andon : déclencher, prendre en charge, résoudre', async ({ page
   await resolve.getByLabel(/Cause identifiée/).fill('Réappro non déclenché');
   await resolve.getByLabel(/Action réalisée/).fill('Rouleau livré, seuil kanban corrigé');
   await resolve.getByRole('button', { name: 'Marquer résolu' }).click();
-  await expect(page.getByRole('listitem').filter({ hasText: 'Ruban épuisé' })).toHaveCount(0);
+  await expect(page.getByRole('listitem').filter({ hasText: 'Consommable épuisé' })).toHaveCount(0);
 
   await page.getByRole('tab', { name: 'Historique et analyse' }).click();
   await expect(page.getByRole('cell', { name: 'Réappro non déclenché' })).toBeVisible();

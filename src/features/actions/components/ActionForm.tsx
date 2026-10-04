@@ -83,7 +83,7 @@ export function ActionForm({ users, action, source = { type: 'manual' }, default
           value={values.title}
           onChange={(e) => set('title', e.target.value)}
           error={errors.title}
-          placeholder="Ex. : remplacer l’outil de sertissage du poste 3"
+          placeholder="Ex. : remplacer l’outil usé du poste 3"
         />
         <TextAreaField
           className="full"

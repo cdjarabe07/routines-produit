@@ -24,9 +24,9 @@ export const ANDON_URGENCY: Record<AndonUrgency, { label: string; tone: Tone; ra
 };
 
 export const ANDON_PRESETS: Record<AndonType, string[]> = {
-  quality: ['Connecteur mal serti', 'Défaut de rubanage', 'Longueur hors tolérance', 'Contact plié ou manquant'],
-  equipment: ['Presse de sertissage à l’arrêt', 'Testeur de continuité en panne', 'Machine de coupe bloquée', 'Bruit anormal'],
-  material: ['Rupture de terminaux', 'Connecteurs manquants', 'Ruban épuisé', 'Mauvaise référence livrée'],
+  quality: ['Pièce non conforme', 'Cote hors tolérance', 'Défaut d’aspect', 'Doute sur un contrôle'],
+  equipment: ['Machine à l’arrêt', 'Outil usé ou cassé', 'Moyen de contrôle en panne', 'Bruit anormal'],
+  material: ['Rupture de composant', 'Matière manquante', 'Consommable épuisé', 'Mauvaise référence livrée'],
   safety: ['Situation dangereuse', 'Blessure légère', 'Protection machine absente'],
 };
 

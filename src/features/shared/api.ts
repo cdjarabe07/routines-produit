@@ -3,7 +3,7 @@ import { useCollection } from '@/hooks/useData';
 import type { AppSettings, Line, Team, User, Workstation } from '@/types/domain';
 
 export const DEFAULT_SETTINGS: Omit<AppSettings, 'id' | 'createdAt' | 'updatedAt'> = {
-  plantName: 'Atelier de câblage',
+  plantName: 'Mon atelier',
   andonEscalationMinutes: 10,
   routineLateToleranceMinutes: 120,
 };

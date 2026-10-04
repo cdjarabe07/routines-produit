@@ -139,7 +139,7 @@ function HandoverForm({ lookups }: { lookups: Lookups }) {
           value={values.note}
           onChange={(e) => set('note', e.target.value)}
           error={errors.note}
-          placeholder="Ex. : machine 3 bruyante au démarrage, surveiller le sertissage. Racks connecteurs à réapprovisionner avant 14 h."
+          placeholder="Ex. : machine 3 bruyante au démarrage, surveiller la qualité. Bacs de composants à réapprovisionner avant 14 h."
         />
       </FormGrid>
       <FormActions>

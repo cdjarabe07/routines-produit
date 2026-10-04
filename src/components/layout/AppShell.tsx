@@ -34,10 +34,10 @@ export function AppShell() {
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
           <span className={styles.brandMark} aria-hidden>
-            RA
+            R
           </span>
           <span className={styles.brandText}>
-            <strong>Routines atelier</strong>
+            <strong>Routine</strong>
             <span>{settings.plantName}</span>
           </span>
         </div>
