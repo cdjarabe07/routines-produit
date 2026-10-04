@@ -124,7 +124,7 @@ export const PROCESS_STAGES: ProcessStage[] = [
       },
       {
         key: 'quality',
-        title: 'Contrôles LQC',
+        title: 'Contrôles qualité',
         description: 'Mesures qualité en ligne comparées aux tolérances.',
         metrics: 'quality',
         module: 'quality',

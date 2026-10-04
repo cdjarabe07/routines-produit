@@ -27,7 +27,7 @@ const ORIGIN_LABEL: Record<Anomaly['origin']['type'], string> = {
   manual: 'Déclaration directe',
   qr: 'QR code du poste',
   routine: 'Routine (point non conforme)',
-  quality: 'Contrôle LQC hors tolérance',
+  quality: 'Contrôle qualité hors tolérance',
   andon: 'Andon',
   gemba: 'Gemba Walk',
 };

@@ -27,7 +27,7 @@ interface AnomalyFormProps {
   submitLabel?: string;
 }
 
-/** Formulaire de déclaration d'anomalie, commun à tous les points d'entrée (QR, routine, LQC, Andon). */
+/** Formulaire de déclaration d'anomalie, commun à tous les points d'entrée (QR, routine, contrôle qualité, Andon). */
 export function AnomalyForm({
   workstations,
   initial,

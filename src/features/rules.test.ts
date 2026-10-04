@@ -404,7 +404,7 @@ describe('stocks et qualité', () => {
     expect([0, 5, 20, 40].map((q) => stockState(stock(q)))).toEqual(['out', 'reorder', 'watch', 'healthy']);
     expect(needsReorder(stock(9))).toBe(true);
   });
-  it('conformité LQC', () => {
+  it('conformité qualité', () => {
     expect(isConform({ value: 10, min: 10, max: 12 })).toBe(true);
     expect(isConform({ value: 12.01, min: 10, max: 12 })).toBe(false);
     expect(conformity([])).toBeNull();

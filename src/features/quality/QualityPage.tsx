@@ -55,7 +55,7 @@ export function QualityPage() {
   return (
     <>
       <PageHeader
-        title="Contrôles LQC"
+        title="Contrôles qualité"
         description="Mesures qualité en ligne. La conformité est calculée à partir des mesures saisies, comparées à leurs tolérances."
         actions={
           <Can permission="quality.record">
@@ -132,7 +132,7 @@ export function QualityPage() {
                   description="Mesures dans les bornes / mesures du jour. Jours sans mesure non tracés."
                 >
                   <LineChart
-                    title="Conformité LQC par jour"
+                    title="Conformité qualité par jour"
                     data={trend}
                     format={(v) => `${Math.round(v)} %`}
                     max={100}
@@ -167,7 +167,7 @@ export function QualityPage() {
               </Columns>
               <Panel title="Mesures" flush>
                 <DataTable
-                  caption="Mesures LQC"
+                  caption="Mesures qualité"
                   rows={all}
                   columns={columns}
                   rowKey={(c) => c.id}

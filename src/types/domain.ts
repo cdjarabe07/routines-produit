@@ -442,7 +442,7 @@ export interface GembaWalk extends BaseEntity {
   closedAt?: ISODateTime;
 }
 
-/* ---------- Qualité LQC ---------- */
+/* ---------- Contrôles qualité en ligne ---------- */
 
 export interface QualityCheck extends BaseEntity {
   characteristic: string;

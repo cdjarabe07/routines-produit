@@ -128,7 +128,7 @@ export const SPACES: Space[] = [
           { path: '/manager/anomalies', label: 'Anomalies', icon: TriangleAlert, permission: 'anomaly.manage', count: 'anomalies' },
           { path: '/manager/actions', label: 'Actions correctives', icon: ListTodo, permission: 'action.manage' },
           { path: '/manager/gemba', label: 'Gemba Walk', icon: Footprints, permission: 'gemba.conduct' },
-          { path: '/manager/qualite', label: 'Contrôles LQC', icon: Ruler, permission: 'quality.record' },
+          { path: '/manager/qualite', label: 'Contrôles qualité', icon: Ruler, permission: 'quality.record' },
         ],
       },
     ],

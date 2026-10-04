@@ -282,7 +282,7 @@ export function buildDailyReport(d: CockpitData, plantName: string): string {
     '',
     'INDICATEURS',
     `• Routines : ${formatPercent(ind.routinePct)} réalisées (${ind.routineDetail}) — en cours ${ind.routines.inProgress}, en retard ${ind.routines.late}`,
-    `• Conformité LQC : ${formatPercent(ind.qualityPct, 1)} (${ind.qualityCount} mesure(s))`,
+    `• Conformité qualité : ${formatPercent(ind.qualityPct, 1)} (${ind.qualityCount} mesure(s))`,
     `• Andon déclenchés aujourd’hui : ${alertsToday.length}`,
     `• Anomalies déclarées aujourd’hui : ${anomaliesToday.length} — ouvertes au total : ${ind.openAnomalies} (dont ${ind.criticalAnomalies} critique(s))`,
     `• Actions en retard : ${ind.overdueActions} — à échéance aujourd’hui : ${ind.dueToday}`,

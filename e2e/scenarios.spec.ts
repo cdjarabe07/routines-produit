@@ -78,7 +78,7 @@ test('administration → planification → exécution → Andon → action corre
   /* ---------- Scénario 2 : opératrice ---------- */
   await login(page, 'operateur');
   await expect(page).toHaveURL(/#\/app$/);
-  await expect(page.getByRole('heading', { level: 1, name: /Bonjour Nadia/ })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /(Bonjour|Bonsoir) Nadia/ })).toBeVisible();
   await expect(page.getByRole('link', { name: ROUTINE }).first()).toBeVisible();
   await page.goto('/app/#/app/reunions');
   await expect(page.getByRole('link', { name: MEETING })).toBeVisible();
@@ -179,7 +179,7 @@ test('déconnexion depuis la supervision puis connexion opérateur : arrivée di
   await expect(page).toHaveURL(/#\/login$/);
   await login(page, 'operateur');
   await expect(page).toHaveURL(/#\/app$/);
-  await expect(page.getByRole('heading', { level: 1, name: /Bonjour Nadia/ })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /(Bonjour|Bonsoir) Nadia/ })).toBeVisible();
 
   // Un lien protégé reste respecté s'il est autorisé, sinon l'espace d'accueil prend le relais
   await logout(page);

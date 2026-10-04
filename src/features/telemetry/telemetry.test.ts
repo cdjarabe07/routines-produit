@@ -118,8 +118,8 @@ describe('Suivi — analyse de la fréquentation', () => {
   it('liste les écrans du menu jamais ouverts', () => {
     const unused = unusedScreens(rows, [
       { path: '/andon', label: 'Andon', space: '' },
-      { path: '/manager/qualite', label: 'Contrôles LQC', space: 'Supervision' },
+      { path: '/manager/qualite', label: 'Contrôles qualité', space: 'Supervision' },
     ]);
-    expect(unused).toEqual([{ path: '/manager/qualite', label: 'Contrôles LQC', space: 'Supervision' }]);
+    expect(unused).toEqual([{ path: '/manager/qualite', label: 'Contrôles qualité', space: 'Supervision' }]);
   });
 });

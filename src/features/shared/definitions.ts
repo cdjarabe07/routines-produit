@@ -10,5 +10,5 @@ export const DEFINITIONS = {
   openAnomalies: 'Anomalies au statut « ouverte » ou « en traitement ».',
   andonAck: 'Temps moyen entre le déclenchement d’un Andon et sa prise en charge.',
   andonResolution: 'Temps moyen entre le déclenchement d’un Andon et sa résolution.',
-  quality: 'Mesures LQC dans les bornes de tolérance / mesures de la période.',
+  quality: 'Mesures qualité dans les bornes de tolérance / mesures de la période.',
 } as const;

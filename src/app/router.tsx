@@ -131,7 +131,7 @@ export const appRoutes: RouteObject[] = [
         { path: 'actions', element: guarded(P.Actions, 'action.manage', 'le suivi des actions correctives') },
         { path: 'gemba', element: guarded(P.Gemba, 'gemba.conduct', 'les Gemba Walks') },
         { path: 'gemba/nouvelle', element: guarded(P.GembaNew, 'gemba.conduct', 'la conduite d’une Gemba Walk') },
-        { path: 'qualite', element: guarded(P.Quality, 'quality.record', 'les contrôles LQC') },
+        { path: 'qualite', element: guarded(P.Quality, 'quality.record', 'les contrôles qualité') },
         { path: 'reporting', element: guarded(P.Reporting, 'reporting.view', 'le reporting') },
         { path: 'bi', element: guarded(P.BI, 'reporting.view', 'les tableaux BI') },
       ]),

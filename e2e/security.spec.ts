@@ -53,6 +53,6 @@ test.describe('sécurité — serveur Supabase', () => {
     await page.getByRole('menuitem', { name: 'Se déconnecter' }).click();
     await loginWithForm(page, 'operateur');
     await expect(page).toHaveURL(/#\/app$/);
-    await expect(page.getByRole('heading', { level: 1, name: /Bonjour Nadia/ })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /(Bonjour|Bonsoir) Nadia/ })).toBeVisible();
   });
 });

@@ -252,7 +252,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'production.view': 'Voir la production et le plan de l’atelier',
   'production.update': 'Mettre à jour la production et les stocks',
   'gemba.conduct': 'Conduire une Gemba Walk',
-  'quality.record': 'Saisir des mesures LQC',
+  'quality.record': 'Saisir des mesures qualité',
   'announcement.write': 'Publier l’annonce du jour',
   'reporting.view': 'Consulter le reporting',
   'routine.manage': 'Créer et modifier les routines et leurs tâches',

@@ -109,6 +109,21 @@ describe('démo par secteur', () => {
     expect(data.workstations.some((w) => /sertissage/i.test(w.name))).toBe(false);
   });
 
+  it.each(SECTOR_KEYS.filter((k) => k !== 'automotive'))('%s : aucun vocabulaire du câblage dans les textes affichés', (key) => {
+    const data = buildDemoData(new Date('2026-10-06T08:05:00Z'), key) as unknown as Record<string, unknown[]>;
+    const wiring = /c[âa]bl|sertiss|faisceau|dénud|rubanage|connecteur|terminaux|tresse|épissure|LQC|Line Leader/i;
+    const found: string[] = [];
+    const walk = (v: unknown, field: string) => {
+      // Identifiants et codes techniques (jamais affichés tels quels) exclus
+      if (typeof v === 'string') {
+        if (!/^(id|.*Id|role|teamId)$/.test(field) && wiring.test(v)) found.push(`${field} : ${v}`);
+      } else if (Array.isArray(v)) v.forEach((x) => walk(x, field));
+      else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, k);
+    };
+    for (const [k, v] of Object.entries(data)) walk(v, k);
+    expect(found).toEqual([]);
+  });
+
   it('automobile : l’atelier de câblage d’origine', () => {
     const data = buildDemoData(new Date('2026-10-06T08:05:00Z'));
     expect(data.settings[0]!.plantName).toBe('Atelier de câblage');

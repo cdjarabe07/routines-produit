@@ -35,6 +35,7 @@ import type {
 import type { Dataset } from '@/services/data/types';
 import { resolveCatalog } from '@/app/catalog';
 import { SECTOR_TEMPLATES, type Cadence, type SectorKey, type SectorRoutine } from '@/data/sectors';
+import { dressDemo } from './dressDemo';
 import { SECTOR_DEMO } from './sectorDemo';
 import { occursOn, slotsOf, usesSlot } from '@/features/planning/model';
 import { buildSample, checkKey, evaluateCheck, taskChecks } from '@/features/routines/model';
@@ -1156,7 +1157,7 @@ export function buildDemoData(now: Date = new Date(), sector: SectorKey = 'autom
     }),
   ];
 
-  return {
+  const dataset: Dataset = {
     users,
     teams,
     lines,
@@ -1188,4 +1189,5 @@ export function buildDemoData(now: Date = new Date(), sector: SectorKey = 'autom
     runPhotos: [],
     routineTriggers,
   };
+  return dressing ? dressDemo(dataset, sector) : dataset;
 }

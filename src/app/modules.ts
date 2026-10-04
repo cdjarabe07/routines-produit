@@ -15,7 +15,7 @@ export const MODULES: Record<ModuleKey, { label: string; description: string; pa
     paths: ['/manager/production', '/manager/atelier'],
   },
   quality: {
-    label: 'Contrôles LQC',
+    label: 'Contrôles qualité',
     description: 'Mesures qualité en ligne et conformité aux tolérances.',
     paths: ['/manager/qualite'],
   },

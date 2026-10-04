@@ -229,7 +229,7 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
   {
     match: /^\/manager\/qualite/,
     topic: {
-      title: 'Contrôles qualité (LQC)',
+      title: 'Contrôles qualité',
       purpose: 'Saisir les mesures au poste et suivre la conformité.',
       steps: [
         'Saisissez la caractéristique, le poste et la valeur mesurée : la conformité est calculée avec les tolérances.',
@@ -394,7 +394,7 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
       purpose: 'Les réglages de l’atelier : nom, délai d’escalade des Andon, tolérance de retard des routines, modules utilisés.',
       steps: [
         'Modifiez une valeur puis enregistrez.',
-        'Dans « Modules », décochez ce que le site n’utilise pas (Gemba Walk, contrôles LQC, production…) puis enregistrez.',
+        'Dans « Modules », décochez ce que le site n’utilise pas (Gemba Walk, contrôles qualité, production…) puis enregistrez.',
       ],
       tips: [
         'Un module décoché disparaît des menus, des tableaux de bord et de l’aide ; ses données sont conservées et il se réactive à tout moment.',
@@ -629,7 +629,7 @@ export const GLOSSARY: { term: string; definition: string }[] = [
       'Animateur de proximité, responsable de son équipe sur le terrain (appelé « Hancho » dans le Lean). Le nom affiché se règle dans les référentiels.',
   },
   { term: 'Responsable de ligne', definition: 'Responsable d’une ligne de production et des équipes qui y travaillent (« Line Leader »).' },
-  { term: 'LQC', definition: 'Contrôle qualité de ligne : mesures au poste et suivi de la conformité.' },
+  { term: 'Contrôle qualité en ligne', definition: 'Mesures réalisées au poste et suivi de la conformité aux tolérances.' },
   { term: 'Gemba Walk', definition: 'Visite terrain structurée de l’encadrement, pour observer et améliorer.' },
   { term: '5S', definition: 'Méthode d’organisation du poste : trier, ranger, nettoyer, standardiser, maintenir.' },
   { term: 'Routine', definition: 'Ensemble de tâches standard à réaliser régulièrement, planifié pour une personne ou une équipe.' },

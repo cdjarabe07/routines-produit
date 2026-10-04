@@ -43,7 +43,7 @@ export const ACTION_SOURCE: Record<ActionSourceType, string> = {
   gemba: 'Gemba Walk',
   routine: 'Routine',
   andon: 'Andon',
-  quality: 'Contrôle LQC',
+  quality: 'Contrôle qualité',
 };
 
 export const ANOMALY_CATEGORY: Record<AnomalyCategory, string> = {

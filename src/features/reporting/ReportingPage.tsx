@@ -299,7 +299,7 @@ export function ReportingPage() {
                     delta={d(kpis.andonAvgResMin, 'andonAvgResMin', false)}
                   />
                   <Kpi
-                    label="Conformité LQC"
+                    label="Conformité qualité"
                     definition={DEFINITIONS.quality}
                     value={formatPercent(kpis.qualityPct, 1)}
                     detail={`${kpis.qualityCount} mesures`}
@@ -415,9 +415,9 @@ export function ReportingPage() {
                       onSelect={(i) => select('jour', report.daily[i]!.date)}
                     />
                   </Panel>
-                  <Panel title="Conformité LQC par jour">
+                  <Panel title="Conformité qualité par jour">
                     <LineChart
-                      title="Conformité LQC par jour"
+                      title="Conformité qualité par jour"
                       data={report.daily.map((d) => ({ label: label(d.date), value: d.qualityPct }))}
                       format={(v) => `${Math.round(v)} %`}
                       max={100}

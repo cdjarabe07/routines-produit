@@ -279,7 +279,7 @@ export function toCsv(rows: DailyRow[]): string {
     'Anomalies déclarées',
     'Andon déclenchés',
     'Actions terminées',
-    'Conformité LQC (%)',
+    'Conformité qualité (%)',
   ];
   const fmt = (v: number | null) => (v === null ? '' : v.toFixed(1).replace('.', ','));
   return [

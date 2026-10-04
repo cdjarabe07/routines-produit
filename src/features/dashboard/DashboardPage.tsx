@@ -246,7 +246,7 @@ export function DashboardPage() {
                 />
                 {modules.isEnabled('quality') && (
                   <Kpi
-                    label="Conformité LQC"
+                    label="Conformité qualité"
                     definition={DEFINITIONS.quality}
                     value={formatPercent(ind.qualityPct, 1)}
                     tone={ind.qualityPct !== null && ind.qualityPct < 95 ? 'warning' : 'neutral'}
