@@ -62,6 +62,8 @@ const ROUTES = [
   '/admin/roles',
   '/admin/parametres',
   '/admin/journal',
+  '/admin/erreurs',
+  '/admin/usage',
   '/admin/integration',
 ];
 

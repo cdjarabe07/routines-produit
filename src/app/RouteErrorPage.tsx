@@ -1,14 +1,20 @@
+import { useEffect } from 'react';
 import { isRouteErrorResponse, useRouteError } from 'react-router';
 import { EmptyState } from '@/components/feedback/States';
 import { ButtonLink } from '@/components/ui/Button';
 import { createLogger } from '@/services/logger';
+import { reportClientError } from './telemetry';
 
 const log = createLogger('router');
 
 /** Erreur de rendu inattendue : message compréhensible, détail dans le journal. */
 export function RouteErrorPage() {
   const error = useRouteError();
-  log.error('Erreur de rendu', error);
+  useEffect(() => {
+    log.error('Erreur de rendu', error);
+    // Une page introuvable n’est pas une panne
+    if (!isRouteErrorResponse(error)) reportClientError(error, 'react');
+  }, [error]);
   const isChunkError = error instanceof Error && /dynamically imported module|Failed to fetch/i.test(error.message);
   return (
     <div style={{ padding: 'var(--space-8) var(--space-4)' }}>

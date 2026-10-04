@@ -2,6 +2,8 @@ import type { BaseEntity, ID } from '@/types/domain';
 import { createId } from '@/utils/id';
 import { NotFoundError, StorageError } from '@/services/errors';
 import { createLogger } from '@/services/logger';
+import { todayKey } from '@/utils/date';
+import { createLocalTelemetry } from './telemetryStore';
 import type { CollectionMap, CollectionName, DataSource, Dataset, EntityPatch, ListFilter, NewEntity, Repository } from './types';
 import { COLLECTIONS } from './types';
 
@@ -120,6 +122,7 @@ export function createStoreDataSource(store: KeyValueStore, buildSeed: () => Dat
   return {
     kind: 'demo',
     repo,
+    telemetry: createLocalTelemetry(store, todayKey),
     async resetDemoData() {
       cache.clear();
       for (const name of COLLECTIONS) store.removeItem(PREFIX + name);

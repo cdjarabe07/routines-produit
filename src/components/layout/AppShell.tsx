@@ -1,6 +1,7 @@
 import { Suspense, useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { moduleOfPath, useModules } from '@/app/modules';
+import { useTelemetry } from '@/app/telemetry';
 import { accessibleSpaces, homeSpace, spaceOfPath, type SpaceId } from '@/app/navigation';
 import { useAuth, useCurrentUser } from '@/app/providers/AuthProvider';
 import { useDataSource } from '@/app/providers/DataSourceProvider';
@@ -22,6 +23,7 @@ export function AppShell() {
   const { pathname } = useLocation();
   const { pathEnabled } = useModules();
   const disabledModule = pathEnabled(pathname) ? null : moduleOfPath(pathname);
+  useTelemetry();
 
   return (
     <div className={styles.shell}>

@@ -63,6 +63,8 @@ const P = {
   AdminRoles: page(() => import('@/features/admin/RolesPage'), 'RolesPage'),
   AdminSettings: page(() => import('@/features/admin/SettingsPage'), 'SettingsPage'),
   AdminAudit: page(() => import('@/features/admin/AuditLogPage'), 'AuditLogPage'),
+  AdminErrors: page(() => import('@/features/telemetry/ErrorsPage'), 'ErrorsPage'),
+  AdminUsage: page(() => import('@/features/telemetry/UsagePage'), 'UsagePage'),
   AdminIntegration: page(() => import('@/features/admin/IntegrationPage'), 'IntegrationPage'),
 };
 
@@ -147,6 +149,8 @@ export const appRoutes: RouteObject[] = [
         { path: 'roles', element: guarded(P.AdminRoles, 'settings.manage', 'les rôles et droits') },
         { path: 'parametres', element: guarded(P.AdminSettings, 'settings.manage', 'les paramètres') },
         { path: 'journal', element: guarded(P.AdminAudit, 'settings.manage', 'le journal d’audit') },
+        { path: 'erreurs', element: guarded(P.AdminErrors, 'settings.manage', 'le suivi des erreurs') },
+        { path: 'usage', element: guarded(P.AdminUsage, 'settings.manage', 'la fréquentation des écrans') },
         { path: 'integration', element: guarded(P.AdminIntegration, 'settings.manage', 'l’intégration ERP') },
       ]),
 

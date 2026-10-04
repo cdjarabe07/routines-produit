@@ -8,6 +8,7 @@ import type {
   CollectionMap,
   ErpObjectType,
   ErpRecord,
+  ErrorReportRow,
   IntegrationApi,
   IntegrationOutboxItem,
   IntegrationSettings,
@@ -20,6 +21,8 @@ import type {
   ListFilter,
   NewEntity,
   Repository,
+  TelemetryApi,
+  UsageRow,
 } from './types';
 
 /* Source de données Supabase (PostgREST). Le navigateur n'est pas une frontière de sécurité :
@@ -255,5 +258,49 @@ export function createSupabaseDataSource(client: SupabaseClient, options: Supaba
     },
   };
 
-  return { kind: 'supabase', repo, serverSideEffects: true, accounts, resetDemoData, recordRunResult, auditLog, integration };
+  // Suivi technique : écriture par fonctions serveur (contrôles et plafonds), lecture réservée à l’administration (RLS).
+  // Un échec d’envoi n’est jamais signalé à l’utilisateur : le suivi ne doit pas gêner le travail.
+  const telemetry: TelemetryApi = {
+    async reportError(r) {
+      const { error } = await client.rpc('report_client_error', {
+        p_message: r.message,
+        p_stack: r.stack ?? null,
+        p_route: r.route,
+        p_source: r.source,
+        p_version: r.appVersion ?? null,
+        p_agent: r.userAgent ?? null,
+      });
+      if (error) log.warn('Erreur non transmise', error.message);
+    },
+    async trackView(route) {
+      const { error } = await client.rpc('track_screen_view', { p_route: route });
+      if (error) log.warn('Fréquentation non transmise', error.message);
+    },
+    errors: (since) =>
+      read<ErrorReportRow>(
+        client.from('errorReports').select('*').gte('day', since).order('lastAt', { ascending: false }).limit(PAGE_SIZE),
+        'errorReports',
+      ),
+    async usage(since) {
+      // Plusieurs milliers de lignes possibles (jour × écran × rôle) : lecture par pages
+      const rows: UsageRow[] = [];
+      for (let from = 0; ; from += PAGE_SIZE) {
+        const page = await read<UsageRow>(
+          client
+            .from('usageDaily')
+            .select('day, route, role, views')
+            .gte('day', since)
+            .order('day')
+            .order('route')
+            .order('role')
+            .range(from, from + PAGE_SIZE - 1),
+          'usageDaily',
+        );
+        rows.push(...page);
+        if (page.length < PAGE_SIZE) return rows;
+      }
+    },
+  };
+
+  return { kind: 'supabase', repo, serverSideEffects: true, accounts, resetDemoData, recordRunResult, auditLog, integration, telemetry };
 }

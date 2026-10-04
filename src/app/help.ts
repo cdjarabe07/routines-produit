@@ -404,6 +404,42 @@ const TOPICS: { match: RegExp; topic: HelpTopic }[] = [
     },
   },
   {
+    match: /^\/admin\/erreurs/,
+    topic: {
+      title: 'Erreurs',
+      purpose: 'Les erreurs rencontrées par les utilisateurs dans l’application (écran planté, opération échouée), regroupées par jour.',
+      steps: [
+        'Repérez en priorité les « Écrans plantés » et les erreurs les plus fréquentes.',
+        'Cliquez sur une erreur pour voir l’écran concerné, la version et la pile d’appels, à transmettre à la personne qui maintient l’application.',
+      ],
+      tips: [
+        'Aucune identité de personne n’est enregistrée : seuls le rôle, l’écran et le navigateur.',
+        'Une même erreur n’est envoyée qu’une fois par session et par écran : le nombre d’occurrences reste lisible.',
+      ],
+      related: [{ label: 'Utilisation des écrans', to: '/admin/usage' }],
+    },
+  },
+  {
+    match: /^\/admin\/usage/,
+    topic: {
+      title: 'Utilisation',
+      purpose: 'Combien de fois chaque écran est ouvert, par rôle, pour savoir ce qui sert réellement.',
+      steps: [
+        'Choisissez la période (7, 30 ou 90 jours).',
+        'Consultez « Par module » : un module jamais ouvert peut être masqué dans Paramètres › Modules.',
+        'La liste « Écrans du menu jamais ouverts » aide à décider de ce qui peut être retiré.',
+      ],
+      tips: [
+        'Les vues sont comptées par jour, par écran et par rôle, sans aucun identifiant de personne.',
+        'Attendez quelques semaines d’usage réel avant de supprimer un module pour de bon.',
+      ],
+      related: [
+        { label: 'Paramètres et modules', to: '/admin/parametres' },
+        { label: 'Erreurs', to: '/admin/erreurs' },
+      ],
+    },
+  },
+  {
     match: /^\/admin\/integration/,
     topic: {
       title: 'Intégration ERP',

@@ -1,0 +1,55 @@
+.message {
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+.stack {
+  max-height: 360px;
+  overflow: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.modules {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+.modules li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 36px;
+  border-bottom: 1px solid var(--color-border);
+}
+.modules li:last-child {
+  border-bottom: 0;
+}
+.modules strong {
+  font-variant-numeric: tabular-nums;
+}
+.unused {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+}
+.unused li {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+.space {
+  color: var(--color-text-subtle);
+}
+.note {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

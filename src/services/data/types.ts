@@ -132,6 +132,53 @@ export interface DataSource {
   auditLog?(limit: number): Promise<AuditEntry[]>;
   /** Intégration ERP : opérations exécutées par le serveur (le navigateur ne connaît aucun système ERP). */
   integration?: IntegrationApi;
+  /** Suivi technique : erreurs du navigateur et fréquentation des écrans (sans identité de personne). */
+  telemetry?: TelemetryApi;
+}
+
+/* ---------- Suivi technique ---------- */
+
+export type ClientErrorSource = 'window' | 'promise' | 'react';
+
+export interface ClientErrorReport {
+  message: string;
+  stack?: string;
+  /** Modèle d’adresse de l’écran (ex. /actions/:id) */
+  route: string;
+  source: ClientErrorSource;
+  appVersion?: string;
+  userAgent?: string;
+}
+
+export interface ErrorReportRow {
+  id: ID;
+  day: string;
+  message: string;
+  stack?: string;
+  route: string;
+  source: ClientErrorSource;
+  role?: string;
+  appVersion?: string;
+  userAgent?: string;
+  count: number;
+  firstAt: string;
+  lastAt: string;
+}
+
+export interface UsageRow {
+  day: string;
+  route: string;
+  role: string;
+  views: number;
+}
+
+export interface TelemetryApi {
+  /** Le rôle n’est utilisé qu’en mode démo : le serveur le déduit de la session. */
+  reportError(report: ClientErrorReport, role: string): Promise<void>;
+  trackView(route: string, role: string): Promise<void>;
+  /** Lecture réservée à l’administration, depuis la date donnée (AAAA-MM-JJ) incluse */
+  errors(since: string): Promise<ErrorReportRow[]>;
+  usage(since: string): Promise<UsageRow[]>;
 }
 
 /* ---------- Intégration ERP (docs/ERP_INTEGRATION.md) ---------- */

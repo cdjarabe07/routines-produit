@@ -173,7 +173,7 @@ export const SPACES: Space[] = [
         items: [
           { path: '/admin/roles', label: 'Rôles et droits', icon: ShieldCheck, permission: 'settings.manage' },
           { path: '/admin/parametres', label: 'Paramètres', icon: Settings, permission: 'settings.manage' },
-          { path: '/admin/journal', label: 'Journal d’audit', icon: ScrollText, permission: 'settings.manage' },
+          { path: '/admin/journal', label: 'Journal et suivi', icon: ScrollText, permission: 'settings.manage' },
           { path: '/admin/integration', label: 'Intégration ERP', icon: Network, permission: 'settings.manage' },
         ],
       },
@@ -215,6 +215,11 @@ export const SECTIONS: SectionTab[][] = [
   [
     { path: '/manager/production', label: 'Ordres et stocks', permission: 'production.view' },
     { path: '/manager/atelier', label: 'Plan de l’atelier', permission: 'production.view' },
+  ],
+  [
+    { path: '/admin/journal', label: 'Journal d’audit', permission: 'settings.manage' },
+    { path: '/admin/erreurs', label: 'Erreurs', permission: 'settings.manage' },
+    { path: '/admin/usage', label: 'Utilisation', permission: 'settings.manage' },
   ],
   [
     { path: '/manager/reporting', label: 'Indicateurs', permission: 'reporting.view' },
