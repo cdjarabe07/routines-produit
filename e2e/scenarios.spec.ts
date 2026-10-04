@@ -349,18 +349,35 @@ test('audit par couches : niveau affiché, trois questions tournantes sur huit',
   await expect(page.getByRole('group', { name: /^Réponse : / })).toHaveCount(3);
 });
 
-test('modèle de secteur : l’administrateur applique le modèle plasturgie', async ({ page }) => {
+test('modèle de secteur : l’administrateur personnalise puis applique le modèle plasturgie', async ({ page }) => {
   test.skip(BACKEND === 'supabase', 'Modifie les paramètres du site : vérifié en mode démo uniquement');
   await signIn(page, 'u-admin');
   await page.goto('/app/#/admin/modele-secteur');
   await page.reload();
   await page.getByRole('radio', { name: /Plasturgie/ }).click();
-  await expect(page.getByText('Contenu du modèle « Plasturgie (injection) »')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Personnaliser le modèle « Plasturgie (injection) »' })).toBeVisible();
+  // Une routine écartée, une valeur d'exemple adaptée
+  await page.getByRole('checkbox', { name: /Contrôle en cours de production/ }).uncheck();
+  await page.getByLabel('Minimum — Température du moule').fill('50');
+  await page.getByLabel('Maximum — Température du moule').fill('70');
   await page.getByRole('button', { name: 'Appliquer ce modèle' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Appliquer' }).click();
-  await expect(page.getByText(/Modèle appliqué : référentiels mis à jour/)).toBeVisible();
+  await expect(page.getByText(/Modèle appliqué/)).toBeVisible();
   await page.goto('/app/#/admin/routines');
   await expect(page.getByText('Démarrage presse').first()).toBeVisible();
+  await expect(page.getByText('Contrôle en cours de production')).toHaveCount(0);
   await page.goto('/app/#/manager/production');
   await expect(page.getByRole('heading', { name: 'Injection' })).toBeVisible();
+});
+
+test('démo : l’administrateur transforme l’atelier en atelier agroalimentaire', async ({ page }) => {
+  test.skip(BACKEND === 'supabase', 'Démo dans le navigateur uniquement');
+  await signIn(page, 'u-admin');
+  await page.goto('/app/#/admin/modele-secteur');
+  await page.reload();
+  await page.getByRole('radio', { name: /Agroalimentaire/ }).click();
+  await page.getByRole('button', { name: 'Transformer la démo en atelier « Agroalimentaire »' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Transformer' }).click();
+  await expect(page.getByText('Atelier de plats cuisinés').first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('radio', { name: /Agroalimentaire/ }).getByText('Appliqué')).toBeVisible();
 });

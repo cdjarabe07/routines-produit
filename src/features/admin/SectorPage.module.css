@@ -78,3 +78,67 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.block h3,
+.block legend {
+  margin-bottom: var(--space-1);
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+}
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.values {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0 var(--space-6, 28px);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-border);
+}
+.valueRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.valueLabel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--weight-semibold);
+}
+.valueInputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 160px));
+  gap: var(--space-2);
+}
+@media (max-width: 560px) {
+  .valueInputs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.error {
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

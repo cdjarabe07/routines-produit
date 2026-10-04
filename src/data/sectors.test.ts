@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveCatalog } from '@/app/catalog';
 import { MODULES } from '@/app/modules';
 import { buildDemoData } from '@/data/demo/seed';
-import { applySectorTemplate } from '@/features/admin/sectorTemplates';
+import { applySectorTemplate, overrideKey } from '@/features/admin/sectorTemplates';
 import { createMemoryStore, createStoreDataSource } from '@/services/data/storeDataSource';
 import { SECTOR_KEYS, SECTOR_TEMPLATES, isExampleValue } from './sectors';
 
@@ -47,6 +47,31 @@ describe('modèles de secteur', () => {
     expect(hygiene.tasks[0]!.checklistId).toBe(checklist.id);
     expect(hygiene.description).toMatch(/Fréquence conseillée/);
     expect(await applySectorTemplate(ds, 'food')).toEqual({ checklists: 0, routines: 0 });
+  });
+});
+
+describe('personnalisation avant application', () => {
+  it('routines retenues seulement, bornes adaptées, référentiels conservés', async () => {
+    const ds = createStoreDataSource(createMemoryStore(), () => buildDemoData());
+    const before = (await ds.repo('settings').list())[0]!.catalog;
+    const result = await applySectorTemplate(ds, 'plastics', {
+      routines: ['Démarrage presse', 'Changement de moule'],
+      checklists: [],
+      overrides: { [overrideKey('Démarrage presse', 'temp')]: { min: 50, max: 70 } },
+      replaceCatalog: false,
+      applyModules: false,
+    });
+    // « Changement de moule » utilise sa checklist : elle est créée même si elle n'est pas cochée ; « Audit 5S » ne l'est pas
+    expect(result).toEqual({ checklists: 1, routines: 2 });
+    const start = (await ds.repo('routineTemplates').list()).find((r) => r.title === 'Démarrage presse')!;
+    const temp = start.tasks.flatMap((t) => t.checks).find((c) => c.id === 'temp')!;
+    expect([temp.min, temp.max]).toEqual([50, 70]);
+    expect(temp.help).toMatch(/^Repère du modèle/);
+    const rosee = start.tasks.flatMap((t) => t.checks).find((c) => c.id === 'rosee')!;
+    expect(rosee.help).toMatch(/^Valeur d’exemple à adapter/);
+    const settings = (await ds.repo('settings').list())[0]!;
+    expect(settings.catalog).toEqual(before);
+    expect(settings.sectorTemplate).toBe('plastics');
   });
 });
 
